@@ -1,0 +1,109 @@
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Windows.Forms.Layout;
+
+namespace FormWind;
+
+/// <summary>
+/// Yuvarlak köşelerini ve kenarlığını antialias çizen panel. <c>flex</c> ya da <c>grid</c> class'ı verildiğinde
+/// çocuklarını FormWind yerleşim motoruyla yerleştirir (Dock ve Anchor yok sayılır).
+/// </summary>
+[ToolboxItem(true)]
+[Description("Yuvarlak köşeli, flex/grid yerleşimli panel.")]
+public class TwPanel : Panel, ITwChrome, ITwLayoutHost
+{
+    private TwChrome _chrome = TwChrome.None;
+
+    public TwPanel()
+    {
+        SetStyle(
+            ControlStyles.AllPaintingInWmPaint
+            | ControlStyles.UserPaint
+            | ControlStyles.OptimizedDoubleBuffer
+            | ControlStyles.ResizeRedraw
+            | ControlStyles.SupportsTransparentBackColor,
+            true);
+    }
+
+    [Category("FormWind"), DefaultValue(0f), Description("Köşe yarıçapı (piksel). Classes tanımlıysa onun değeri kullanılır.")]
+    public float CornerRadius
+    {
+        get => _chrome.Radius;
+        set => SetUniform(Math.Max(0f, value), _chrome.BorderTop, _chrome.BorderColor);
+    }
+
+    [Category("FormWind"), DefaultValue(0f), Description("Kenarlık kalınlığı (piksel, tüm kenarlar).")]
+    public float BorderWidth
+    {
+        get => _chrome.BorderTop;
+        set => SetUniform(_chrome.Radius, Math.Max(0f, value), _chrome.BorderColor);
+    }
+
+    [Category("FormWind"), Description("Kenarlık rengi.")]
+    public Color BorderColor
+    {
+        get => _chrome.BorderColor;
+        set => SetUniform(_chrome.Radius, _chrome.BorderTop, value);
+    }
+
+    private void SetUniform(float radius, float width, Color color)
+    {
+        _chrome = new TwChrome(radius, width, width, width, width, color, _chrome.Gradient);
+        Invalidate();
+    }
+
+    private bool ShouldSerializeBorderColor() => !_chrome.BorderColor.IsEmpty;
+
+    private void ResetBorderColor() => BorderColor = Color.Empty;
+
+    public override LayoutEngine LayoutEngine =>
+        TwLayout.IsLayoutContainer(this) ? TwLayout.Engine : base.LayoutEngine;
+
+    /// <summary>Flex konteynerinde içerikten hesaplanır; <c>AutoSize = true</c> ile panel içeriğine göre boyutlanır.</summary>
+    public override Size GetPreferredSize(Size proposedSize) =>
+        TwLayout.TryMeasure(this, out var size) ? size : base.GetPreferredSize(proposedSize);
+
+    void ITwChrome.SetChrome(TwChrome chrome)
+    {
+        if (_chrome.Equals(chrome)) return;
+        bool borderChanged = BorderInsets() != Insets(chrome);
+        _chrome = chrome;
+        if (borderChanged) PerformLayout(this, nameof(BorderWidth));
+        Invalidate();
+    }
+
+    /// <summary>
+    /// CSS kutu modelindeki gibi içerik kenarlığın içindedir: çocuklar (Dock ve flex/grid) kenarlığın üzerine yerleşmez.
+    /// </summary>
+    public override Rectangle DisplayRectangle
+    {
+        get
+        {
+            var rect = base.DisplayRectangle;
+            var border = BorderInsets();
+            return new Rectangle(
+                rect.X + border.Left,
+                rect.Y + border.Top,
+                Math.Max(0, rect.Width - border.Horizontal),
+                Math.Max(0, rect.Height - border.Vertical));
+        }
+    }
+
+    /// <summary>Kenarlık kalınlıkları (piksele yuvarlanmış); içerik bu kadar içeriden başlar.</summary>
+    public Padding BorderInsets() => Insets(_chrome);
+
+    private static Padding Insets(TwChrome chrome) => new Padding(
+        (int)Math.Ceiling(chrome.BorderLeft),
+        (int)Math.Ceiling(chrome.BorderTop),
+        (int)Math.Ceiling(chrome.BorderRight),
+        (int)Math.Ceiling(chrome.BorderBottom));
+
+    protected override void OnPaintBackground(PaintEventArgs e)
+    {
+        TwPainter.PaintParentBackground(this, e.Graphics);
+        TwPainter.FillSurface(e.Graphics, ClientRectangle, _chrome.Radius, BackColor, _chrome.Gradient);
+        TwPainter.StrokeChrome(e.Graphics, ClientRectangle, _chrome);
+    }
+}

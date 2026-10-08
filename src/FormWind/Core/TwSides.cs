@@ -1,0 +1,34 @@
+using System;
+using System.Windows.Forms;
+
+namespace FormWind;
+
+/// <summary>Dört kenar için isteğe bağlı piksel değerleri (padding, margin). 96 DPI'a göredir.</summary>
+public sealed class TwSides
+{
+    public int? Left { get; set; }
+    public int? Top { get; set; }
+    public int? Right { get; set; }
+    public int? Bottom { get; set; }
+
+    public bool IsEmpty => Left is null && Top is null && Right is null && Bottom is null;
+
+    public void MergeFrom(TwSides other)
+    {
+        Left = other.Left ?? Left;
+        Top = other.Top ?? Top;
+        Right = other.Right ?? Right;
+        Bottom = other.Bottom ?? Bottom;
+    }
+
+    /// <summary>
+    /// Tanımlı kenarları DPI ölçeğiyle uygular, tanımsız kenarları <paramref name="fallback"/>'ten alır.
+    /// </summary>
+    public Padding ApplyTo(Padding fallback, float scale) => new Padding(
+        Left is int left ? Scale(left, scale) : fallback.Left,
+        Top is int top ? Scale(top, scale) : fallback.Top,
+        Right is int right ? Scale(right, scale) : fallback.Right,
+        Bottom is int bottom ? Scale(bottom, scale) : fallback.Bottom);
+
+    public static int Scale(int pixels, float scale) => (int)Math.Round(pixels * scale);
+}

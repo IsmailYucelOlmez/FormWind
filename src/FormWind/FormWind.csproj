@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>FormWind</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>FormWind</PackageId>
+    <Description>WinForms kontrolleri için Tailwind benzeri utility-class stil sistemi.</Description>
+    <PackageTags>winforms;tailwind;theme;ui;styling</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing.Design" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="FormWind.Tests" />
+  </ItemGroup>
+
+</Project>
