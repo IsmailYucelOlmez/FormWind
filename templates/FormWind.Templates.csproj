@@ -12,7 +12,6 @@
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <IncludeSymbols>false</IncludeSymbols>
-    <ContentTargetFolders>content</ContentTargetFolders>
     <NoDefaultExcludes>true</NoDefaultExcludes>
     <EnableDefaultItems>false</EnableDefaultItems>
     <!-- Şablon paketinde lib/ klasörü olmaz (NU5128). -->
@@ -20,7 +19,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" />
+    <!-- content\formwind-app\… paket içinde de content\formwind-app\… olur (NuGet klasör yolunu ekler). -->
+    <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" PackagePath="content" />
   </ItemGroup>
 
 </Project>
