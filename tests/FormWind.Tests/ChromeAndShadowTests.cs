@@ -154,4 +154,38 @@ public class ChromeAndShadowTests
         Assert.Equal(BorderStyle.Fixed3D, textBox.BorderStyle);
         Assert.Null(TwOutset.For(textBox).Spec);
     });
+
+    [Fact]
+    public void Drop_down_list_combo_box_is_painted_with_border_and_corners() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form { BackColor = Color.LightGray, ShowInTaskbar = false, StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000) };
+        var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Bounds = new Rectangle(10, 10, 160, 30) };
+        combo.Items.AddRange(new object[] { "İstanbul", "İzmir" });
+        combo.SelectedIndex = 0;
+        form.Controls.Add(combo);
+        form.Show();
+        provider.SetClasses(combo, "bg-white text-gray-900 border border-red-600 rounded-md");
+        Assert.True(TwComboPainter.IsAttached(combo));
+
+        using (var bitmap = new Bitmap(combo.Width, combo.Height))
+        {
+            combo.DrawToBitmap(bitmap, new Rectangle(Point.Empty, combo.Size));
+            Assert.Equal(Argb("#dc2626"), bitmap.GetPixel(0, combo.Height / 2).ToArgb());      // kenarlık
+            Assert.Equal(Color.White.ToArgb(), bitmap.GetPixel(combo.Width / 2, 2).ToArgb());  // zemin
+            Assert.Equal(Color.LightGray.ToArgb(), bitmap.GetPixel(0, 0).ToArgb());           // yuvarlak köşe
+        }
+
+        // Düzenlenebilir kutu native kalır.
+        combo.DropDownStyle = ComboBoxStyle.DropDown;
+        provider.Refresh(combo);
+        Assert.False(TwComboPainter.IsAttached(combo));
+
+        combo.DropDownStyle = ComboBoxStyle.DropDownList;
+        provider.Refresh(combo);
+        Assert.True(TwComboPainter.IsAttached(combo));
+        provider.SetClasses(combo, "");
+        Assert.False(TwComboPainter.IsAttached(combo));
+        form.Close();
+    });
 }

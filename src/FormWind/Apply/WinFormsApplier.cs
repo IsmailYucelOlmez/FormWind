@@ -508,6 +508,13 @@ public class WinFormsApplier : IStyleApplier
             }
         }
 
+        // DropDownList ComboBox'ın kapalı kutusu tümüyle FormWind tarafından çizilir (kenarlık, köşe, ok).
+        if (control is ComboBox combo)
+        {
+            if (TwComboPainter.Supports(combo) && (chrome.HasBorder || chrome.Radius > 0)) TwComboPainter.Attach(combo, chrome);
+            else TwComboPainter.Detach(combo);
+        }
+
         if (style.HasOutset || !outset.IsEmpty || TwOutset.IsAttached(control))
             TwOutset.For(control).Update(outset);
     }
