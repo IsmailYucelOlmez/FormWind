@@ -214,6 +214,7 @@ public class InteractionTests
 
         using var provider = new TailwindProvider();
         provider.DarkMode = true;
+        Assert.True(TwNativeToolTips.HookInstalled);
         int themedBefore = TwNativeToolTips.Themed.Count;
         Assert.True(themedBefore > 0, "existing tooltip window should be themed");
 
@@ -226,6 +227,7 @@ public class InteractionTests
         provider.DarkToolTips = false;
         Assert.Empty(TwNativeToolTips.Themed);
         Assert.False(TwNativeToolTips.IsDark);
+        Assert.False(TwNativeToolTips.HookInstalled, "hook should be removed when no provider is dark");
         form.Close();
     });
 
