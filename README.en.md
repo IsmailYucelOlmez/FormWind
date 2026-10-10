@@ -591,6 +591,7 @@ samples/FormWind.Showcase/ Showcase application (net472)
 samples/Rickipedia/       Sample page using the Rick and Morty API (net472)
 tools/FormWind.Convert/   Command-line tool that converts Designer files to classes (net8.0-windows)
 tools/FormWind.Harness/   Startup hook and harness for trying FormWind on real applications (net8.0-windows)
+tools/FormWind.Docs/      Generates the class reference site with previews (net8.0-windows)
 tools/run-harness.ps1     Runs a .NET WinForms application with the harness and prints a log summary
 .github/workflows/ci.yml  Build, test, pack and upload of visual snapshots as artifacts
 ```
@@ -696,6 +697,16 @@ $env:FORMWIND_UPDATE_BASELINES = "1"; dotnet test tests/FormWind.Tests -f net472
 ```
 
 **CI.** `.github/workflows/ci.yml` builds, tests on four targets (net472, .NET 8, 9, 10), checks coverage and packs on every push and PR. Because `FORMWIND_VISUAL_EXPORT` is set, the visual tests write their renderings to the `visual-snapshots` artifact; if there is no baseline for the CI environment yet, the tests only export and the workflow prints a warning. CI is pinned to the `windows-2022` image; if the image changes, the baseline folder name changes too. Adding the `win…` folder from the artifact under `tests/FormWind.Tests/Baselines/` and committing it enables comparison for that environment.
+
+### Documentation site
+
+`tools/FormWind.Docs` renders every example off-screen with FormWind itself (PNG; light and dark for components and controls) and generates a class reference with previews; the color palette (v3 and v4) and icon names are included too:
+
+```bash
+dotnet run --project tools/FormWind.Docs -c Release -- artifacts/docs-site
+```
+
+The examples are defined in `tools/FormWind.Docs/Catalog.cs`. `.github/workflows/docs.yml` generates the site on every push and uploads it as the `docs-site` artifact; to publish to GitHub Pages, set the Pages source to "GitHub Actions" in the repository settings and define the `DEPLOY_DOCS=true` repository variable.
 
 ### Conversion tool
 

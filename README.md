@@ -591,6 +591,7 @@ samples/FormWind.Showcase/ Vitrin uygulaması (net472)
 samples/Rickipedia/       Rick and Morty API ile örnek sayfa (net472)
 tools/FormWind.Convert/   Designer dosyalarını class'lara çeviren komut satırı aracı (net8.0-windows)
 tools/FormWind.Harness/   Gerçek uygulamalarda deneme için startup hook ve harness (net8.0-windows)
+tools/FormWind.Docs/      Önizlemeli class referansı sitesini üretir (net8.0-windows)
 tools/run-harness.ps1     Bir .NET WinForms uygulamasını harness'le çalıştırıp log özetini yazar
 .github/workflows/ci.yml  Derleme, test, paket ve görsel çizimlerin yapıt olarak yüklenmesi
 ```
@@ -696,6 +697,16 @@ $env:FORMWIND_UPDATE_BASELINES = "1"; dotnet test tests/FormWind.Tests -f net472
 ```
 
 **CI.** `.github/workflows/ci.yml` her push ve PR'da derler, dört hedefte (net472, .NET 8, 9, 10) test eder, kapsamı denetler, paketler. `FORMWIND_VISUAL_EXPORT` ayarlı olduğundan görsel testler çizimlerini `visual-snapshots` yapıtına yazar; CI ortamının referansı henüz yoksa testler yalnızca dışa aktarır ve iş akışı bir uyarı yazar. CI `windows-2022` imajına sabitlidir; imaj değişirse referans klasörünün adı da değişir. Yapıttaki `win…` klasörünü `tests/FormWind.Tests/Baselines/` altına ekleyip commit'lemek, o ortam için karşılaştırmayı açar.
+
+### Belge sitesi
+
+`tools/FormWind.Docs`, her örneği gerçek FormWind ile ekran dışında çizip (PNG; bileşen ve kontrollerde açık ve koyu tema) önizlemeli bir class referansı üretir; renk paleti (v3 ve v4) ve ikon adları da sitededir. Site İngilizcedir:
+
+```bash
+dotnet run --project tools/FormWind.Docs -c Release -- artifacts/docs-site
+```
+
+Örnekler `tools/FormWind.Docs/Catalog.cs` içinde tanımlıdır. `.github/workflows/docs.yml` siteyi her push'ta üretip `docs-site` yapıtı olarak yükler; GitHub Pages'e yayımlamak için depo ayarlarında Pages kaynağını "GitHub Actions" yapıp `DEPLOY_DOCS=true` depo değişkenini tanımlayın.
 
 ### Dönüştürme aracı
 
