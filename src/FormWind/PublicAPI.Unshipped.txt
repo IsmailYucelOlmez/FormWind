@@ -607,7 +607,9 @@ FormWind.TwState.None = 0 -> FormWind.TwState
 FormWind.TwState.Sm = 512 -> FormWind.TwState
 FormWind.TwState.Xl = 4096 -> FormWind.TwState
 FormWind.TwState.Xxl = 8192 -> FormWind.TwState
-FormWind.TwState.HighContrast = 16384 -> FormWind.TwState
+FormWind.TwState.HighContrast = 65536 -> FormWind.TwState
+FormWind.TwState.Ltr = 16384 -> FormWind.TwState
+FormWind.TwState.Rtl = 32768 -> FormWind.TwState
 FormWind.TwStyle
 FormWind.TwStyle.AccentColor.get -> System.Drawing.Color?
 FormWind.TwStyle.AccentColor.set -> void
@@ -991,6 +993,7 @@ override FormWind.TwPager.OnResize(System.EventArgs! e) -> void
 override FormWind.TwPanel.DisplayRectangle.get -> System.Drawing.Rectangle
 override FormWind.TwPanel.GetPreferredSize(System.Drawing.Size proposedSize) -> System.Drawing.Size
 override FormWind.TwPanel.LayoutEngine.get -> System.Windows.Forms.Layout.LayoutEngine!
+override FormWind.TwPanel.OnRightToLeftChanged(System.EventArgs! e) -> void
 override FormWind.TwPanel.OnPaintBackground(System.Windows.Forms.PaintEventArgs! e) -> void
 override FormWind.TwPictureBox.CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject!
 override FormWind.TwPictureBox.DefaultSize.get -> System.Drawing.Size

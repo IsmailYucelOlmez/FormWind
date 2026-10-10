@@ -284,19 +284,23 @@ public class TwSelect : Control, ITwChrome
 
         int chevron = ChevronArea;
         var fore = Enabled ? ForeColor : Color.FromArgb(128, ForeColor);
-        var textBounds = new Rectangle(Padding.Left, 0, Math.Max(0, Width - Padding.Left - chevron), Height);
-        TextRenderer.DrawText(g, SelectedItem ?? "", Font, textBounds, fore,
-            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        // Sağdan sola: ok solda, metin sağa yaslı.
+        bool rtl = TwRtl.NeedsMirroring(this);
+        var textBounds = rtl
+            ? new Rectangle(chevron, 0, Math.Max(0, Width - Padding.Left - chevron), Height)
+            : new Rectangle(Padding.Left, 0, Math.Max(0, Width - Padding.Left - chevron), Height);
+        var textFlags = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
+        TextRenderer.DrawText(g, SelectedItem ?? "", Font, textBounds, fore, rtl ? TwRtl.Mirror(textFlags) : textFlags);
 
         // Ayraç: kenarlık rengiyle, yüksekliğin yarısı kadar.
         var dividerColor = _chrome.HasBorder ? _chrome.BorderColor : Color.FromArgb(80, fore);
-        int x = Width - chevron;
+        int x = rtl ? chevron : Width - chevron;
         using (var pen = new Pen(dividerColor, Math.Max(1f, TwDpi.DeviceDpi(this) / 96f)))
             g.DrawLine(pen, x, Height * 0.28f, x, Height * 0.72f);
 
         {
             int em = TwIconRenderer.EmPixels(Font.SizeInPoints, TwDpi.DeviceDpi(this));
-            TwIconRenderer.DrawIcon(g, "chevron-down", em, new Rectangle(x, 0, chevron, Height), fore);
+            TwIconRenderer.DrawIcon(g, "chevron-down", em, new Rectangle(rtl ? 0 : x, 0, chevron, Height), fore);
         }
     }
 }

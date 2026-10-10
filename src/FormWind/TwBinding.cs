@@ -35,6 +35,7 @@ internal sealed class TwBinding
         _control.Enter += OnEnter;
         _control.Leave += OnStateChanged;
         _control.EnabledChanged += OnStateChanged;
+        _control.RightToLeftChanged += OnStateChanged;
         _control.DpiChangedAfterParent += OnDpiChanged;
         _control.Disposed += OnDisposed;
         // Ekran değişimi formun DpiChanged olayıyla güvenilir biçimde gelir (alt kontrollerin olayları .NET Framework'te
@@ -164,6 +165,7 @@ internal sealed class TwBinding
         _control.Enter -= OnEnter;
         _control.Leave -= OnStateChanged;
         _control.EnabledChanged -= OnStateChanged;
+        _control.RightToLeftChanged -= OnStateChanged;
         _control.DpiChangedAfterParent -= OnDpiChanged;
         _control.Disposed -= OnDisposed;
         if (_control is CheckBox checkBox) checkBox.CheckedChanged -= OnStateChanged;
@@ -207,7 +209,7 @@ internal sealed class TwBinding
 
     private TwState CurrentState()
     {
-        var state = _owner.BaseState;
+        var state = _owner.BaseState | (_control.RightToLeft == RightToLeft.Yes ? TwState.Rtl : TwState.Ltr);
         if (_control is CheckBox { Checked: true } || _control is RadioButton { Checked: true })
             state |= TwState.Checked;
 

@@ -114,6 +114,7 @@ public class TwButton : Button, ITwChrome
             Math.Max(0, Height - Padding.Vertical));
 
         var flags = TwPainter.ToTextFormatFlags(TextAlign);
+        if (TwRtl.NeedsMirroring(this)) flags = TwRtl.Mirror(flags);
         if (!UseMnemonic) flags |= TextFormatFlags.NoPrefix;
         else if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
 
@@ -156,7 +157,8 @@ public class TwButton : Button, ITwChrome
             : bounds.X;
 
         var vertical = textFlags & (TextFormatFlags.Top | TextFormatFlags.VerticalCenter | TextFormatFlags.Bottom);
-        bool iconFirst = IconPosition == TwIconPosition.Left;
+        // Sağdan sola: ikon metnin öbür yanına geçer (IconPosition okuma yönüne göredir).
+        bool iconFirst = (IconPosition == TwIconPosition.Left) != TwRtl.NeedsMirroring(this);
         var iconRect = new Rectangle(iconFirst ? x : x + textWidth + gap, bounds.Y, iconSize.Width, bounds.Height);
         var textRect = new Rectangle(iconFirst ? x + iconSize.Width + gap : x, bounds.Y, textWidth, bounds.Height);
 

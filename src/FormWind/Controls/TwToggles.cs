@@ -49,12 +49,17 @@ internal static class TwToggleDrawing
             control.Padding.Top,
             Math.Max(0, control.Width - control.Padding.Horizontal),
             Math.Max(0, control.Height - control.Padding.Vertical));
-        var indicator = new Rectangle(content.X, content.Y + (content.Height - indicatorHeight) / 2, indicatorWidth, indicatorHeight);
+        // Sağdan sola: gösterge sağda, metin solunda.
+        bool rtl = TwRtl.NeedsMirroring(control);
+        var indicator = new Rectangle(rtl ? content.Right - indicatorWidth : content.X, content.Y + (content.Height - indicatorHeight) / 2, indicatorWidth, indicatorHeight);
 
         if (!string.IsNullOrEmpty(control.Text))
         {
-            var textBounds = new Rectangle(indicator.Right + gap, content.Y, Math.Max(0, content.Right - indicator.Right - gap), content.Height);
+            var textBounds = rtl
+                ? new Rectangle(content.X, content.Y, Math.Max(0, indicator.Left - gap - content.X), content.Height)
+                : new Rectangle(indicator.Right + gap, content.Y, Math.Max(0, content.Right - indicator.Right - gap), content.Height);
             var flags = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis;
+            if (rtl) flags = TwRtl.Mirror(flags);
             TextRenderer.DrawText(graphics, control.Text, control.Font, textBounds,
                 control.Enabled ? control.ForeColor : SystemColors.GrayText, flags);
         }
@@ -297,7 +302,9 @@ public class TwSwitch : CheckBox, ITwChrome, ITwToggle
 
         float inset = TwToggleDrawing.Scale(this, 2);
         float thumb = track.Height - inset * 2;
-        float x = track.Left + inset + (track.Width - inset * 2 - thumb) * _position;
+        // Sağdan sola: açık konum solda.
+        float travel = (track.Width - inset * 2 - thumb) * (TwRtl.NeedsMirroring(this) ? 1 - _position : _position);
+        float x = track.Left + inset + travel;
         TwToggleDrawing.FillEllipse(g, new RectangleF(x, track.Top + inset, thumb, thumb), Color.White);
     }
 

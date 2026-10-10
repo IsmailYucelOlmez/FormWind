@@ -100,6 +100,13 @@ public class TwPanel : Panel, ITwChrome, ITwLayoutHost
         (int)Math.Ceiling(chrome.BorderRight),
         (int)Math.Ceiling(chrome.BorderBottom));
 
+    // Sağdan sola değişince flex/grid yerleşimi aynalanır (bkz. TwLayoutEngine).
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        base.OnRightToLeftChanged(e);
+        PerformLayout();
+    }
+
     protected override void OnPaintBackground(PaintEventArgs e)
     {
         TwPainter.PaintParentBackground(this, e.Graphics);

@@ -500,6 +500,16 @@ tw.StyleError += (s, e) => logger.LogWarning(e.Exception, "{Target} stillenemedi
 - Bellek yetersizliği gibi kritik istisnalar yakalanmaz.
 - Hatalı kontrol bir sonraki durum değişikliğinde (hover, tema …) yeniden denenir.
 
+## Sağdan sola (RTL)
+
+Kontrolün kalıtılan `RightToLeft` değeri `Yes` ise:
+
+- `rtl:` ve `ltr:` varyantları yöne göre uygulanır (Tailwind'deki gibi): `pl-4 rtl:pl-0 rtl:pr-4`. Yön sonradan değişirse stiller yeniden uygulanır.
+- `TwPanel` flex ve grid yerleşimi yatayda aynalanır (CSS'teki `dir="rtl"` gibi): ilk öğe sağdadır, `justify-start` sağa yaslar. Kenar boşlukları da aynayla yer değiştirir (`ml-*` başlangıç tarafı gibi davranır).
+- `TwButton` (ikon metnin öbür yanına geçer, metin hizası aynalanır), `TwCheckBox`, `TwRadioButton`, `TwSwitch` (gösterge sağda, açık konum solda) ve `TwSelect` (ok solda) aynalanır.
+- Formda `RightToLeftLayout = true` ise Windows pencereleri kendisi aynalar; FormWind ayrıca aynalamaz.
+- Henüz aynalanmayanlar: `TwNumberBox`, `TwDatePicker`, `TwSlider`, `TwProgress`, `TwTabStrip` (sekme sırası), `TwDataList`, `TwTreeView`, `TwCalendar`, `DropDownList` ComboBox çizimi. `ps-*`/`pe-*` gibi mantıksal boşluk class'ları yok; `rtl:` ile yazılır.
+
 ## .NET 9+ renk modu (`Application.SetColorMode`)
 
 .NET 9 ve sonrasında `Application.SetColorMode(SystemColorMode.Dark)` sistem renklerini ve native kontrolleri koyulaştırır. FormWind bununla birlikte çalışır:

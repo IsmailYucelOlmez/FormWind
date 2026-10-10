@@ -500,6 +500,16 @@ tw.StyleError += (s, e) => logger.LogWarning(e.Exception, "Could not style {Targ
 - Critical exceptions such as out-of-memory are not caught.
 - The failing control is retried on the next state change (hover, theme …).
 
+## Right-to-left (RTL)
+
+When a control's inherited `RightToLeft` is `Yes`:
+
+- The `rtl:` and `ltr:` variants apply by direction (as in Tailwind): `pl-4 rtl:pl-0 rtl:pr-4`. Styles are reapplied when the direction changes.
+- `TwPanel` flex and grid layouts are mirrored horizontally (like CSS `dir="rtl"`): the first item is on the right and `justify-start` aligns to the right. Margins swap with the mirror (`ml-*` acts as the start side).
+- `TwButton` (the icon moves to the other side of the text, text alignment is mirrored), `TwCheckBox`, `TwRadioButton`, `TwSwitch` (indicator on the right, "on" position on the left) and `TwSelect` (arrow on the left) are mirrored.
+- If the form has `RightToLeftLayout = true`, Windows mirrors the windows itself and FormWind does not mirror again.
+- Not mirrored yet: `TwNumberBox`, `TwDatePicker`, `TwSlider`, `TwProgress`, `TwTabStrip` (tab order), `TwDataList`, `TwTreeView`, `TwCalendar`, the `DropDownList` ComboBox painting. There are no logical spacing classes such as `ps-*`/`pe-*`; use `rtl:` instead.
+
 ## .NET 9+ color mode (`Application.SetColorMode`)
 
 On .NET 9 and later, `Application.SetColorMode(SystemColorMode.Dark)` darkens system colors and native controls. FormWind works together with it:

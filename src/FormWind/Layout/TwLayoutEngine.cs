@@ -16,6 +16,11 @@ internal sealed class TwLayoutEngine : LayoutEngine
 
     private const float Infinity = float.PositiveInfinity;
 
+    // Sağdan sola konteynerde (RightToLeft = Yes) yerleşim yatayda aynalanır: X, alanın sol ve sağ kenarlarının toplamından
+    // öğenin sağ kenarı çıkarılarak bulunur. İç içe yerleşimler kendi değerini kurar ve geri yükler.
+    [ThreadStatic] private static int _mirrorAxis;
+    [ThreadStatic] private static bool _mirror;
+
     public override bool Layout(object container, LayoutEventArgs layoutEventArgs)
     {
         if (container is not Control parent) return false;
@@ -33,6 +38,9 @@ internal sealed class TwLayoutEngine : LayoutEngine
             area = new Rectangle(area.X, area.Y, Math.Max(0, visible), area.Height);
         }
 
+        var (savedMirror, savedAxis) = (_mirror, _mirrorAxis);
+        _mirror = TwRtl.NeedsMirroring(parent);
+        _mirrorAxis = area.Left + area.Right;
         TwLayout.Enter();
         try
         {
@@ -50,6 +58,7 @@ internal sealed class TwLayoutEngine : LayoutEngine
         finally
         {
             TwLayout.Exit();
+            (_mirror, _mirrorAxis) = (savedMirror, savedAxis);
         }
 
         return parent.AutoSize;
@@ -311,6 +320,7 @@ internal sealed class TwLayoutEngine : LayoutEngine
         var bounds = row
             ? new Rectangle(main0, cross0, Math.Max(0, main1 - main0), Math.Max(0, cross1 - cross0))
             : new Rectangle(cross0, main0, Math.Max(0, cross1 - cross0), Math.Max(0, main1 - main0));
+        if (_mirror) bounds.X = _mirrorAxis - bounds.Right;
         if (control.Bounds != bounds)
             control.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
     }
