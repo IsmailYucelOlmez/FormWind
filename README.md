@@ -362,7 +362,7 @@ samples/Rickipedia/bin/Debug/net472/Rickipedia.exe --snapshot sayfa.png --dark -
 | `TwSelect` | Stillenebilir açılır liste (native ComboBox'ın yerine): kutu temel class'larla, menü `menu:` / `item:` ile. Genişlik varsayılan olarak seçili öğeye göredir (`SizeToSelection`). Harf yazmak o harflerle başlayan öğeyi seçer; `Searchable = true` menünün üstüne öğeleri süzen bir arama kutusu ekler (büyük/küçük harf, aksan ve ı/i farkı gözetilmez). |
 | `TwIcon` | Tek başına ikon (bkz. [İkonlar](#i̇konlar)). |
 | `TwCheckBox`, `TwRadioButton`, `TwSwitch` | Bkz. [CheckBox, Radio, Switch](#checkbox-radio-switch). |
-| Standart kontroller | Renk, yazı ve boşluk her kontrolde çalışır. Köşe `Region` ile kırpılır (antialias yok), kenarlık `Paint` olayında çizilir. Native kontrollerde (`TextBox`, `ComboBox`, `ListBox` …) köşe ve kenarlık uygulanmaz. |
+| Standart kontroller | Renk, yazı ve boşluk her kontrolde çalışır. Köşe `Region` ile kırpılır (antialias yok), kenarlık `Paint` olayında çizilir. `TextBox`'ta (`TextBoxBase`) native kenarlık kapatılır; `border-*` ve `rounded-*` ebeveynde, kontrolün 3 px dışına zemin rengiyle doldurulmuş bir çerçeve olarak çizilir (çerçeve kontrolün sınırlarından taşar, yerleşimde pay bırakın). Diğer native kontrollerde (`ComboBox`, `ListBox` …) köşe ve kenarlık uygulanmaz; `TwSelect`, `TwListBox` kullanın. |
 | `TwButton` | Pürüzsüz köşeli buton. `Image` henüz çizilmez, `Paint` olayı tetiklenmez. |
 | `TwPanel` | Pürüzsüz köşeli, kenarlıklı panel (kart). |
 | `TwTextBox` | Kenarlıksız TextBox'ı yuvarlak bir panel içine alır; `input` stili için. |
@@ -505,7 +505,8 @@ Piksel değerleri kontrolün `DeviceDpi / 96` oranıyla ölçeklenir. Uygulama D
 ## Designer
 
 - `TwTabControl`: "Sayfa ekle" / "Seçili sayfayı kaldır" komutları ve akıllı etiket (görünüm seçimi), tasarım zamanında sekmeye tıklayınca sayfa değişir; kontrolün içine yalnızca `TwTabPage` bırakılabilir, diğer kontroller sayfaya bırakılır. Araç kutusundan bırakılan kontrol iki sayfayla başlar.
-- Bu destek .NET Framework Designer'ı içindir; .NET 8'in süreç dışı Designer'ı için ayrı bir Designer SDK paketi gerekir.
+- `TwTabControl` tasarımcısı .NET Framework ve .NET 8 için derlenir; .NET 8'in süreç dışı Designer'ında tasarımcı sunucu sürecinde çalışır (komutlar `DesignSurface` testleriyle iki hedefte doğrulanır).
+- `Classes` alanının "…" editörü (`ClassesEditor`) yalnızca .NET Framework Designer'ında açılır; .NET 8'de alan düz metin olarak düzenlenir. Taşınması için Designer SDK gerekir.
 
 ### FW001 çözümleyicisi
 
