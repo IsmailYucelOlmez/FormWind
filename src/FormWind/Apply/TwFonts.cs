@@ -13,6 +13,8 @@ namespace FormWind;
 /// <summary>
 /// Paylaşılan <see cref="Font"/> örnekleri ve uygulamayla dağıtılan fontlar. Her <c>new Font</c> bir GDI handle'ı
 /// tuttuğundan aynı aile/boyut/stil için tek örnek kullanılır; örnekler süreç boyunca yaşar ve dispose edilmemelidir.
+/// Kontroller fontları tuttuğundan önbellek küçültülemez; <see cref="CacheWarningThreshold"/> aşılınca bir kez Debug uyarısı yazılır
+/// (genelde kodla üretilen <c>text-[…px]</c> class'larının işareti).
 /// </summary>
 public static class TwFonts
 {
@@ -23,6 +25,11 @@ public static class TwFonts
 
     private static readonly ConcurrentDictionary<(string Family, float Size, FontStyle Style), Font> Cache =
         new ConcurrentDictionary<(string Family, float Size, FontStyle Style), Font>();
+
+    /// <summary>Önbellekteki font sayısı bunu aşınca Debug çıktısına bir kez uyarı yazılır.</summary>
+    public const int CacheWarningThreshold = 256;
+
+    private static int _warned;
 
     private static readonly object Gate = new object();
     private static readonly PrivateFontCollection Private = new PrivateFontCollection();
@@ -100,6 +107,8 @@ public static class TwFonts
         var key = (resolved, (float)Math.Round(sizeInPoints, 2), style);
         return Cache.GetOrAdd(key, k =>
         {
+            if (Cache.Count >= CacheWarningThreshold && System.Threading.Interlocked.Exchange(ref _warned, 1) == 0)
+                Debug.WriteLine($"FormWind: font önbelleği {CacheWarningThreshold} örneği aştı; class'larda çok sayıda farklı yazı boyutu kullanılıyor olabilir.");
             FontFamily? privateFamily;
             lock (Gate) PrivateFamilies.TryGetValue(k.Item1, out privateFamily);
             return privateFamily != null && privateFamily.IsStyleAvailable(k.Item3)
@@ -107,6 +116,9 @@ public static class TwFonts
                 : new Font(k.Item1, k.Item2, k.Item3, GraphicsUnit.Point);
         });
     }
+
+    /// <summary>Önbellekteki font sayısı (testler için).</summary>
+    internal static int CachedCount => Cache.Count;
 
     /// <summary>
     /// Stilin font değerlerini <paramref name="baseFont"/> üzerine uygular. Kalınlık, temadaki

@@ -35,6 +35,15 @@ public class FontAndIconTests
     public void Parses_font_weights(string classes, int expected) =>
         Assert.Equal(expected, _theme.Parse(classes).Resolve(TwState.None).FontWeight);
 
+    [Fact]
+    public void Font_cache_shares_instances()
+    {
+        int before = TwFonts.CachedCount;
+        var a = TwFonts.Get("Segoe UI", 10.5f, FontStyle.Regular);
+        Assert.Same(a, TwFonts.Get("Segoe UI", 10.501f, FontStyle.Regular));
+        Assert.True(TwFonts.CachedCount <= before + 1);
+    }
+
     [Theory]
     [InlineData(600, "Segoe UI Semibold", false)] // birebir
     [InlineData(700, "Segoe UI", true)]           // ailenin kendisi + kalın
