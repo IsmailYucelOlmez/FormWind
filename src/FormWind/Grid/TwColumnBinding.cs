@@ -37,6 +37,18 @@ internal sealed class TwColumnBinding
     public void Refresh()
     {
         if (!_owner.ShouldApply) return;
+        try
+        {
+            RefreshCore();
+        }
+        catch (System.Exception ex) when (!TwErrors.IsCritical(ex))
+        {
+            _owner.ReportError(_column, Classes, ex);
+        }
+    }
+
+    private void RefreshCore()
+    {
 
         _originalCells ??= new DataGridViewCellStyle(_column.DefaultCellStyle);
         _originalHeader ??= new DataGridViewCellStyle(_column.HeaderCell.Style);
@@ -121,7 +133,17 @@ internal sealed class TwRowRule
     private void OnCellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
     {
         if (e.RowIndex < 0 || e.RowIndex >= _grid.Rows.Count || e.CellStyle is null) return;
-        var classes = _rule(_grid.Rows[e.RowIndex]);
+        string? classes = null;
+        try
+        {
+            // Kural uygulamanın kodudur; istisnası hücre çizimini (ve grid'i) düşürmemeli.
+            classes = _rule(_grid.Rows[e.RowIndex]);
+        }
+        catch (System.Exception ex) when (!TwErrors.IsCritical(ex))
+        {
+            _owner.ReportError(_grid, "SetRowClasses", ex);
+            return;
+        }
         if (string.IsNullOrWhiteSpace(classes)) return;
 
         var style = _owner.Theme.Parse(classes).Resolve(_owner.BaseState);

@@ -121,6 +121,12 @@ internal sealed class TwBinding
         {
             TwAppliers.Find(_control).Apply(_control, style, context);
         }
+        catch (Exception ex) when (!TwErrors.IsCritical(ex))
+        {
+            // Bir sonraki durum değişikliğinde yeniden denensin.
+            _lastParsed = null;
+            _owner.ReportError(_control, Classes, ex);
+        }
         finally
         {
             _applying = false;

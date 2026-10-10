@@ -488,6 +488,18 @@ foreach (var issue in TwContrast.Audit(this, tw))
 - `TwContrast.Ratio(ön, zemin)` iki renk arasındaki oranı verir.
 - Varsayılan bileşenler (`btn-primary`, `btn-ghost`, `card`, `input`, `table`) açık ve koyu temada bu denetimden geçer (`ContrastTests`). `btn-primary` koyu temada da `blue-600`/`blue-700` kullanır; beyaz yazı `blue-500` üzerinde 3,7:1, `blue-400` üzerinde 2,5:1 ile eşiğin altında kalır.
 
+## Hata yönetimi
+
+Stil uygulanırken çıkan bir hata uygulamayı düşürmez: istisna yakalanır, kontrol o ana kadar uygulanan stille kalır ve hata `TailwindProvider.StyleError` olayıyla bildirilir (dinleyici yoksa Debug çıktısına yazılır). Özel bir `IStyleApplier`'ın ya da `SetRowClasses` kuralının fırlattığı istisnalar bu yolla raporlanır; gölge, kenarlık ve ComboBox çizimindeki hatalar da çizimi durdurmaz.
+
+```csharp
+tw.StyleError += (s, e) => logger.LogWarning(e.Exception, "{Target} stillenemedi: {Classes}", e.Target, e.Classes);
+```
+
+- Dinleyici istisnayı yeniden fırlatabilir (örn. testlerde hataları görünür tutmak için).
+- Bellek yetersizliği gibi kritik istisnalar yakalanmaz.
+- Hatalı kontrol bir sonraki durum değişikliğinde (hover, tema …) yeniden denenir.
+
 ## Krypton Toolkit
 
 ```csharp

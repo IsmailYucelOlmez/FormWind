@@ -86,6 +86,18 @@ internal sealed class TwComboPainter : NativeWindow
 
     internal void Paint(Graphics g)
     {
+        try
+        {
+            PaintCore(g);
+        }
+        catch (Exception ex) when (!TwErrors.IsCritical(ex))
+        {
+            TwErrors.Trace("ComboBox çizimi", ex);
+        }
+    }
+
+    private void PaintCore(Graphics g)
+    {
         var combo = _combo;
         var bounds = new Rectangle(Point.Empty, combo.Size);
         float scale = TwDpi.DeviceDpi(combo) / 96f;

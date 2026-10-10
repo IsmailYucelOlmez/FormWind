@@ -52,6 +52,14 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     /// <summary>Bir kontrolün class'larında tanınmayan değer bulunduğunda tetiklenir. Dinleyici yoksa Debug çıktısına yazılır.</summary>
     public event EventHandler<TwUnknownClassesEventArgs>? UnknownClasses;
 
+    /// <summary>
+    /// Stil uygulanırken bir hata çıktığında tetiklenir (örn. özel bir <see cref="IStyleApplier"/> ya da
+    /// <see cref="SetRowClasses"/> kuralı istisna fırlattı). Hata yutulur: uygulama çalışmaya devam eder, kontrol o ana
+    /// kadar uygulanan stille kalır. Dinleyici yoksa Debug çıktısına yazılır; dinleyici istisnayı yeniden fırlatabilir.
+    /// Bellek yetersizliği gibi kritik istisnalar yakalanmaz.
+    /// </summary>
+    public event EventHandler<TwStyleErrorEventArgs>? StyleError;
+
     [Category("FormWind"), DefaultValue(false), Description("dark: varyantlarını etkinleştirir.")]
     public bool DarkMode
     {
@@ -448,6 +456,18 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         {
             if (binding.Control != group && group.Contains(binding.Control)) binding.Refresh();
         }
+    }
+
+    internal void ReportError(object target, string classes, Exception exception)
+    {
+        var handler = StyleError;
+        if (handler != null)
+        {
+            handler(this, new TwStyleErrorEventArgs(target, classes, exception));
+            return;
+        }
+        var name = (target as Control)?.Name ?? (target as DataGridViewColumn)?.Name ?? target.GetType().Name;
+        Debug.WriteLine($"FormWind: '{name}' stillenirken hata ({classes}): {exception}");
     }
 
     internal void ReportUnknown(Control control, TwParsed parsed)

@@ -253,8 +253,20 @@ internal sealed class TwOutset
             // Controls sırasının tersi: alttaki (sonra eklenen) kontrolün gölgesi önce çizilir.
             for (int i = _children.Count - 1; i >= 0; i--)
             {
-                if (_children[i].TryGetTarget(out var outset)) outset.Paint(e.Graphics);
-                else _children.RemoveAt(i);
+                if (!_children[i].TryGetTarget(out var outset))
+                {
+                    _children.RemoveAt(i);
+                    continue;
+                }
+                // Çizim hatası ebeveynin Paint'ini (ve uygulamayı) düşürmemeli.
+                try
+                {
+                    outset.Paint(e.Graphics);
+                }
+                catch (Exception ex) when (!TwErrors.IsCritical(ex))
+                {
+                    TwErrors.Trace("gölge/halka çizimi", ex);
+                }
             }
         }
     }

@@ -488,6 +488,18 @@ foreach (var issue in TwContrast.Audit(this, tw))
 - `TwContrast.Ratio(foreground, background)` returns the ratio between two colors.
 - The default components (`btn-primary`, `btn-ghost`, `card`, `input`, `table`) pass this audit in light and dark mode (`ContrastTests`). `btn-primary` uses `blue-600`/`blue-700` in dark mode too; white text stays below the threshold on `blue-500` (3.7:1) and `blue-400` (2.5:1).
 
+## Error handling
+
+An error while applying styles does not crash the application: the exception is caught, the control keeps the style applied so far, and the error is reported through the `TailwindProvider.StyleError` event (or the Debug output when nobody listens). Exceptions thrown by a custom `IStyleApplier` or a `SetRowClasses` rule are reported this way; errors while painting shadows, borders and ComboBoxes do not stop painting either.
+
+```csharp
+tw.StyleError += (s, e) => logger.LogWarning(e.Exception, "Could not style {Target}: {Classes}", e.Target, e.Classes);
+```
+
+- A listener may rethrow the exception (e.g. to keep errors visible in tests).
+- Critical exceptions such as out-of-memory are not caught.
+- The failing control is retried on the next state change (hover, theme …).
+
 ## Krypton Toolkit
 
 ```csharp

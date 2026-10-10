@@ -65,6 +65,7 @@ FormWind.TailwindProvider.TailwindProvider(System.ComponentModel.IContainer! con
 FormWind.TailwindProvider.Theme.get -> FormWind.TwTheme!
 FormWind.TailwindProvider.Theme.set -> void
 FormWind.TailwindProvider.UnknownClasses -> System.EventHandler<FormWind.TwUnknownClassesEventArgs!>?
+FormWind.TailwindProvider.StyleError -> System.EventHandler<FormWind.TwStyleErrorEventArgs!>?
 FormWind.TailwindProvider.Validate(System.Windows.Forms.Control! container) -> bool
 FormWind.TwAlign
 FormWind.TwAlign.Center = 2 -> FormWind.TwAlign
@@ -877,6 +878,11 @@ FormWind.TwUnknownClassesEventArgs
 FormWind.TwUnknownClassesEventArgs.Control.get -> System.Windows.Forms.Control!
 FormWind.TwUnknownClassesEventArgs.TwUnknownClassesEventArgs(System.Windows.Forms.Control! control, System.Collections.Generic.IReadOnlyList<string!>! unknown) -> void
 FormWind.TwUnknownClassesEventArgs.Unknown.get -> System.Collections.Generic.IReadOnlyList<string!>!
+FormWind.TwStyleErrorEventArgs
+FormWind.TwStyleErrorEventArgs.Classes.get -> string!
+FormWind.TwStyleErrorEventArgs.Exception.get -> System.Exception!
+FormWind.TwStyleErrorEventArgs.Target.get -> object!
+FormWind.TwStyleErrorEventArgs.TwStyleErrorEventArgs(object! target, string! classes, System.Exception! exception) -> void
 FormWind.TwValidators
 FormWind.WinFormsApplier
 FormWind.WinFormsApplier.WinFormsApplier() -> void

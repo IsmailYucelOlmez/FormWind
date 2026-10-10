@@ -58,9 +58,16 @@ internal sealed class TwDecorator
 
     private void OnPaint(object? sender, PaintEventArgs e)
     {
-        // Gradient yalnızca kendi içeriği olmayan Panel'de çizilir; Button/Label'da metni örterdi.
-        if (_chrome.Gradient.HasValue && _control is Panel)
-            TwPainter.FillSurface(e.Graphics, _control.ClientRectangle, 0, _control.BackColor, _chrome.Gradient);
-        TwPainter.StrokeChrome(e.Graphics, _control.ClientRectangle, _chrome);
+        try
+        {
+            // Gradient yalnızca kendi içeriği olmayan Panel'de çizilir; Button/Label'da metni örterdi.
+            if (_chrome.Gradient.HasValue && _control is Panel)
+                TwPainter.FillSurface(e.Graphics, _control.ClientRectangle, 0, _control.BackColor, _chrome.Gradient);
+            TwPainter.StrokeChrome(e.Graphics, _control.ClientRectangle, _chrome);
+        }
+        catch (System.Exception ex) when (!TwErrors.IsCritical(ex))
+        {
+            TwErrors.Trace("kenarlık çizimi", ex);
+        }
     }
 }
