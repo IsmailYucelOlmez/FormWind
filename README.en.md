@@ -599,6 +599,20 @@ dotnet format analyzers src/FormWind/FormWind.csproj --diagnostics RS0016 --seve
 
 Only helpers used by the library itself (drawing, parser, internal appliers) are `internal`; extension points (`IStyleApplier`, `TwApplyContext`, `TwStyle`, `ITwChrome`) are public.
 
+### Code coverage
+
+Coverage is measured with the "Code Coverage" collector that ships with the test SDK (net472 and net8.0-windows; only `FormWind` and `FormWind.Analyzers`):
+
+```powershell
+dotnet test tests/FormWind.Tests -f net8.0-windows --settings tests/coverage.runsettings --collect "Code Coverage" --results-directory TestResults/net8.0-windows
+```
+
+```powershell
+.\tools\check-coverage.ps1 -Results TestResults -Minimum 0.78
+```
+
+CI writes both targets' reports to the workflow summary as a table and fails if `FormWind` line coverage drops below 78% (currently ~81–83%). Coverlet is not used because it cannot resolve the WinForms framework assemblies.
+
 ### Invariant tests
 
 `InvariantTests` applies a random sequence of operations to a random control (16 types: standard controls, ToolStrip, DataGridView, `Tw*` controls): assigning classes, dark mode, disabling, hover, changing the parent's color, application color assignments, recreating the handle. After every step it checks that the colors equal the resolved style (or the color the application assigned), and at the end that the original values return when the classes are removed.
@@ -657,7 +671,7 @@ Because font rendering depends on the environment, baselines are kept per enviro
 $env:FORMWIND_UPDATE_BASELINES = "1"; dotnet test tests/FormWind.Tests -f net472 --filter Category=Visual; $env:FORMWIND_UPDATE_BASELINES = ""
 ```
 
-**CI.** `.github/workflows/ci.yml` builds, tests on both targets and packs on every push and PR. Because `FORMWIND_VISUAL_EXPORT` is set, the visual tests write their renderings to the `visual-snapshots` artifact; if there is no baseline for the CI environment yet, the tests only export and the workflow prints a warning. CI is pinned to the `windows-2022` image; if the image changes, the baseline folder name changes too. Adding the `win…` folder from the artifact under `tests/FormWind.Tests/Baselines/` and committing it enables comparison for that environment.
+**CI.** `.github/workflows/ci.yml` builds, tests on both targets, checks coverage and packs on every push and PR. Because `FORMWIND_VISUAL_EXPORT` is set, the visual tests write their renderings to the `visual-snapshots` artifact; if there is no baseline for the CI environment yet, the tests only export and the workflow prints a warning. CI is pinned to the `windows-2022` image; if the image changes, the baseline folder name changes too. Adding the `win…` folder from the artifact under `tests/FormWind.Tests/Baselines/` and committing it enables comparison for that environment.
 
 ### Conversion tool
 

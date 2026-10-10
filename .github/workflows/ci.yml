@@ -25,8 +25,17 @@ jobs:
       - name: Build
         run: dotnet build FormWind.sln -c Release
 
-      - name: Test (net472 + net8.0-windows)
-        run: dotnet test FormWind.sln -c Release --no-build --logger "trx" --results-directory TestResults
+      # Her hedef kendi klasörüne test sonucu ve kapsam raporu (Cobertura) yazar.
+      - name: Test (net472)
+        run: dotnet test tests/FormWind.Tests -c Release --no-build -f net472 --logger "trx" --settings tests/coverage.runsettings --collect "Code Coverage" --results-directory TestResults/net472
+
+      - name: Test (net8.0-windows)
+        run: dotnet test tests/FormWind.Tests -c Release --no-build -f net8.0-windows --logger "trx" --settings tests/coverage.runsettings --collect "Code Coverage" --results-directory TestResults/net8.0-windows
+
+      # FormWind satır kapsamı %78'in altına düşerse iş akışı düşer (şu an ~%81-83); tablo iş akışı özetine yazılır.
+      - name: Coverage
+        shell: pwsh
+        run: ./tools/check-coverage.ps1 -Results TestResults -Minimum 0.78
 
       # UI Automation istemcisi süreç genelinde ayar değiştirdiğinden ayrı bir süreçte çalışır.
       - name: Test (UI Automation)
