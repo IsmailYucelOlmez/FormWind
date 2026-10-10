@@ -506,7 +506,7 @@ Piksel değerleri kontrolün `DeviceDpi / 96` oranıyla ölçeklenir. Uygulama D
 
 - `TwTabControl`: "Sayfa ekle" / "Seçili sayfayı kaldır" komutları ve akıllı etiket (görünüm seçimi), tasarım zamanında sekmeye tıklayınca sayfa değişir; kontrolün içine yalnızca `TwTabPage` bırakılabilir, diğer kontroller sayfaya bırakılır. Araç kutusundan bırakılan kontrol iki sayfayla başlar.
 - `TwTabControl` tasarımcısı .NET Framework ve .NET 8 için derlenir; .NET 8'in süreç dışı Designer'ında tasarımcı sunucu sürecinde çalışır (komutlar `DesignSurface` testleriyle iki hedefte doğrulanır).
-- `Classes` alanının "…" editörü (`ClassesEditor`) yalnızca .NET Framework Designer'ında açılır; .NET 8'de alan düz metin olarak düzenlenir. Taşınması için Designer SDK gerekir.
+- `Classes` alanının "…" editörü (`ClassesEditor`) yalnızca .NET Framework Designer'ında açılır. .NET 8'de alan, temadaki bileşen adlarını (`btn-primary`, `card` …) öneren bir açılır listedir (`ClassesConverter`); seçilen ad alanın değerinin yerine geçer, serbest metin de yazılabilir.
 
 ### FW001 çözümleyicisi
 

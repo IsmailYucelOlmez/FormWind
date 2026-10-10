@@ -150,6 +150,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     [DefaultValue("")]
     [Description("Kolon class'ları: hücreler (text-right font-semibold px-3), başlık (header:…), w-32, min-w-20, flex-1, hidden.")]
     [Editor(typeof(ClassesEditor), typeof(UITypeEditor))]
+    [TypeConverter(typeof(ClassesConverter))]
     public string GetColumnClasses(DataGridViewColumn column) =>
         column != null && _columns.TryGetValue(column, out var binding) ? binding.Classes : "";
 
@@ -188,6 +189,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     [DefaultValue("")]
     [Description("Tailwind benzeri utility class'lar. Örn: bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700")]
     [Editor(typeof(ClassesEditor), typeof(UITypeEditor))]
+    [TypeConverter(typeof(ClassesConverter))]
     public string GetClasses(Control control) =>
         control != null && _bindings.TryGetValue(control, out var binding) ? binding.Classes : "";
 

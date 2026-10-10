@@ -42,4 +42,23 @@ public class DesignerTests
         Assert.Equal("Sayfa 2", tabs.TabPages[0].Text);
         Assert.Single(designer.ActionLists);
     });
+
+    [Fact]
+    public void Classes_property_suggests_components() => Sta.Run(() =>
+    {
+        using var surface = new DesignSurface(typeof(Form));
+        var host = (IDesignerHost)surface.GetService(typeof(IDesignerHost))!;
+        var form = (Form)host.RootComponent;
+        host.CreateComponent(typeof(TailwindProvider), "tw");
+        var button = (Button)host.CreateComponent(typeof(Button), "btn");
+        form.Controls.Add(button);
+
+        var property = System.ComponentModel.TypeDescriptor.GetProperties(button)["Classes"]!;
+        var converter = Assert.IsType<ClassesConverter>(property.Converter);
+        Assert.True(converter.GetStandardValuesSupported());
+        Assert.False(converter.GetStandardValuesExclusive());              // serbest metin de yazılır
+        var values = converter.GetStandardValues()!.Cast<string>().ToArray();
+        Assert.Contains("btn-primary", values);
+        Assert.Contains("card", values);
+    });
 }
