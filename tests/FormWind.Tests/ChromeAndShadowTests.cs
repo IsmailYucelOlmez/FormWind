@@ -130,4 +130,28 @@ public class ChromeAndShadowTests
         Assert.Equal(Color.White.ToArgb(), bitmap.GetPixel(50, 0).ToArgb());
         Assert.Equal(Color.White.ToArgb(), bitmap.GetPixel(0, 20).ToArgb());
     });
+
+    [Fact]
+    public void Native_text_box_border_is_drawn_around_it_and_restored() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var parent = new Panel { Size = new Size(200, 80), BackColor = Color.LightGray };
+        var textBox = new TextBox { Bounds = new Rectangle(50, 30, 100, 20) };
+        parent.Controls.Add(textBox);
+        provider.SetClasses(textBox, "bg-white border border-red-600 rounded-md");
+
+        Assert.Equal(BorderStyle.None, textBox.BorderStyle);
+        Assert.Equal(new Padding(4), TwOutset.For(textBox).Spec!.FrameInset);   // 3 px boşluk + 1 px kenarlık
+
+        using var bitmap = new Bitmap(200, 80);
+        parent.DrawToBitmap(bitmap, new Rectangle(0, 0, 200, 80));
+        Assert.Equal(Argb("#dc2626"), bitmap.GetPixel(46, 40).ToArgb());          // kenarlık
+        Assert.Equal(Color.White.ToArgb(), bitmap.GetPixel(48, 40).ToArgb());     // zeminle dolu boşluk
+        Assert.Equal(Color.LightGray.ToArgb(), bitmap.GetPixel(44, 40).ToArgb());
+        Assert.Equal(Color.LightGray.ToArgb(), bitmap.GetPixel(46, 26).ToArgb()); // yuvarlak köşe
+
+        provider.SetClasses(textBox, "");
+        Assert.Equal(BorderStyle.Fixed3D, textBox.BorderStyle);
+        Assert.Null(TwOutset.For(textBox).Spec);
+    });
 }

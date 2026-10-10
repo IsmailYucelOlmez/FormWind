@@ -50,7 +50,10 @@ public readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
     public override int GetHashCode() => OffsetY.GetHashCode() ^ (Blur.GetHashCode() * 7) ^ Color.ToArgb();
 }
 
-/// <summary>Kontrolün dışına taşan süslemeler: gölge katmanları ve focus halkası (ring).</summary>
+/// <summary>
+/// Kontrolün dışına taşan süslemeler: gölge katmanları, focus halkası (ring) ve native kontrollerin çerçevesi
+/// (<see cref="Frame"/>: kendi kenarlığını çizemeyen TextBox'ların kenarlığı ve köşesi).
+/// </summary>
 public sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
 {
     public static readonly Color DefaultRingColor = Color.FromArgb(128, 59, 130, 246); // Tailwind: blue-500 / %50
@@ -72,16 +75,35 @@ public sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
     public float RingOffset { get; }
     public Color RingOffsetColor { get; }
 
-    public bool IsEmpty => Shadows.Count == 0 && RingWidth <= 0;
+    /// <summary>Kontrolün etrafına, zemin rengiyle doldurulup çizilen kenarlık; <c>null</c> = çerçeve yok.</summary>
+    public TwChrome? Frame { get; private set; }
+
+    /// <summary>Çerçeve ile kontrol arasındaki boşluk (piksel).</summary>
+    public float FrameGap { get; private set; }
+
+    public bool IsEmpty => Shadows.Count == 0 && RingWidth <= 0 && Frame is null;
+
+    /// <summary>Çerçevenin kontrol sınırlarından taştığı mesafe (kenar başına).</summary>
+    public Padding FrameInset => Frame is TwChrome frame
+        ? new Padding(
+            (int)Math.Ceiling(FrameGap + frame.BorderLeft), (int)Math.Ceiling(FrameGap + frame.BorderTop),
+            (int)Math.Ceiling(FrameGap + frame.BorderRight), (int)Math.Ceiling(FrameGap + frame.BorderBottom))
+        : Padding.Empty;
+
+    /// <summary>Aynı gölge ve halkayla, verilen çerçeveyi de çizen bir kopya.</summary>
+    public TwOutsetSpec WithFrame(TwChrome frame, float gap) =>
+        new TwOutsetSpec(Radius, Shadows, RingWidth, RingColor, RingOffset, RingOffsetColor) { Frame = frame, FrameGap = gap };
 
     /// <summary>Gölge ya da halkanın kontrol sınırlarının dışına taştığı en büyük mesafe.</summary>
     public int Extent
     {
         get
         {
-            float extent = RingWidth + RingOffset;
+            var inset = FrameInset;
+            float frame = Math.Max(Math.Max(inset.Left, inset.Right), Math.Max(inset.Top, inset.Bottom));
+            float extent = frame + RingWidth + RingOffset;
             foreach (var layer in Shadows)
-                extent = Math.Max(extent, layer.Blur + Math.Max(0, layer.Spread) + Math.Abs(layer.OffsetY));
+                extent = Math.Max(extent, frame + layer.Blur + Math.Max(0, layer.Spread) + Math.Abs(layer.OffsetY));
             return (int)Math.Ceiling(extent) + 2;
         }
     }
@@ -104,7 +126,8 @@ public sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
         if (other is null) return false;
         if (Radius != other.Radius || RingWidth != other.RingWidth || RingOffset != other.RingOffset
             || RingColor.ToArgb() != other.RingColor.ToArgb() || RingOffsetColor.ToArgb() != other.RingOffsetColor.ToArgb()
-            || Shadows.Count != other.Shadows.Count)
+            || Shadows.Count != other.Shadows.Count
+            || !Nullable.Equals(Frame, other.Frame) || FrameGap != other.FrameGap)
             return false;
         for (int i = 0; i < Shadows.Count; i++)
             if (!Shadows[i].Equals(other.Shadows[i])) return false;
@@ -137,6 +160,8 @@ internal sealed class TwOutset
         _control.LocationChanged += (_, _) => InvalidateParent();
         _control.SizeChanged += (_, _) => InvalidateParent();
         _control.VisibleChanged += (_, _) => InvalidateParent();
+        // Çerçevenin zemini kontrolün o anki rengidir (geçiş animasyonları dahil).
+        _control.BackColorChanged += (_, _) => { if (Spec?.Frame != null) InvalidateParent(); };
         Reattach();
     }
 
@@ -161,9 +186,19 @@ internal sealed class TwOutset
         var bounds = _control.Bounds;
         _paintedBounds = Rectangle.Inflate(bounds, spec.Extent, spec.Extent);
 
+        // Çerçeve varsa gölge ve halka onun dışına çizilir.
+        var inset = spec.FrameInset;
+        bounds = Rectangle.FromLTRB(bounds.Left - inset.Left, bounds.Top - inset.Top, bounds.Right + inset.Right, bounds.Bottom + inset.Bottom);
+
         // Gölgeler, en geniş katman önce.
         for (int i = spec.Shadows.Count - 1; i >= 0; i--)
             TwShadowRenderer.Draw(graphics, bounds, spec.Radius, spec.Shadows[i]);
+
+        if (spec.Frame is TwChrome frame)
+        {
+            TwPainter.FillRounded(graphics, bounds, frame.Radius, _control.BackColor);
+            TwPainter.StrokeChrome(graphics, bounds, frame);
+        }
 
         if (spec.RingWidth > 0)
         {

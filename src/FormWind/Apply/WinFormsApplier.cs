@@ -37,7 +37,7 @@ public class WinFormsApplier : IStyleApplier
         ApplyCursor(control, style, original, applied);
         if (!context.DesignMode) ApplyHidden(control, style, applied);
         ApplyFlatButton(control, style, original, applied);
-        ApplyChrome(control, style, context);
+        ApplyChrome(control, style, context, applied);
         if (control is ITwToggle toggle) toggle.SetToggleColors(style.AccentColor, style.FillColor);
         if (!context.DesignMode && TwNativeTheme.Supports(control))
         {
@@ -476,9 +476,10 @@ public class WinFormsApplier : IStyleApplier
         }
     }
 
-    private static void ApplyChrome(Control control, TwStyle style, TwApplyContext context)
+    private static void ApplyChrome(Control control, TwStyle style, TwApplyContext context, Applied applied)
     {
         var chrome = TwChrome.FromStyle(style, context.Scale, context.Theme.DefaultBorderColor);
+        var outset = TwOutsetSpec.FromStyle(style, context.Scale);
 
         if (control is ITwChrome owner)
         {
@@ -490,9 +491,29 @@ public class WinFormsApplier : IStyleApplier
         }
 
         // Gölge ve halka ebeveyn tarafından çizilir; native kontrollerde de çalışır (TextBox'ın focus halkası gibi).
-        if (style.HasOutset || TwOutset.IsAttached(control))
-            TwOutset.For(control).Update(TwOutsetSpec.FromStyle(style, context.Scale));
+        // TextBox kendi kenarlığını çizer ve Paint olayı çalışmaz: native kenarlık kapatılır, class'ların kenarlığı ve
+        // köşesi ebeveynde, kontrolün etrafına (zemin rengiyle doldurulmuş bir çerçeve olarak) çizilir.
+        if (control is TextBoxBase textBox && control is not ITwChrome)
+        {
+            if (chrome.HasBorder)
+            {
+                applied.NativeBorder ??= textBox.BorderStyle;
+                if (textBox.BorderStyle != BorderStyle.None) textBox.BorderStyle = BorderStyle.None;
+                outset = outset.WithFrame(chrome, FrameGap * context.Scale);
+            }
+            else if (applied.NativeBorder is BorderStyle restore)
+            {
+                textBox.BorderStyle = restore;
+                applied.NativeBorder = null;
+            }
+        }
+
+        if (style.HasOutset || !outset.IsEmpty || TwOutset.IsAttached(control))
+            TwOutset.For(control).Update(outset);
     }
+
+    /// <summary>Native TextBox çerçevesi ile metin arasındaki boşluk (96 DPI pikseli).</summary>
+    internal const float FrameGap = 3f;
 
     // Native çizilen kontrollerde Paint olayı çalışmaz; Form'da Region başlık çubuğunu keser.
     private static bool SupportsDecoration(Control control) =>
@@ -526,6 +547,8 @@ public class WinFormsApplier : IStyleApplier
         public bool Margin;
         public bool Cursor;
         public bool FlatButton;
+        /// <summary>Çerçeve çizilen TextBox'ın özgün kenarlığı; <c>null</c> = çerçeve yok.</summary>
+        public BorderStyle? NativeBorder;
         public bool Hidden;
         public Padding? DesiredPadding;
         public bool FitHooked;
