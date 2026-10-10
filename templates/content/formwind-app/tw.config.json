@@ -1,0 +1,13 @@
+{
+  // FormWind theme: palette, fonts and component classes (https://github.com/IsmailYucelOlmez/FormWind).
+  "palette": "PALETTE_VERSION",
+  "fontFamily": "Segoe UI",
+  "components": {
+    "page": "bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100",
+    "panel": "bg-white border border-gray-200 rounded-xl dark:bg-gray-900 dark:border-gray-800",
+    "title": "text-2xl font-semibold text-gray-900 dark:text-white",
+    "muted": "text-sm text-gray-500 dark:text-gray-400",
+    "list": "p-1 bg-white text-gray-900 item:hover:bg-gray-100 selected:bg-blue-50 selected:text-blue-900 row:border-gray-100 fill-gray-300 dark:bg-gray-900 dark:text-gray-100 dark:item:hover:bg-gray-800 dark:selected:bg-blue-950 dark:selected:text-blue-100 dark:row:border-gray-800",
+    "toggle": "text-gray-700 accent-blue-600 dark:text-gray-200"
+  }
+}

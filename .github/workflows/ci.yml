@@ -73,6 +73,25 @@ jobs:
       - name: Pack
         run: dotnet pack FormWind.sln -c Release --no-build
 
+      # Şablon yalıtılmış bir depoya kurulur, iki proje üretilip yerel paketlerle (uyarılar hata sayılarak) derlenir.
+      - name: Template smoke test
+        shell: pwsh
+        run: |
+          $hive = Join-Path $env:RUNNER_TEMP "template-hive"
+          $work = Join-Path $env:RUNNER_TEMP "template-work"
+          $packages = Join-Path $env:GITHUB_WORKSPACE "artifacts/packages"
+          $template = Get-ChildItem $packages -Filter "FormWind.Templates.*.nupkg" | Select-Object -First 1
+          dotnet new install $template.FullName --debug:custom-hive $hive
+          dotnet new formwind-app -n SmokeApp -o (Join-Path $work "SmokeApp") --debug:custom-hive $hive
+          dotnet new formwind-app -n SmokeFx -o (Join-Path $work "SmokeFx") --Framework net472 --Palette v4 --debug:custom-hive $hive
+          @"
+          <configuration><packageSources><clear /><add key="local" value="$packages" /><add key="nuget.org" value="https://api.nuget.org/v3/index.json" /></packageSources></configuration>
+          "@ | Set-Content (Join-Path $work "nuget.config")
+          dotnet build (Join-Path $work "SmokeApp") -c Release -warnaserror
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build (Join-Path $work "SmokeFx") -c Release -warnaserror
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

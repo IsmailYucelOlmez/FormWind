@@ -41,6 +41,20 @@ btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold ho
 
 5. Dark mode: `tailwindProvider1.DarkMode = true;`
 
+### Project template
+
+The `FormWind.Templates` package creates an app with ready-made screens: sign-in (validated fields), list-detail (searchable `TwDataList` with a detail card) and settings; the light/dark switch is shared across forms.
+
+```bash
+dotnet new install FormWind.Templates
+```
+
+```bash
+dotnet new formwind-app -n MyApp --Framework net8.0-windows --Palette v4
+```
+
+`--Framework`: `net8.0-windows` (default), `net9.0-windows`, `net10.0-windows`, `net472`; `--Palette`: `v3` (default), `v4`; `--FormWindVersion`: package version. Forms are built in code without the Designer and use `AutoScaleMode.Dpi`. Until the package is published, add the `artifacts/packages` folder as a package source; CI generates and builds the template for two targets on every run.
+
 ## Class reference
 
 | Category | Pattern | Example | WinForms equivalent |
@@ -592,6 +606,7 @@ samples/Rickipedia/       Sample page using the Rick and Morty API (net472)
 tools/FormWind.Convert/   Command-line tool that converts Designer files to classes (net8.0-windows)
 tools/FormWind.Harness/   Startup hook and harness for trying FormWind on real applications (net8.0-windows)
 tools/FormWind.Docs/      Generates the class reference site with previews (net8.0-windows)
+templates/                dotnet new template (formwind-app)
 tools/run-harness.ps1     Runs a .NET WinForms application with the harness and prints a log summary
 .github/workflows/ci.yml  Build, test, pack and upload of visual snapshots as artifacts
 ```

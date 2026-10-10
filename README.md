@@ -41,6 +41,20 @@ btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold ho
 
 5. Koyu tema: `tailwindProvider1.DarkMode = true;`
 
+### Proje şablonu
+
+`FormWind.Templates` paketi hazır ekranlarla bir uygulama oluşturur: giriş (doğrulamalı alanlar), liste–detay (aranabilir `TwDataList` ve ayrıntı kartı) ve ayarlar; açık/koyu tema anahtarı formlar arasında paylaşılır. Şablon metinleri İngilizcedir.
+
+```bash
+dotnet new install FormWind.Templates
+```
+
+```bash
+dotnet new formwind-app -n MyApp --Framework net8.0-windows --Palette v4
+```
+
+`--Framework`: `net8.0-windows` (varsayılan), `net9.0-windows`, `net10.0-windows`, `net472`; `--Palette`: `v3` (varsayılan), `v4`; `--FormWindVersion`: paket sürümü. Formlar Designer'sız, kodla kurulur ve `AutoScaleMode.Dpi` kullanır. Paket yayımlanana kadar `artifacts/packages` klasörü paket kaynağı olarak eklenmelidir; CI şablonu her çalışmada iki hedefle üretip derler.
+
 ## Class sözlüğü
 
 | Kategori | Kalıp | Örnek | WinForms karşılığı |
@@ -592,6 +606,7 @@ samples/Rickipedia/       Rick and Morty API ile örnek sayfa (net472)
 tools/FormWind.Convert/   Designer dosyalarını class'lara çeviren komut satırı aracı (net8.0-windows)
 tools/FormWind.Harness/   Gerçek uygulamalarda deneme için startup hook ve harness (net8.0-windows)
 tools/FormWind.Docs/      Önizlemeli class referansı sitesini üretir (net8.0-windows)
+templates/                dotnet new şablonu (formwind-app)
 tools/run-harness.ps1     Bir .NET WinForms uygulamasını harness'le çalıştırıp log özetini yazar
 .github/workflows/ci.yml  Derleme, test, paket ve görsel çizimlerin yapıt olarak yüklenmesi
 ```
