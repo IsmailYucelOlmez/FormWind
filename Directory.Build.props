@@ -8,5 +8,23 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages</PackageOutputPath>
+    <Copyright>© İsmail Yücel Ölmez</Copyright>
+    <PackageProjectUrl>https://github.com/IsmailYucelOlmez/FormWind</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/IsmailYucelOlmez/FormWind</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>icon.png</PackageIcon>
+    <!-- SourceLink (SDK'da yerleşik): hata ayıklayıcı kaynak dosyalarını GitHub'dan indirir. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
+
+  <!-- CI'da yerel yollar pdb'ye yazılmaz (deterministik derleme). -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)docs\icon.png" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 </Project>
