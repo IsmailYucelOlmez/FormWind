@@ -1,4 +1,3 @@
-#if NETFRAMEWORK
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -13,7 +12,7 @@ namespace FormWind.Design;
 /// <summary>
 /// <see cref="TwTabControl"/> için Visual Studio Designer desteği: "Sayfa ekle" / "Sayfayı kaldır" komutları ve akıllı etiket,
 /// tasarım zamanında sekmelere tıklayarak sayfa değiştirme; kontrolün içine yalnızca <see cref="TwTabPage"/> bırakılabilir.
-/// (.NET Framework Designer'ı; .NET 8'in süreç dışı Designer'ı için ayrı paket gerekir.)
+/// .NET 8+'ın süreç dışı Designer'ında tasarımcı sunucu sürecinde çalışır; komutlar ve akıllı etiket orada da gösterilir.
 /// </summary>
 public class TwTabControlDesigner : ParentControlDesigner
 {
@@ -130,4 +129,3 @@ public class TwTabControlDesigner : ParentControlDesigner
         };
     }
 }
-#endif

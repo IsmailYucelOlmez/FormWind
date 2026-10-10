@@ -47,7 +47,6 @@ public class TwTabPage : TwPanel
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
 [Description("Stillenebilir sayfalı sekme kontrolü.")]
-// .NET Framework Designer'ı; .NET 8'de tür bulunmaz ve varsayılan designer kullanılır.
 [Designer("FormWind.Design.TwTabControlDesigner, FormWind")]
 public class TwTabControl : Control
 {

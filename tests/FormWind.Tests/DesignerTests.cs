@@ -1,4 +1,3 @@
-#if NETFRAMEWORK
 using System.ComponentModel.Design;
 using System.Linq;
 using System.Windows.Forms;
@@ -23,8 +22,8 @@ public class DesignerTests
         var designer = Assert.IsType<TwTabControlDesigner>(host.GetDesigner(tabs));
         Assert.Equal(new[] { "Sayfa ekle", "Seçili sayfayı kaldır" }, designer.Verbs.Cast<DesignerVerb>().Select(v => v.Text));
 
-        designer.Verbs[0].Invoke();
-        designer.Verbs[0].Invoke();
+        designer.Verbs[0]!.Invoke();
+        designer.Verbs[0]!.Invoke();
         Assert.Equal(2, tabs.TabPages.Count);
         Assert.All(tabs.TabPages, p => Assert.NotNull(p.Site));            // Designer.cs'e yazılacak bileşenler
         Assert.Equal(new[] { "Sayfa 1", "Sayfa 2" }, tabs.Strip.Tabs);
@@ -38,10 +37,9 @@ public class DesignerTests
         selection.SetSelectedComponents(new[] { tabs.TabPages[0] });
         Assert.Equal(0, tabs.SelectedIndex);
 
-        designer.Verbs[1].Invoke();
+        designer.Verbs[1]!.Invoke();
         Assert.Single(tabs.TabPages);
         Assert.Equal("Sayfa 2", tabs.TabPages[0].Text);
         Assert.Single(designer.ActionLists);
     });
 }
-#endif
