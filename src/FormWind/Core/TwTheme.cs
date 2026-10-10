@@ -134,7 +134,7 @@ public sealed class TwTheme
         _svgIcons[name] = TwSvgIcon.Parse(svg);
     }
 
-    public bool TryGetSvgIcon(string? name, out TwSvgIcon? icon)
+    internal bool TryGetSvgIcon(string? name, out TwSvgIcon? icon)
     {
         icon = null;
         return !string.IsNullOrWhiteSpace(name) && _svgIcons.TryGetValue(name!, out icon);

@@ -79,7 +79,7 @@ public class TwSelect : Control, ITwChrome
 
     /// <summary>Menü renkleri; FormWind <c>menu:</c> / <c>item:</c> class'larından doldurur.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public TwMenuColors MenuColors { get; set; } = new TwMenuColors();
+    internal TwMenuColors MenuColors { get; set; } = new TwMenuColors();
 
     [Browsable(true), EditorBrowsable(EditorBrowsableState.Always), DefaultValue(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]

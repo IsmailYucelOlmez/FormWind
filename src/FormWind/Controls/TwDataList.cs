@@ -8,7 +8,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>Veri listesi renkleri; FormWind class'lardan doldurur.</summary>
-public sealed class TwDataListColors
+internal sealed class TwDataListColors
 {
     public Color Back { get; set; } = Color.White;
     public Color Fore { get; set; } = ColorTranslator.FromHtml("#111827");          // gray-900
@@ -437,7 +437,7 @@ public class TwDataList : Control
     }
 
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public TwDataListColors Colors
+    internal TwDataListColors Colors
     {
         get => _colors;
         set

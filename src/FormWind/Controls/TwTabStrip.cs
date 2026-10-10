@@ -20,7 +20,7 @@ public enum TwTabVariant
 }
 
 /// <summary>Sekme renkleri; FormWind class'lardan doldurur.</summary>
-public sealed class TwTabColors
+internal sealed class TwTabColors
 {
     public Color Fore { get; set; } = ColorTranslator.FromHtml("#6b7280");          // gray-500
     public Color ActiveFore { get; set; } = ColorTranslator.FromHtml("#111827");    // gray-900
@@ -114,7 +114,7 @@ public class TwTabStrip : Control, ITwChrome
     }
 
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public TwTabColors Colors
+    internal TwTabColors Colors
     {
         get => _colors;
         set

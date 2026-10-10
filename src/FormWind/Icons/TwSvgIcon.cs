@@ -14,7 +14,7 @@ namespace FormWind;
 /// <c>stroke-linecap</c>, <c>stroke-linejoin</c> (öğe ya da üst öğeden miras). Renkler yok sayılır: ikon tek renkle,
 /// çizildiği yerin metin rengiyle (<c>currentColor</c> gibi) boyanır. Gradient, maske, metin ve CSS desteklenmez.
 /// </summary>
-public sealed class TwSvgIcon
+internal sealed class TwSvgIcon
 {
     private readonly List<Shape> _shapes = new List<Shape>();
 

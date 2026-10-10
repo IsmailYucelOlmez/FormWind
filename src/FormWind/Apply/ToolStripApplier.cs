@@ -6,7 +6,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>Menü ve araç çubuğu renkleri. Boş bırakılan renkler varsayılan açık temadan gelir.</summary>
-public sealed class TwMenuColors
+internal sealed class TwMenuColors
 {
     public Color Back { get; set; } = Color.White;
     public Color Fore { get; set; } = ColorTranslator.FromHtml("#374151");          // gray-700
@@ -21,7 +21,7 @@ public sealed class TwMenuColors
 }
 
 /// <summary>Tema renkleriyle çizen ToolStrip renderer'ı: düz yüzeyler, yuvarlak hover, ince kenarlıklar.</summary>
-public class TwToolStripRenderer : ToolStripRenderer
+internal class TwToolStripRenderer : ToolStripRenderer
 {
     public TwToolStripRenderer(TwMenuColors colors) => Colors = colors ?? throw new ArgumentNullException(nameof(colors));
 
@@ -116,7 +116,7 @@ public class TwToolStripRenderer : ToolStripRenderer
 /// <c>menu:</c> açılan menülere, <c>item:</c> öğelere uygulanır:
 /// <c>bg-white text-gray-700 border-b menu:bg-white menu:border-gray-200 item:hover:bg-gray-100 item:rounded-md divide-gray-200</c>.
 /// </summary>
-public class ToolStripApplier : WinFormsApplier
+internal class ToolStripApplier : WinFormsApplier
 {
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolStripDropDown, object> SharedDropDowns =
         new System.Runtime.CompilerServices.ConditionalWeakTable<ToolStripDropDown, object>();
@@ -262,7 +262,7 @@ public class ToolStripApplier : WinFormsApplier
 /// Koyu tema açıkken başlık çubuğu otomatik koyulaşır; renkler <c>caption:bg-*</c>, <c>caption:text-*</c>,
 /// <c>caption:border-*</c> ile verilir. Eski Windows sürümlerinde sessizce yok sayılır.
 /// </summary>
-public class FormApplier : WinFormsApplier
+internal class FormApplier : WinFormsApplier
 {
     public override bool CanApply(Control control) => control is Form;
 

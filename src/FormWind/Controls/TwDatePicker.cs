@@ -79,7 +79,7 @@ public class TwDatePicker : TwTextBox
     }
 
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public TwCalendarColors CalendarColors
+    internal TwCalendarColors CalendarColors
     {
         get => _calendarColors;
         set => _calendarColors = value ?? new TwCalendarColors();

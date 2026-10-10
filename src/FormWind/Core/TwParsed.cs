@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace FormWind;
 
 /// <summary>Bir varyant (örn. <c>dark:hover</c> ya da <c>dark:header</c>) ve ona ait stil.</summary>
-public sealed class TwVariant
+internal sealed class TwVariant
 {
     internal TwVariant(TwState conditions, string? part, string name)
     {
@@ -42,7 +42,7 @@ public sealed class TwParsed
     public string Classes { get; }
 
     /// <summary>Uygulama sırasına dizilmiş varyantlar.</summary>
-    public IReadOnlyList<TwVariant> Variants { get; }
+    internal IReadOnlyList<TwVariant> Variants { get; }
 
     /// <summary>Tanınmayan class'lar (varyant önekleriyle birlikte).</summary>
     public IReadOnlyList<string> Unknown { get; }

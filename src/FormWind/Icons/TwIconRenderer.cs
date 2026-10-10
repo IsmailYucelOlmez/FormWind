@@ -9,7 +9,7 @@ namespace FormWind;
 /// uyuşmadığından (Segoe Fluent Icons 15 pt'de 11 px yükseklik ölçer) metin çizimi ikonu kırpar; burada glyph
 /// bir yola çevrilir ve gerçek mürekkep sınırlarına göre kutunun ortasına yerleştirilir.
 /// </summary>
-public static class TwIconRenderer
+internal static class TwIconRenderer
 {
     /// <summary>Font boyutuna karşılık gelen kare ikon kutusu (web'deki gibi: 20 px font = 20 px ikon).</summary>
     /// <remarks>

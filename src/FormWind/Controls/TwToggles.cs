@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>İşaret kutusu / anahtar renkleri: <c>accent-*</c> (seçili) ve <c>fill-*</c> (seçili değil).</summary>
-public interface ITwToggle
+internal interface ITwToggle
 {
     void SetToggleColors(Color? accent, Color? fill);
 }

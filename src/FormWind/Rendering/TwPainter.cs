@@ -6,7 +6,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>Yuvarlak dikdörtgen çizim yardımcıları. Tüm çizimler antialias ve yarım piksel ofsetle yapılır.</summary>
-public static class TwPainter
+internal static class TwPainter
 {
     /// <summary>Yarıçapı kontrolün kısa kenarının yarısıyla sınırlar (<c>rounded-full</c> = hap şekli).</summary>
     public static float EffectiveRadius(float radius, Size size) =>

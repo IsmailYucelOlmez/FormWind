@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>Takvim renkleri; FormWind class'lardan doldurur.</summary>
-public sealed class TwCalendarColors
+internal sealed class TwCalendarColors
 {
     public Color Back { get; set; } = Color.White;
     public Color Border { get; set; } = ColorTranslator.FromHtml("#e5e7eb");       // gray-200
@@ -106,7 +106,7 @@ public class TwCalendar : Control
     }
 
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public TwCalendarColors Colors
+    internal TwCalendarColors Colors
     {
         get => _colors;
         set

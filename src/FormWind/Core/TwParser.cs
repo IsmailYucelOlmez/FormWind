@@ -11,7 +11,7 @@ namespace FormWind;
 /// <summary>
 /// Class dizisini varyant/stil sözlüğüne çevirir. Saf fonksiyondur; önbellek <see cref="TwTheme.Parse"/>'tadır.
 /// </summary>
-public static class TwParser
+internal static class TwParser
 {
     private const int MaxComponentDepth = 5;
     private const RegexOptions Options = RegexOptions.Compiled | RegexOptions.CultureInvariant;

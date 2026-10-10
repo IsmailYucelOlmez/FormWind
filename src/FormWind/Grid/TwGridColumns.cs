@@ -9,7 +9,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>Grid'e ait çalışma zamanı bilgisi: koyu tema durumu (hücre tipleri dark: varyantlarını buna göre seçer).</summary>
-public static class TwGridState
+internal static class TwGridState
 {
     private static readonly ConditionalWeakTable<DataGridView, Box> Dark = new ConditionalWeakTable<DataGridView, Box>();
 

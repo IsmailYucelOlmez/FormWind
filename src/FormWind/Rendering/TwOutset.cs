@@ -9,7 +9,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>Bir gölge katmanı (CSS box-shadow): dikey kayma, bulanıklık, yayılma ve renk. Değerler pikseldir.</summary>
-public readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
+internal readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
 {
     public TwShadowLayer(float offsetY, float blur, float spread, Color color)
     {
@@ -54,7 +54,7 @@ public readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
 /// Kontrolün dışına taşan süslemeler: gölge katmanları, focus halkası (ring) ve native kontrollerin çerçevesi
 /// (<see cref="Frame"/>: kendi kenarlığını çizemeyen TextBox'ların kenarlığı ve köşesi).
 /// </summary>
-public sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
+internal sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
 {
     public static readonly Color DefaultRingColor = Color.FromArgb(128, 59, 130, 246); // Tailwind: blue-500 / %50
 

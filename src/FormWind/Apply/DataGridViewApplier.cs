@@ -17,7 +17,7 @@ namespace FormWind;
 /// </list>
 /// Her uygulamada stiller kontrolün orijinal değerlerinden yeniden kurulur; class kaldırıldığında orijinale dönülür.
 /// </summary>
-public class DataGridViewApplier : WinFormsApplier
+internal class DataGridViewApplier : WinFormsApplier
 {
     private static readonly ConditionalWeakTable<DataGridView, GridOriginal> Originals =
         new ConditionalWeakTable<DataGridView, GridOriginal>();
