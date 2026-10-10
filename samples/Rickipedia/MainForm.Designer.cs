@@ -349,7 +349,7 @@ namespace Rickipedia
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Rickipedia";
-            this.tw.SetClasses(this, "bg-white dark:bg-gray-900 caption:bg-white caption:text-gray-900 dark:caption:bg-gray-900 dark:caption:text-gray-100");
+            this.tw.SetClasses(this, "font-sans bg-white dark:bg-gray-900 caption:bg-white caption:text-gray-900 dark:caption:bg-gray-900 dark:caption:text-gray-100");
             ((System.ComponentModel.ISupportInitialize)(this.tw)).EndInit();
             this.pnlHeader.ResumeLayout(false);
             this.pnlHeader.PerformLayout();

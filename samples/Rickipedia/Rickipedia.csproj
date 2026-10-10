@@ -11,11 +11,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FormWind\FormWind.csproj" />
+    <!-- Paketle gelen FW001 çözümleyicisi, depo içinde proje referansıyla. -->
+    <ProjectReference Include="..\..\src\FormWind.Analyzers\FormWind.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <Reference Include="System.Net.Http" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Assets\logo.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Assets\fonts\*.ttf" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Assets\fonts')" />
     <None Update="tw.config.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

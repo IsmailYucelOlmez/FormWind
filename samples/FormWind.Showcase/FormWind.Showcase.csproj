@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FormWind\FormWind.csproj" />
+    <!-- Paketle gelen FW001 çözümleyicisi, depo içinde proje referansıyla. -->
+    <ProjectReference Include="..\..\src\FormWind.Analyzers\FormWind.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

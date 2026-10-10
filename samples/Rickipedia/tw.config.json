@@ -1,5 +1,19 @@
 {
   // Rickipedia teması: sayfa bileşenleri. Varsayılan palet ve bileşenlerin üzerine eklenir.
+
+  // Tasarımdaki yuvarlak font. Quicksand (SIL OFL) dosyaları Assets/fonts klasörüne konursa kurulum gerekmeden
+  // kullanılır; yoksa yığındaki Segoe UI'ye düşülür.
+  "fonts": [
+    "Assets/fonts/Quicksand-Regular.ttf",
+    "Assets/fonts/Quicksand-Medium.ttf",
+    "Assets/fonts/Quicksand-SemiBold.ttf",
+    "Assets/fonts/Quicksand-Bold.ttf"
+  ],
+  "fontFamily": "Quicksand, Segoe UI",
+  "fontWeights": {
+    "Quicksand": { "500": "Quicksand Medium", "600": "Quicksand SemiBold" }
+  },
+
   "components": {
     "nav-link": "text-sm text-gray-600 cursor-pointer hover:text-gray-900 transition dark:text-gray-400 dark:hover:text-white",
     "nav-link-active": "text-sm font-semibold text-gray-900 dark:text-white",
