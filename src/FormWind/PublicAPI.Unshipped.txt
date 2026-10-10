@@ -41,6 +41,9 @@ FormWind.TailwindProvider.DarkScrollbars.get -> bool
 FormWind.TailwindProvider.DarkScrollbars.set -> void
 FormWind.TailwindProvider.DarkToolTips.get -> bool
 FormWind.TailwindProvider.DarkToolTips.set -> void
+FormWind.TailwindProvider.HighContrastActive.get -> bool
+FormWind.TailwindProvider.RespectHighContrast.get -> bool
+FormWind.TailwindProvider.RespectHighContrast.set -> void
 FormWind.TailwindProvider.DesignTimePreview.get -> bool
 FormWind.TailwindProvider.DesignTimePreview.set -> void
 FormWind.TailwindProvider.EndInit() -> void
@@ -603,6 +606,7 @@ FormWind.TwState.None = 0 -> FormWind.TwState
 FormWind.TwState.Sm = 512 -> FormWind.TwState
 FormWind.TwState.Xl = 4096 -> FormWind.TwState
 FormWind.TwState.Xxl = 8192 -> FormWind.TwState
+FormWind.TwState.HighContrast = 16384 -> FormWind.TwState
 FormWind.TwStyle
 FormWind.TwStyle.AccentColor.get -> System.Drawing.Color?
 FormWind.TwStyle.AccentColor.set -> void

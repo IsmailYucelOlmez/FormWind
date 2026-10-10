@@ -143,6 +143,7 @@ internal static class TwParser
             switch (segment)
             {
                 case "dark": conditions |= TwState.Dark; break;
+                case "forced-colors": conditions |= TwState.HighContrast; break;
                 case "checked": conditions |= TwState.Checked; break;
                 case "focus": conditions |= TwState.Focus; break;
                 case "focus-visible": conditions |= TwState.FocusVisible; break;

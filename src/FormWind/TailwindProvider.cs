@@ -30,6 +30,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     private bool _scaleWithDpi = true;
     private bool _darkScrollbars = true;
     private bool _darkToolTips = true;
+    private bool _respectHighContrast = true;
     private bool _initializing;
 
     public TailwindProvider()
@@ -37,6 +38,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         _hoverTimer = new Timer { Interval = 100 };
         _hoverTimer.Tick += OnHoverTick;
         TwTheme.CurrentChanged += OnCurrentThemeChanged;
+        TwHighContrast.Changed += OnHighContrastChanged;
         TwFocusVisible.EnsureInstalled();
     }
 
@@ -96,6 +98,36 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     /// Koyu temada native kaydırma çubuklarını (panel, TextBox, ListBox, TreeView, ListView, DataGridView) da
     /// koyulaştırır. Windows 10 1809+ gerekir ve belgelenmemiş bir tema adı kullanır; sorun olursa kapatılabilir.
     /// </summary>
+    /// <summary>
+    /// Windows Yüksek Karşıtlık modu açıkken class renkleri yerine sistem renklerini kullanır (zemin ve yazı özgün değerlerine
+    /// döner, seçili ve hover parçaları vurgu rengini alır, gölge ve gradient çizilmez); <c>forced-colors:</c> varyantları
+    /// yine uygulanır. Boşluk, yazı boyutu, köşe ve yerleşim değişmez. Mod çalışırken değişirse stiller yeniden uygulanır.
+    /// </summary>
+    [Category("FormWind"), DefaultValue(true), Description("Yüksek Karşıtlık modunda sistem renklerini kullanır.")]
+    public bool RespectHighContrast
+    {
+        get => _respectHighContrast;
+        set
+        {
+            if (_respectHighContrast == value) return;
+            _respectHighContrast = value;
+            RefreshAll();
+        }
+    }
+
+    /// <summary>Sistem renkleri kullanılıyor mu (Yüksek Karşıtlık açık ve <see cref="RespectHighContrast"/>).</summary>
+    [Browsable(false)]
+    public bool HighContrastActive => _respectHighContrast && !DesignMode && TwHighContrast.IsActive;
+
+    /// <summary>Kontrolden bağımsız durum: koyu tema ve Yüksek Karşıtlık.</summary>
+    internal TwState BaseState =>
+        (_darkMode ? TwState.Dark : TwState.None) | (HighContrastActive ? TwState.HighContrast : TwState.None);
+
+    private void OnHighContrastChanged(object? sender, EventArgs e)
+    {
+        if (_respectHighContrast) RefreshAll();
+    }
+
     [Category("FormWind"), DefaultValue(true), Description("Koyu temada native kaydırma çubuklarını da koyulaştırır.")]
     public bool DarkScrollbars
     {
@@ -434,6 +466,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         if (disposing)
         {
             TwTheme.CurrentChanged -= OnCurrentThemeChanged;
+            TwHighContrast.Changed -= OnHighContrastChanged;
             TwNativeToolTips.SetDark(this, false);
             _hoverTimer.Dispose();
             foreach (var binding in _bindings.Values.ToList())

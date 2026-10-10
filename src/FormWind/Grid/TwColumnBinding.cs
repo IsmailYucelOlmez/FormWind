@@ -42,7 +42,7 @@ internal sealed class TwColumnBinding
         _originalHeader ??= new DataGridViewCellStyle(_column.HeaderCell.Style);
 
         var grid = _column.DataGridView;
-        var state = _owner.DarkMode ? TwState.Dark : TwState.None;
+        var state = _owner.BaseState;
         var scale = _owner.ScaleWithDpi ? (grid is null ? 96 : TwDpi.DeviceDpi(grid)) / 96f : 1f;
         var cells = _parsed.Resolve(state);
         var header = _parsed.ResolvePart("header", state);
@@ -124,7 +124,7 @@ internal sealed class TwRowRule
         var classes = _rule(_grid.Rows[e.RowIndex]);
         if (string.IsNullOrWhiteSpace(classes)) return;
 
-        var style = _owner.Theme.Parse(classes).Resolve(_owner.DarkMode ? TwState.Dark : TwState.None);
+        var style = _owner.Theme.Parse(classes).Resolve(_owner.BaseState);
         if (style.BackColor is Color back) e.CellStyle.BackColor = back;
         if (style.ForeColor is Color fore) e.CellStyle.ForeColor = fore;
         if (style.HasFont) e.CellStyle.Font = TwFonts.Create(style, e.CellStyle.Font ?? _grid.Font, _owner.Theme, TwDpi.FontScale(_grid));

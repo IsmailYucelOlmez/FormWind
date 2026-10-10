@@ -67,7 +67,7 @@ public static class TwContrast
             // hover: varyantı: çözülen renkler, belirtilmeyen kanal için kontrolün o anki rengi.
             if (provider?.GetParsed(control) is TwParsed parsed && parsed.HasCondition(TwState.Hover) && CarriesText(control))
             {
-                var state = provider.DarkMode ? TwState.Dark : TwState.None;
+                var state = provider.BaseState;
                 var hover = parsed.Resolve(state | TwState.Hover);
                 var hoverBack = hover.BackColor is Color b ? Composite(b, back) : back;
                 Check(issues, control, "hover", hover.ForeColor ?? fore, hoverBack, required);

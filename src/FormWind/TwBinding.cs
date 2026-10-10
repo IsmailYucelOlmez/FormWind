@@ -173,7 +173,7 @@ internal sealed class TwBinding
 
     private TwState CurrentState()
     {
-        var state = _owner.DarkMode ? TwState.Dark : TwState.None;
+        var state = _owner.BaseState;
         if (_control is CheckBox { Checked: true } || _control is RadioButton { Checked: true })
             state |= TwState.Checked;
 

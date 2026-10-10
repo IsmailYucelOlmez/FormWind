@@ -42,6 +42,12 @@ public enum TwState
     /// <summary>En az 1536 px (<c>2xl:</c>).</summary>
     Xxl = 1 << 13,
 
+    /// <summary>
+    /// Windows Yüksek Karşıtlık modu açık (<c>forced-colors:</c>). Bu durumda class renkleri sistem renklerine çevrilir;
+    /// yalnızca <c>forced-colors:</c> varyantlarının renkleri uygulanır.
+    /// </summary>
+    HighContrast = 1 << 14,
+
     /// <summary>Tüm genişlik eşikleri.</summary>
     Breakpoints = Sm | Md | Lg | Xl | Xxl,
 }

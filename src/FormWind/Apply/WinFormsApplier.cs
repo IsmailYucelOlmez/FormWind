@@ -133,6 +133,14 @@ public class WinFormsApplier : IStyleApplier
         var selected = context.Parsed.ResolvePart("selected", state);
         var row = context.Parsed.ResolvePart("row", state);
         var colors = new TwDataListColors();
+        // Yüksek Karşıtlık: Tailwind varsayılanları yerine kontrolün sistem renkleri; ikincil metin soluklaştırılmaz.
+        if ((context.State & TwState.HighContrast) != 0)
+        {
+            colors.Back = list.BackColor;
+            colors.Fore = colors.Muted = colors.Thumb = list.ForeColor;
+            colors.Hover = colors.Selected = SystemColors.Highlight;
+            colors.SelectedFore = SystemColors.HighlightText;
+        }
         if (style.BackColor is Color back) colors.Back = back;
         if (style.ForeColor is Color fore)
         {
@@ -163,6 +171,12 @@ public class WinFormsApplier : IStyleApplier
         var selected = context.Parsed.ResolvePart("selected", state);
         var hover = context.Parsed.ResolvePart("item", state | TwState.Hover);
         var colors = new TwTabColors();
+        // Yüksek Karşıtlık: Tailwind gri varsayılanları yerine kontrolün sistem renkleri.
+        if ((context.State & TwState.HighContrast) != 0)
+        {
+            colors.Fore = tabs.ForeColor;
+            colors.ActiveFore = SystemColors.Highlight;
+        }
         if (style.ForeColor is Color fore) colors.Fore = fore;
         if (selected.ForeColor is Color activeFore) colors.ActiveFore = activeFore;
         if (selected.BackColor is Color activeBack) colors.ActiveBack = activeBack;
@@ -480,6 +494,13 @@ public class WinFormsApplier : IStyleApplier
     {
         var chrome = TwChrome.FromStyle(style, context.Scale, context.Theme.DefaultBorderColor);
         var outset = TwOutsetSpec.FromStyle(style, context.Scale);
+
+        // Yüksek Karşıtlık: zemini kalkan butonlar düz metne benzemesin diye kenarlık alır.
+        if ((context.State & TwState.HighContrast) != 0 && control is ITwChrome && control is IButtonControl && !chrome.HasBorder)
+        {
+            float width = Math.Max(1f, context.Scale);
+            chrome = new TwChrome(chrome.Radius, width, width, width, width, SystemColors.WindowText);
+        }
 
         if (control is ITwChrome owner)
         {

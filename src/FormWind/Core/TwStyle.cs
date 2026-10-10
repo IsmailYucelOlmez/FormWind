@@ -121,6 +121,51 @@ public sealed class TwStyle
 
     public bool HasGradient => GradientDirection.HasValue && (GradientFrom.HasValue || GradientTo.HasValue);
 
+    /// <summary>
+    /// Yüksek Karşıtlık modu: renkleri sistem renklerine çevirir. Kontrolün kendi zemini ve yazısı özgün (sistem) değerlerine
+    /// bırakılır; seçili ve hover parçaları vurgu renklerini, kenarlık ve ayırıcılar yazı rengini alır. Gölge ve gradient çizilmez.
+    /// </summary>
+    internal void ApplyForcedColors(string? part, TwState state)
+    {
+        bool highlighted = part == "selected" || ((part == "item" || part == "row") && (state & TwState.Hover) != 0);
+        if (part is null)
+        {
+            BackColor = null;
+            ForeColor = null;
+        }
+        else if (highlighted)
+        {
+            // Zemin verilmişse vurgu zemini + vurgu yazısı; yalnızca yazı rengi verilmişse (örn. alt çizgili sekme) vurgu rengi yazıya.
+            bool hasBack = BackColor.HasValue;
+            ForeColor = hasBack ? SystemColors.HighlightText : ForeColor.HasValue ? SystemColors.Highlight : null;
+            BackColor = hasBack ? SystemColors.Highlight : null;
+        }
+        else if (part == "label" || part == "hint" || part == "error" || part == "placeholder" || part == "item")
+        {
+            BackColor = null;
+            ForeColor = part == "placeholder" ? SystemColors.GrayText : SystemColors.WindowText;
+        }
+        else
+        {
+            BackColor = SystemColors.Window;
+            ForeColor = SystemColors.WindowText;
+        }
+        // Kenarlık ve ayırıcılar yalnızca class'larda varsa çizilir; rengi yazı rengidir.
+        if (BorderColor.HasValue || BorderWidth.HasValue || HasSideBorder) BorderColor = SystemColors.WindowText;
+        if (DivideColor.HasValue || DivideX == true || DivideY == true) DivideColor = SystemColors.WindowText;
+        Shadow = null;
+        ShadowColor = null;
+        RingColor = SystemColors.Highlight;
+        RingOffsetColor = SystemColors.Window;
+        GradientDirection = null;
+        GradientFrom = null;
+        GradientVia = null;
+        GradientTo = null;
+        FillColor = SystemColors.ControlDark;
+        AccentColor = SystemColors.Highlight;
+        Transition = null;
+    }
+
     /// <summary><paramref name="other"/>'daki tanımlı değerleri bu stilin üzerine yazar.</summary>
     public void MergeFrom(TwStyle other)
     {

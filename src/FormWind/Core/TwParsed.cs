@@ -51,14 +51,25 @@ public sealed class TwParsed
     public TwStyle Resolve(TwState state) => ResolvePart(null, state);
 
     /// <summary>Bir parça için (<c>null</c> = kontrolün kendisi) koşulları <paramref name="state"/> içinde kalan varyantları birleştirir.</summary>
+    /// <remarks>
+    /// <paramref name="state"/> <see cref="TwState.HighContrast"/> içeriyorsa diğer varyantların renkleri sistem renklerine
+    /// çevrilir; <c>forced-colors:</c> varyantları (en yüksek bit olduğundan en sonda) bunun üzerine uygulanır.
+    /// </remarks>
     public TwStyle ResolvePart(string? part, TwState state)
     {
         var style = new TwStyle();
+        bool forced = (state & TwState.HighContrast) != 0;
         foreach (var variant in Variants)
         {
-            if (variant.Part == part && (variant.Conditions & state) == variant.Conditions)
-                style.MergeFrom(variant.Style);
+            if (variant.Part != part || (variant.Conditions & state) != variant.Conditions) continue;
+            if (forced && (variant.Conditions & TwState.HighContrast) != 0)
+            {
+                style.ApplyForcedColors(part, state);
+                forced = false;
+            }
+            style.MergeFrom(variant.Style);
         }
+        if (forced) style.ApplyForcedColors(part, state);
         return style;
     }
 
