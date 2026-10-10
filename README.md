@@ -1,5 +1,7 @@
 # FormWind
 
+**Türkçe** | [English](README.en.md)
+
 WinForms kontrolleri için Tailwind benzeri utility-class stil sistemi. Forma bir `TailwindProvider` bırakın; her kontrolün property penceresinde `Classes` alanı belirir:
 
 ```
@@ -13,7 +15,7 @@ btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold ho
 - Bileşen class'ları (`btn-primary`, `card`) ve JSON tema dosyası
 - Yuvarlak köşeleri antialias çizen `TwButton`, `TwPanel`, `TwTextBox`
 - Koyu temada native kaydırma çubukları ve ipuçları da koyulaşır
-- WCAG kontrast denetimi (`TwContrast`)
+- WCAG kontrast denetimi (`TwContrast`) ve Windows Yüksek Karşıtlık desteği
 - İsteğe bağlı Krypton Toolkit entegrasyonu (`FormWind.Krypton`)
 - Gerçek uygulamalarda kaynak koduna dokunmadan deneme aracı (`tools/run-harness.ps1`)
 
@@ -108,7 +110,7 @@ CSS'ten farklar:
 - Öğeler satırın çapraz boyutunu aşmaz (CSS'te taşabilir; WinForms'ta taşan kısım kesilip kaybolurdu). Daralan Label'larda `truncate` "…" gösterir.
 - `TwPanel`'in içeriği kenarlığın içinde başlar (CSS kutu modeli); `AutoScroll` panelde genişlik görünen alandan alınır ve dikey kaydırma çubuğunun yeri önceden ayrılır.
 - `AutoSize = true` olan flex `TwPanel` içeriğine göre boyutlanır (grid için henüz yok).
-- Responsive varyantlar (`sm:`, `md:`) henüz yok.
+- Responsive varyantlar (`sm:`, `md:` …): bkz. [Animasyonlar ve responsive varyantlar](#animasyonlar-ve-responsive-varyantlar).
 
 ## Font kalınlıkları
 
@@ -319,7 +321,7 @@ tw.SetClasses(pager, "text-gray-700 selected:bg-blue-600 selected:text-white ite
 
 ### Varyantların uygulanma sırası
 
-Sonraki, öncekini ezer: temel → `dark:` → `checked:` → `focus:` → `focus-visible:` → `group-hover:` → `hover:` → `dark:hover:` → `active:` → `disabled:` → `invalid:` → `sm:` → `md:` → `lg:` → `xl:` → `2xl:` (Tailwind'deki gibi genişlik varyantları en sonda).
+Sonraki, öncekini ezer: temel → `dark:` → `checked:` → `focus:` → `focus-visible:` → `group-hover:` → `hover:` → `dark:hover:` → `active:` → `disabled:` → `invalid:` → `sm:` → `md:` → `lg:` → `xl:` → `2xl:` → `forced-colors:` (Tailwind'deki gibi genişlik varyantları en sonda).
 Kontrol devre dışıyken `focus`, `hover` ve `active` uygulanmaz.
 
 ## Tema dosyası (`tw.config.json`)
@@ -681,7 +683,7 @@ samples/FormWind.Showcase/bin/Debug/net472/FormWind.Showcase.exe --snapshot ligh
 dotnet pack FormWind.sln -c Release
 ```
 
-Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypton` ve `.snupkg` sembol paketleri). `FormWind` paketi FW001 çözümleyicisini `analyzers/dotnet/cs` altında içerir. Yerel kullanım için bu klasörü Visual Studio'da Package Sources'a ekleyin.
+Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypton` ve `.snupkg` sembol paketleri). `FormWind` paketi FW001 çözümleyicisini `analyzers/dotnet/cs` altında içerir. Paketler SourceLink bilgisi taşır; hata ayıklayıcı FormWind'in kaynağına GitHub'dan girebilir. NuGet paketlerinde İngilizce README (`README.en.md`) kullanılır. Yerel kullanım için bu klasörü Visual Studio'da Package Sources'a ekleyin.
 
 ## Bilinen sınırlamalar ve yapılacaklar
 

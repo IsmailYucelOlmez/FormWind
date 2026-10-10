@@ -6,7 +6,7 @@
     <RootNamespace>FormWind.Krypton</RootNamespace>
     <IsPackable>true</IsPackable>
     <PackageId>FormWind.Krypton</PackageId>
-    <Description>FormWind class'larını Krypton Toolkit kontrollerinin durum paletlerine uygular.</Description>
+    <Description>Applies FormWind classes to the state palettes of Krypton Toolkit controls.</Description>
     <PackageTags>winforms;tailwind;krypton;theme</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -16,7 +16,8 @@
   <ItemGroup>
     <PackageReference Include="Krypton.Toolkit" Version="105.26.7.201" />
     <ProjectReference Include="..\FormWind\FormWind.csproj" />
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <!-- NuGet okuyucuları için İngilizce README, paket içinde README.md adıyla. -->
+    <None Include="..\..\README.en.md" Pack="true" PackagePath="\README.md" />
   </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@
     <RootNamespace>FormWind</RootNamespace>
     <IsPackable>true</IsPackable>
     <PackageId>FormWind</PackageId>
-    <Description>WinForms kontrolleri için Tailwind benzeri utility-class stil sistemi.</Description>
+    <Description>Tailwind-style utility classes for WinForms: hover/focus/dark variants, flex and grid layout, themed controls, DataGridView styling and accessibility support.</Description>
     <PackageTags>winforms;tailwind;theme;ui;styling</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -35,7 +35,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <!-- NuGet okuyucuları için İngilizce README, paket içinde README.md adıyla. -->
+    <None Include="..\..\README.en.md" Pack="true" PackagePath="\README.md" />
     <InternalsVisibleTo Include="FormWind.Tests" />
   </ItemGroup>
 
