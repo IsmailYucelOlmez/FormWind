@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -20,7 +20,7 @@ internal static class TwToggleDrawing
     public static readonly Color DefaultBorder = ColorTranslator.FromHtml("#d1d5db"); // gray-300
     public static readonly Color DefaultTrack = ColorTranslator.FromHtml("#e5e7eb"); // gray-200
 
-    public static int Scale(Control control, int pixels) => (int)Math.Round(pixels * control.DeviceDpi / 96f);
+    public static int Scale(Control control, int pixels) => (int)Math.Round(pixels * TwDpi.DeviceDpi(control) / 96f);
 
     public static Color Dim(Color color, bool enabled) => enabled ? color : Color.FromArgb(color.A / 2, color);
 
@@ -134,7 +134,7 @@ public class TwCheckBox : CheckBox, ITwChrome, ITwToggle
 
         TwPainter.FillRounded(g, box, radius, on ? accent : TwToggleDrawing.Dim(_fill ?? TwToggleDrawing.DefaultFill, Enabled));
         var borderColor = on ? accent : TwToggleDrawing.Dim(_chrome.HasBorder ? _chrome.BorderColor : TwToggleDrawing.DefaultBorder, Enabled);
-        var borderWidth = _chrome.HasBorder ? _chrome.BorderTop : Math.Max(1f, DeviceDpi / 96f);
+        var borderWidth = _chrome.HasBorder ? _chrome.BorderTop : Math.Max(1f, TwDpi.DeviceDpi(this) / 96f);
         TwPainter.StrokeRounded(g, box, radius, borderWidth, borderColor);
 
         if (CheckState == CheckState.Checked)
@@ -193,7 +193,7 @@ public class TwRadioButton : RadioButton, ITwChrome, ITwToggle
 
         TwPainter.FillRounded(g, circle, radius, Checked ? accent : TwToggleDrawing.Dim(_fill ?? TwToggleDrawing.DefaultFill, Enabled));
         var borderColor = Checked ? accent : TwToggleDrawing.Dim(_chrome.HasBorder ? _chrome.BorderColor : TwToggleDrawing.DefaultBorder, Enabled);
-        TwPainter.StrokeRounded(g, circle, radius, _chrome.HasBorder ? _chrome.BorderTop : Math.Max(1f, DeviceDpi / 96f), borderColor);
+        TwPainter.StrokeRounded(g, circle, radius, _chrome.HasBorder ? _chrome.BorderTop : Math.Max(1f, TwDpi.DeviceDpi(this) / 96f), borderColor);
 
         if (Checked)
         {

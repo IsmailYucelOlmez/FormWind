@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -18,8 +18,19 @@ public class TwButton : Button, ITwChrome
     private TwIconPosition _iconPosition = TwIconPosition.Left;
     private int _iconSpacing = 8;
 
+    protected override void OnGotFocus(EventArgs e)
+    {
+        base.OnGotFocus(e);
+        _focusVisible = TwFocusVisible.LastInputWasKeyboard;
+        Invalidate();
+    }
+
+    // Odak halkası yalnızca odak klavyeyle geldiyse çizilir (bkz. TwFocusVisible).
+    private bool _focusVisible;
+
     public TwButton()
     {
+        TwFocusVisible.EnsureInstalled();
         SetStyle(
             ControlStyles.AllPaintingInWmPaint
             | ControlStyles.UserPaint
@@ -106,12 +117,12 @@ public class TwButton : Button, ITwChrome
         if (!UseMnemonic) flags |= TextFormatFlags.NoPrefix;
         else if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
 
-        if (TwTheme.Current.TryGetIcon(_iconName, out var glyph))
-            DrawIconAndText(graphics, glyph, textBounds, flags);
+        if (TwTheme.Current.HasIcon(_iconName))
+            DrawIconAndText(graphics, _iconName, textBounds, flags);
         else
             TextRenderer.DrawText(graphics, Text, Font, textBounds, ForeColor, flags);
 
-        if (Focused && ShowFocusCues)
+        if (Focused && _focusVisible)
         {
             var inset = (int)Math.Ceiling(TwPainter.EffectiveRadius(_chrome.Radius, Size) / 2) + 3;
             var focus = Rectangle.Inflate(ClientRectangle, -inset, -3);
@@ -128,14 +139,14 @@ public class TwButton : Button, ITwChrome
     }
 
     // İkon ve metin tek bir grup olarak TextAlign'a göre hizalanır; metin sığmazsa kısaltılır.
-    private void DrawIconAndText(Graphics graphics, char glyph, Rectangle bounds, TextFormatFlags textFlags)
+    private void DrawIconAndText(Graphics graphics, string icon, Rectangle bounds, TextFormatFlags textFlags)
     {
         const TextFormatFlags measure = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine;
-        int em = TwIconRenderer.EmPixels(Font.SizeInPoints, DeviceDpi);
+        int em = TwIconRenderer.EmPixels(Font.SizeInPoints, TwDpi.DeviceDpi(this));
         var iconSize = new Size(em, em);
 
         bool hasText = !string.IsNullOrEmpty(Text);
-        int gap = hasText ? (int)Math.Round(IconSpacing * DeviceDpi / 96f) : 0;
+        int gap = hasText ? (int)Math.Round(IconSpacing * TwDpi.DeviceDpi(this) / 96f) : 0;
         int textWidth = hasText ? TextRenderer.MeasureText(graphics, Text, Font, Size.Empty, measure).Width : 0;
         textWidth = Math.Min(textWidth, Math.Max(0, bounds.Width - iconSize.Width - gap));
         int total = iconSize.Width + gap + textWidth;
@@ -149,7 +160,7 @@ public class TwButton : Button, ITwChrome
         var iconRect = new Rectangle(iconFirst ? x : x + textWidth + gap, bounds.Y, iconSize.Width, bounds.Height);
         var textRect = new Rectangle(iconFirst ? x + iconSize.Width + gap : x, bounds.Y, textWidth, bounds.Height);
 
-        TwIconRenderer.Draw(graphics, glyph, TwTheme.Current.IconFontFamily, em, AlignVertically(iconRect, em, vertical), ForeColor);
+        TwIconRenderer.DrawIcon(graphics, icon, em, AlignVertically(iconRect, em, vertical), ForeColor);
         if (hasText)
         {
             var flags = (textFlags & ~(TextFormatFlags.HorizontalCenter | TextFormatFlags.Right)) | TextFormatFlags.NoPadding;

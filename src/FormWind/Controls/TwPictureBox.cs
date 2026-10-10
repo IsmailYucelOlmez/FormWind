@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -31,6 +31,8 @@ public class TwPictureBox : Control, ITwChrome
     private Image? _image;
     private TwImageFit _fit = TwImageFit.Cover;
     private Bitmap? _scaled;
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new TwRoleAccessibleObject(this, AccessibleRole.Graphic);
 
     public TwPictureBox()
     {
