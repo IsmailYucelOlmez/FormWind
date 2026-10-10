@@ -148,4 +148,111 @@ public class InteractionTests
             }
         return count;
     }
+
+    [Fact]
+    public void Hover_does_not_reapply_style_without_hover_variants() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var strip = new ToolStrip();
+        provider.SetClasses(strip, "bg-gray-50 text-gray-800");
+        var renderer = strip.Renderer;
+
+        Enter(strip);
+
+        Assert.Same(renderer, strip.Renderer);
+    });
+
+    [Fact]
+    public void Toolstrip_keeps_renderer_when_colors_are_unchanged() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var strip = new ToolStrip();
+        provider.SetClasses(strip, "bg-gray-50 hover:text-gray-800");
+        var renderer = strip.Renderer;
+
+        provider.Refresh(strip);
+        Assert.Same(renderer, strip.Renderer);
+
+        provider.DarkMode = true; // renkler değişmez: dark: varyantı yok
+        Assert.Same(renderer, strip.Renderer);
+
+        provider.SetClasses(strip, "bg-gray-900");
+        Assert.NotSame(renderer, strip.Renderer);
+    });
+
+    [Fact]
+    public void Dark_toolstrip_derives_hover_colors_from_its_own_background() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var dark = new ToolStrip();
+        provider.SetClasses(dark, "bg-gray-800 text-gray-100");
+        var colors = ((TwToolStripRenderer)dark.Renderer).Colors;
+        Assert.True(colors.ItemHoverBack.GetBrightness() < 0.5f, $"hover {colors.ItemHoverBack} on dark strip");
+        Assert.NotEqual(colors.Back.ToArgb(), colors.ItemHoverBack.ToArgb());
+        Assert.Equal(colors.Fore.ToArgb(), colors.ItemHoverFore.ToArgb());
+
+        using var light = new ToolStrip();
+        provider.SetClasses(light, "bg-white text-gray-700");
+        Assert.Equal(Argb("#f3f4f6"), ((TwToolStripRenderer)light.Renderer).Colors.ItemHoverBack.ToArgb());
+
+        using var custom = new ToolStrip();
+        provider.SetClasses(custom, "bg-gray-800 item:hover:bg-blue-600");
+        Assert.Equal(Argb("#2563eb"), ((TwToolStripRenderer)custom.Renderer).Colors.ItemHoverBack.ToArgb());
+    });
+
+    [Fact]
+    public void Dark_mode_themes_native_tooltip_windows_of_the_thread() => Sta.Run(() =>
+    {
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        var button = new Button();
+        form.Controls.Add(button);
+        form.Show();
+        using var existing = new ToolTip();
+        existing.SetToolTip(button, "önce");
+        existing.Show("önce", button);
+        Application.DoEvents();
+
+        using var provider = new TailwindProvider();
+        provider.DarkMode = true;
+        int themedBefore = TwNativeToolTips.Themed.Count;
+        Assert.True(themedBefore > 0, "existing tooltip window should be themed");
+
+        using var created = new ToolTip();
+        created.SetToolTip(button, "sonra");
+        created.Show("sonra", button);
+        Application.DoEvents();
+        Assert.True(TwNativeToolTips.Themed.Count > themedBefore, "tooltip created in dark mode should be themed");
+
+        provider.DarkToolTips = false;
+        Assert.Empty(TwNativeToolTips.Themed);
+        Assert.False(TwNativeToolTips.IsDark);
+        form.Close();
+    });
+
+    [Fact]
+    public void Assigned_context_menu_dropdown_follows_owner_strip_theme() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var strip = new MenuStrip();
+        using var shared = new ContextMenuStrip();
+        shared.Items.Add("100%");
+        var zoom = new ToolStripMenuItem("Zoom") { DropDown = shared };
+        strip.Items.Add(zoom);
+        using var custom = new ContextMenuStrip { Renderer = new ToolStripProfessionalRenderer() };
+        strip.Items.Add(new ToolStripMenuItem("Özel") { DropDown = custom });
+        using var classed = new ContextMenuStrip();
+        strip.Items.Add(new ToolStripMenuItem("Class'lı") { DropDown = classed });
+
+        provider.SetClasses(classed, "bg-red-600");
+        provider.SetClasses(strip, "bg-gray-50 dark:bg-gray-800 dark:text-gray-100");
+
+        Assert.Same(strip.Renderer, shared.Renderer);
+        Assert.IsType<ToolStripProfessionalRenderer>(custom.Renderer);
+        Assert.Equal(Argb("#dc2626"), ((TwToolStripRenderer)classed.Renderer).Colors.Back.ToArgb());
+
+        provider.DarkMode = true;
+        Assert.Same(strip.Renderer, shared.Renderer);
+        Assert.Equal(Argb("#1f2937"), ((TwToolStripRenderer)shared.Renderer).Colors.Back.ToArgb());
+        Assert.Equal(Argb("#dc2626"), ((TwToolStripRenderer)classed.Renderer).Colors.Back.ToArgb());
+    });
 }

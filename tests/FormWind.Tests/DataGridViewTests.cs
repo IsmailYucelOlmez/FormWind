@@ -165,4 +165,74 @@ public sealed class DataGridViewTests : IDisposable
 
         Assert.Equal(new[] { "header:cell:bg-white", "footer:bg-white" }, parsed.Unknown);
     }
+
+    [Fact]
+    public void Row_height_on_virtual_grid_does_not_unshare_rows()
+    {
+        using var grid = new DataGridView { VirtualMode = true, AllowUserToAddRows = false };
+        grid.Columns.Add("a", "A");
+        grid.RowCount = 5000;
+
+        _provider.SetClasses(grid, "row:h-10");
+
+        Assert.Equal(40, grid.Rows[0].Height);
+        Assert.Equal(40, grid.Rows[4999].Height);
+        Assert.Equal(40 * 5000, grid.Rows.GetRowsHeight(DataGridViewElementStates.None));
+        int unshared = 0;
+        for (int i = 0; i < grid.Rows.Count; i++)
+            if (grid.Rows.SharedRow(i).Index != -1) unshared++;
+        Assert.True(unshared < 10, $"{unshared} rows unshared");
+
+        _provider.SetClasses(grid, "");
+        Assert.Equal(grid.RowTemplate.Height, grid.Rows.SharedRow(10).Height);
+        Assert.NotEqual(40, grid.Rows.SharedRow(10).Height);
+    }
+
+    [Fact]
+    public void Row_height_applies_to_data_bound_grid()
+    {
+        using var form = new Form();
+        using var grid = new DataGridView { AllowUserToAddRows = false };
+        form.Controls.Add(grid);
+        grid.DataSource = new[] { new { Name = "Ayşe" }, new { Name = "Mehmet" } };
+
+        _provider.SetClasses(grid, "row:h-10");
+
+        Assert.Equal(40, grid.Rows[0].Height);
+        Assert.Equal(40, grid.Rows[1].Height);
+    }
+
+    [Fact]
+    public void Row_height_on_unbound_grid_still_updates_existing_rows()
+    {
+        _provider.SetClasses(_grid, "row:h-12");
+
+        Assert.Equal(48, _grid.Rows[0].Height);
+        Assert.Equal(48, _grid.Rows[1].Height);
+    }
+
+    [Fact]
+    public void Adding_rows_adds_no_extra_invalidation_without_overlay()
+    {
+        // DataGridView RowCount değişince kendisi de geçersiz kılar; FormWind buna ek yapmamalı.
+        int Count(bool styled, string? emptyText)
+        {
+            using var form = new Form();
+            using var grid = new DataGridView { VirtualMode = true, AllowUserToAddRows = false };
+            grid.Columns.Add("a", "A");
+            form.Controls.Add(grid);
+            _ = grid.Handle;
+            if (styled) _provider.SetClasses(grid, "table");
+            if (emptyText != null) TwGrid.SetEmptyText(grid, emptyText);
+            int invalidated = 0;
+            grid.Invalidated += (_, _) => invalidated++;
+            for (int i = 1; i <= 20; i++) grid.RowCount = i * 10;
+            grid.RowCount = 0;
+            grid.RowCount = 5;
+            return invalidated;
+        }
+
+        Assert.Equal(Count(styled: false, emptyText: null), Count(styled: true, emptyText: null));
+        Assert.True(Count(styled: true, emptyText: "Kayıt yok") > Count(styled: true, emptyText: null), "empty-state changes must repaint");
+    }
 }
