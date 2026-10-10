@@ -8,7 +8,8 @@ on:
 
 jobs:
   build-test:
-    runs-on: windows-latest
+    # Görsel referanslar Windows sürümüne bağlı; windows-latest değişince referans klasörü de değişir.
+    runs-on: windows-2022
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -32,6 +33,17 @@ jobs:
         run: dotnet test tests/FormWind.Tests -c Release --no-build -f net472 --filter Category=UIAutomation
         env:
           FORMWIND_UIA: "1"
+
+      - name: Check visual baselines
+        if: always()
+        shell: pwsh
+        run: |
+          if (-not (Test-Path visual-export)) { exit 0 }
+          foreach ($dir in Get-ChildItem visual-export -Directory) {
+            if (-not (Test-Path "tests/FormWind.Tests/Baselines/$($dir.Name)")) {
+              Write-Output "::warning::Görsel referans yok ($($dir.Name)); görsel testler karşılaştırma yapmadı. visual-snapshots yapıtındaki klasörü tests/FormWind.Tests/Baselines altına ekleyin."
+            }
+          }
 
       - name: Pack
         run: dotnet pack FormWind.sln -c Release --no-build
