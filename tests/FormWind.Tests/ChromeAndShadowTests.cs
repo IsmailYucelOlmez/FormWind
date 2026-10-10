@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using FormWind.Tests.Performance;
@@ -188,4 +189,40 @@ public class ChromeAndShadowTests
         Assert.False(TwComboPainter.IsAttached(combo));
         form.Close();
     });
+
+    // TextAlign değişimi handle'ı yeniden oluşturur; bu sırada gelen odak olayıyla stil iç içe uygulanıp BorderStyle de
+    // değişirse WinForms yönetilen nesnesi olmayan bir pencere bırakıyordu ve çöp toplamadan sonra süreç düşüyordu
+    // (InvariantTests seed 105'ten indirgenmiş senaryo).
+    [Fact]
+    public void Text_box_frame_survives_handle_recreation_during_focus_changes() => Sta.Run(() =>
+    {
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        var parent = new Panel { Dock = DockStyle.Fill };
+        form.Controls.Add(parent);
+        var textBox = new TextBox { Text = "Ayşe" };
+        parent.Controls.Add(textBox);
+        form.Show();
+        using var provider = new TailwindProvider();
+
+        provider.SetClasses(textBox, "input disabled:text-gray-500 text-center");
+        Assert.Equal(BorderStyle.None, textBox.BorderStyle);
+        Assert.Equal(HorizontalAlignment.Center, textBox.TextAlign);
+        Assert.NotNull(TwOutset.For(textBox).Spec?.Frame);
+
+        textBox.ForeColor = Color.Red;
+        parent.BackColor = Color.Green;
+        provider.SetClasses(textBox, "text-sm text-gray-700 font-semibold bg-blue-600");
+        Assert.Equal(BorderStyle.Fixed3D, textBox.BorderStyle);
+        provider.SetClasses(textBox, "bg-transparent text-center bg-gray-50");
+        RecreateHandle.Invoke(textBox, null);
+        provider.SetClasses(textBox, "");
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        Application.DoEvents();
+    });
+
+    private static readonly System.Reflection.MethodInfo RecreateHandle =
+        typeof(Control).GetMethod("RecreateHandle", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
 }

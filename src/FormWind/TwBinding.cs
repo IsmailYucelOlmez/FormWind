@@ -16,6 +16,9 @@ internal sealed class TwBinding
     private readonly HashSet<Control> _hookedDescendants = new HashSet<Control>();
 
     private TwParsed? _lastParsed;
+    // Stil uygulanırken gelen yenileme (bkz. Refresh).
+    private bool _applying;
+    private bool _pending;
     private TwState _lastState;
     private bool _focusVisible;
     private float _lastScale;
@@ -89,6 +92,15 @@ internal sealed class TwBinding
     {
         if (_control.IsDisposed || !_owner.ShouldApply) return;
 
+        // Bazı özellikler (TextBox.TextAlign, BorderStyle) handle'ı yeniden oluşturur; bu sırada odak olayları yenileme
+        // ister. Stil iç içe uygulanırsa, yok edilmekte olan pencere için ikinci bir yeniden oluşturma başlar ve WinForms
+        // yönetilen nesnesi olmayan bir pencere bırakır (çöp toplamadan sonra süreç düşer). Yenileme uygulama bitince yapılır.
+        if (_applying)
+        {
+            _pending = true;
+            return;
+        }
+
         _original ??= TwOriginal.Capture(_control, _owner.IsDesignMode);
 
         var state = CurrentState();
@@ -104,7 +116,23 @@ internal sealed class TwBinding
         {
             DarkScrollbars = _owner.DarkScrollbars,
         };
-        TwAppliers.Find(_control).Apply(_control, style, context);
+        _applying = true;
+        try
+        {
+            TwAppliers.Find(_control).Apply(_control, style, context);
+        }
+        finally
+        {
+            _applying = false;
+        }
+
+        // Handle yeniden oluşturulurken uygulayıcı handle'ı yeniden oluşturan özellikleri atlar; sonraki yenileme tam uygulasın.
+        if (_control.RecreatingHandle) _lastParsed = null;
+        if (_pending)
+        {
+            _pending = false;
+            Refresh(force: true);
+        }
     }
 
     public bool IsCursorInside() =>

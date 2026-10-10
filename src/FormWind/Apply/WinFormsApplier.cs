@@ -447,8 +447,9 @@ public class WinFormsApplier : IStyleApplier
         {
             case ButtonBase button: button.TextAlign = ToContentAlignment(align, button.TextAlign); break;
             case Label label: label.TextAlign = ToContentAlignment(align, label.TextAlign); break;
-            case TextBox textBox: textBox.TextAlign = ToHorizontalAlignment(align); break;
-            case TwTextBox twTextBox: twTextBox.InnerTextBox.TextAlign = ToHorizontalAlignment(align); break;
+            // TextAlign handle'ı yeniden oluşturur; yeniden oluşturma sürerken iç içe başlatılmamalı (bkz. TwBinding.Refresh).
+            case TextBox textBox when !textBox.RecreatingHandle: textBox.TextAlign = ToHorizontalAlignment(align); break;
+            case TwTextBox twTextBox when !twTextBox.InnerTextBox.RecreatingHandle: twTextBox.InnerTextBox.TextAlign = ToHorizontalAlignment(align); break;
         }
     }
 
@@ -516,13 +517,18 @@ public class WinFormsApplier : IStyleApplier
         // köşesi ebeveynde, kontrolün etrafına (zemin rengiyle doldurulmuş bir çerçeve olarak) çizilir.
         if (control is TextBoxBase textBox && control is not ITwChrome)
         {
+            // BorderStyle değişimi handle'ı yeniden oluşturur; yeniden oluşturma sürerken ertelenir (bkz. TwBinding.Refresh).
+            bool canRecreate = !textBox.RecreatingHandle;
             if (chrome.HasBorder)
             {
-                applied.NativeBorder ??= textBox.BorderStyle;
-                if (textBox.BorderStyle != BorderStyle.None) textBox.BorderStyle = BorderStyle.None;
+                if (canRecreate)
+                {
+                    applied.NativeBorder ??= textBox.BorderStyle;
+                    if (textBox.BorderStyle != BorderStyle.None) textBox.BorderStyle = BorderStyle.None;
+                }
                 outset = outset.WithFrame(chrome, FrameGap * context.Scale);
             }
-            else if (applied.NativeBorder is BorderStyle restore)
+            else if (applied.NativeBorder is BorderStyle restore && canRecreate)
             {
                 textBox.BorderStyle = restore;
                 applied.NativeBorder = null;
