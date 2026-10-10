@@ -25,14 +25,17 @@ public static class TwToast
         if (!Open.TryGetValue(owner, out var list))
         {
             Open[owner] = list = new List<TwToastForm>();
-            owner.LocationChanged += (_, _) => Arrange(owner);
-            owner.SizeChanged += (_, _) => Arrange(owner);
+            owner.LocationChanged += OnOwnerMoved;
+            owner.SizeChanged += OnOwnerMoved;
+            owner.Disposed += OnOwnerDisposed;
         }
         list.Add(toast);
         toast.FormClosed += (_, _) =>
         {
             list.Remove(toast);
-            Arrange(owner);
+            // Son bildirim kapanınca sahip form bırakılır; statik sözlük formu yaşatmasın.
+            if (list.Count == 0) Release(owner);
+            else Arrange(owner);
         };
         Arrange(owner);
         toast.Show(owner);
@@ -42,6 +45,21 @@ public static class TwToast
     /// <summary>Sahip formun açık bildirimleri (en yenisi sonda).</summary>
     public static IReadOnlyList<TwToastForm> OpenToasts(Form owner) =>
         Open.TryGetValue(owner, out var list) ? list.AsReadOnly() : (IReadOnlyList<TwToastForm>)Array.Empty<TwToastForm>();
+
+    /// <summary>Bildirimi açık sahip formların sayısı (testler için).</summary>
+    internal static int TrackedOwners => Open.Count;
+
+    private static void OnOwnerMoved(object? sender, EventArgs e) => Arrange((Form)sender!);
+
+    private static void OnOwnerDisposed(object? sender, EventArgs e) => Release((Form)sender!);
+
+    private static void Release(Form owner)
+    {
+        if (!Open.Remove(owner)) return;
+        owner.LocationChanged -= OnOwnerMoved;
+        owner.SizeChanged -= OnOwnerMoved;
+        owner.Disposed -= OnOwnerDisposed;
+    }
 
     // En yenisi en altta; eskiler yukarı kayar.
     private static void Arrange(Form owner)

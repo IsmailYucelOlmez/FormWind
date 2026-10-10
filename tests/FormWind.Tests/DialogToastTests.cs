@@ -84,4 +84,22 @@ public class DialogToastTests
         Assert.Equal(client.Bottom - (int)Math.Round(16 * owner.DeviceDpi / 96f), second.Bottom);   // aşağı kaydı
         second.Close();
     });
+
+    [Fact]
+    public void Toasts_release_their_owner() => Sta.Run(() =>
+    {
+        int before = TwToast.TrackedOwners;
+        using (var owner = Host())
+        {
+            TwToast.Show(owner, "Bir", durationMs: 0).Close();
+            Application.DoEvents();
+            Assert.Equal(before, TwToast.TrackedOwners);              // son bildirim kapandı
+
+            TwToast.Show(owner, "İki", durationMs: 0);
+            Assert.Equal(before + 1, TwToast.TrackedOwners);
+            owner.Close();                                             // açık bildirimle kapanan form
+        }
+        Application.DoEvents();
+        Assert.Equal(before, TwToast.TrackedOwners);
+    });
 }
