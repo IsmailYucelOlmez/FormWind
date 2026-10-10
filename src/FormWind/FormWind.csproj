@@ -21,7 +21,7 @@
 
   <!-- FW001 çözümleyicisi pakete eklenir (analyzers/dotnet/cs); kütüphanenin kendisine referans olmaz. -->
   <ItemGroup>
-    <ProjectReference Include="..\FormWind.Analyzers\FormWind.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" SetTargetFramework="TargetFramework=netstandard2.0" />
+    <ProjectReference Include="..\FormWind.Analyzers\FormWind.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <None Include="..\FormWind.Analyzers\bin\$(Configuration)\netstandard2.0\FormWind.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
