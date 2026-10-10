@@ -58,7 +58,7 @@ btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold ho
 | Diğer | `cursor-pointer`, `cursor-text`, `hidden`, `visible`, `truncate` | | `Cursor`, `Visible`, `AutoEllipsis` |
 
 - Boşluk birimi 4 px'tir (`spacingUnit` ile değiştirilebilir). Sayılar her kültürde nokta ile yazılır: `p-0.5`.
-- Palet: Tailwind v3'ün 22 rengi × 11 tonu (50–950), ayrıca `white`, `black`, `transparent`.
+- Palet: Tailwind v3'ün 22 rengi × 11 tonu (50–950), ayrıca `white`, `black`, `transparent`. Tailwind v4 paleti de seçilebilir (bkz. [Tema dosyası](#tema-dosyası-twconfigjson)).
 - Aynı varyant içinde sonra gelen class kazanır: `p-2 px-4` → dikey 8 px, yatay 16 px.
 - Tanınmayan class'lar `TailwindProvider.UnknownClasses` olayına (dinleyici yoksa Debug çıktısına) bildirilir.
 - CSS'te padding kutuyu büyütür; WinForms'ta boyutu sabit (`AutoSize` kapalı) bir buton ya da etikette ise içeriği daraltır. Bu kontrollerde padding, yazı tek satıra sığacak kadar kısılır (örn. 25 px yüksekliğindeki bir butona `btn` verildiğinde `py-2` küçülür). Kontrol büyüyünce, fontu ya da metni değişince yeniden hesaplanır ve yer varsa tam değere döner.
@@ -341,6 +341,8 @@ Kontrol devre dışıyken `focus`, `hover` ve `active` uygulanmaz.
 ```
 
 `fontFamily` virgülle ayrılmış bir yığın olabilir (`"Inter, Segoe UI"`): kurulu ya da kayıtlı ilk aile kullanılır. Uygulamayla dağıtılan fontlar `"fonts": ["Assets/fonts/Inter-Regular.ttf", "Assets/fonts/Inter-SemiBold.ttf"]` ile kurulum gerektirmeden kaydedilir (yol tema dosyasına göredir, bulunamayan dosya atlanır); kodda `TwFonts.Register(path)`. Fontlar hem GDI+ (`PrivateFontCollection`) hem GDI (`AddFontResourceEx`, süreç içi) tarafına kaydedildiğinden `TextRenderer` ile çizilen standart kontrollerde de çalışır. Font dosyalarının lisansını (örn. SIL OFL) uygulamayla birlikte dağıtın.
+
+**Tailwind v4 paleti.** `"palette": "v4"` (kodda `new TwTheme(TwPaletteVersion.V4)` ya da `theme.UsePalette(...)`) aynı 22 rengin v4 tonlarını kullanır. v4 renkleri OKLCH olarak tanımlıdır (`TwPaletteV4`); sRGB'ye sığmayanlar tarayıcıların yaptığı gibi CSS Color 4 gamut eşlemesiyle yaklaştırılır, böylece `blue-500` Tailwind sitesindeki gibi `#2b7fff` olur. Tema dosyasındaki renkler `oklch(62.3% 0.214 259.8)` biçiminde de yazılabilir; kodda `TwOklch.TryParse`. Varsayılan bileşenler iki paletle de kontrast denetiminden geçer.
 
 Dosya varsayılan palet ve bileşenlerin üzerine eklenir. Varsayılan bileşenler: `btn`, `btn-primary`, `btn-ghost`, `btn-danger`, `card`, `input`, `table` (bkz. `TwTheme.DefaultComponents`). Designer tema dosyasını okumadığından tasarım zamanı önizlemesi varsayılanlarla yapılır.
 

@@ -108,13 +108,15 @@ public class ContrastTests
         form.Close();
     });
 
-    // Kütüphanenin varsayılan bileşen class'ları açık ve koyu temada okunabilir olmalı.
+    // Kütüphanenin varsayılan bileşen class'ları açık ve koyu temada, iki palet sürümüyle de okunabilir olmalı.
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void Default_component_classes_pass_the_audit(bool dark) => Sta.Run(() =>
+    [InlineData(false, TwPaletteVersion.V3)]
+    [InlineData(true, TwPaletteVersion.V3)]
+    [InlineData(false, TwPaletteVersion.V4)]
+    [InlineData(true, TwPaletteVersion.V4)]
+    public void Default_component_classes_pass_the_audit(bool dark, TwPaletteVersion palette) => Sta.Run(() =>
     {
-        using var provider = new TailwindProvider();
+        using var provider = new TailwindProvider { Theme = new TwTheme(palette) };
         using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
         var card = new TwPanel { Name = "card", Size = new Size(400, 300) };
         var title = new Label { Name = "title", Text = "Müşteri", AutoSize = true };

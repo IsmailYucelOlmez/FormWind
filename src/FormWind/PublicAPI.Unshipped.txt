@@ -466,6 +466,11 @@ FormWind.TwPager.TotalItems.set -> void
 FormWind.TwPager.TwPager() -> void
 FormWind.TwPager.VisiblePages() -> System.Collections.Generic.IReadOnlyList<int>!
 FormWind.TwPalette
+FormWind.TwPaletteV4
+FormWind.TwPaletteVersion
+FormWind.TwPaletteVersion.V3 = 0 -> FormWind.TwPaletteVersion
+FormWind.TwPaletteVersion.V4 = 1 -> FormWind.TwPaletteVersion
+FormWind.TwOklch
 FormWind.TwPanel
 FormWind.TwPanel.BorderColor.get -> System.Drawing.Color
 FormWind.TwPanel.BorderColor.set -> void
@@ -818,6 +823,9 @@ FormWind.TwTheme.SpacingUnit.set -> void
 FormWind.TwTheme.TryGetColor(string! name, string! shade, out System.Drawing.Color color) -> bool
 FormWind.TwTheme.TryGetIcon(string? name, out char glyph) -> bool
 FormWind.TwTheme.TwTheme() -> void
+FormWind.TwTheme.TwTheme(FormWind.TwPaletteVersion palette) -> void
+FormWind.TwTheme.Palette.get -> FormWind.TwPaletteVersion
+FormWind.TwTheme.UsePalette(FormWind.TwPaletteVersion palette) -> void
 FormWind.TwToast
 FormWind.TwToastForm
 FormWind.TwToastForm.Dismiss() -> void
@@ -1107,6 +1115,8 @@ static FormWind.TwChrome.FromStyle(FormWind.TwStyle! style, float scale, System.
 static FormWind.TwChrome.None.get -> FormWind.TwChrome
 static FormWind.TwContrast.Audit(System.Windows.Forms.Control! root, FormWind.TailwindProvider? provider = null, double minimum = 4.5) -> System.Collections.Generic.IReadOnlyList<FormWind.TwContrastIssue!>!
 static FormWind.TwContrast.Ratio(System.Drawing.Color foreground, System.Drawing.Color background) -> double
+static FormWind.TwOklch.ToColor(double lightness, double chroma, double hue, double alpha = 1) -> System.Drawing.Color
+static FormWind.TwOklch.TryParse(string? text, out System.Drawing.Color color) -> bool
 static FormWind.TwDialog.Create(FormWind.TwDialogOptions! options, System.Windows.Forms.Control? owner = null) -> FormWind.TwDialogForm!
 static FormWind.TwDialog.Show(System.Windows.Forms.IWin32Window? owner, FormWind.TwDialogOptions! options) -> System.Windows.Forms.DialogResult
 static FormWind.TwDialog.Show(System.Windows.Forms.IWin32Window? owner, string! message, string? title = null, FormWind.TwDialogKind kind = FormWind.TwDialogKind.Info, FormWind.TwDialogButtons buttons = FormWind.TwDialogButtons.Ok, bool danger = false) -> System.Windows.Forms.DialogResult
@@ -1169,6 +1179,7 @@ static FormWind.TwValidators.TcKimlikNo(string! value) -> string?
 static FormWind.TwValidators.TurkishMobile(string! value) -> string?
 static readonly FormWind.TwPalette.Colors -> System.Collections.Generic.IReadOnlyDictionary<string!, string![]!>!
 static readonly FormWind.TwPalette.Shades -> string![]!
+static readonly FormWind.TwPaletteV4.Colors -> System.Collections.Generic.IReadOnlyDictionary<string!, string![]!>!
 static readonly FormWind.TwParsed.Empty -> FormWind.TwParsed!
 virtual FormWind.TwDataList.OnDrawItem(FormWind.TwDataListDrawEventArgs! e) -> void
 virtual FormWind.WinFormsApplier.Apply(System.Windows.Forms.Control! control, FormWind.TwStyle! style, FormWind.TwApplyContext! context) -> void

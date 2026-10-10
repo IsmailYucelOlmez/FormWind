@@ -20,6 +20,11 @@ public sealed class TwTheme
 
     private static readonly Regex ColorNameRx = new Regex("^[a-z][a-z0-9]*$", RegexOptions.CultureInvariant);
 
+    // Paletler bir kez çözülür (v4'ün OKLCH dönüşümü tema başına tekrarlanmasın). Varsayılan tema (Current) bunları
+    // kullandığından ondan önce başlatılmalı: statik alanlar yazım sırasıyla başlar.
+    private static readonly Lazy<Dictionary<string, Color[]>> V3Colors = new Lazy<Dictionary<string, Color[]>>(() => Resolve(TwPalette.Colors));
+    private static readonly Lazy<Dictionary<string, Color[]>> V4Colors = new Lazy<Dictionary<string, Color[]>>(() => Resolve(TwPaletteV4.Colors));
+
     private readonly Dictionary<string, Dictionary<string, Color>> _colors =
         new Dictionary<string, Dictionary<string, Color>>(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _components = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -36,12 +41,14 @@ public sealed class TwTheme
     private int _spacingUnit = 4;
 
     public TwTheme()
+        : this(TwPaletteVersion.V3)
     {
-        foreach (var pair in TwPalette.Colors)
-        {
-            for (int i = 0; i < TwPalette.Shades.Length; i++)
-                SetColorCore(pair.Key, TwPalette.Shades[i], ColorTranslator.FromHtml(pair.Value[i]));
-        }
+    }
+
+    /// <summary>Verilen Tailwind sürümünün varsayılan paletiyle bir tema oluşturur.</summary>
+    public TwTheme(TwPaletteVersion palette)
+    {
+        LoadPalette(palette);
         SetColorCore("white", "", Color.White);
         SetColorCore("black", "", Color.Black);
         SetColorCore("transparent", "", Color.Transparent);
@@ -223,6 +230,41 @@ public sealed class TwTheme
 
     public void SetColor(string name, Color color) => SetColor(name, "", color);
 
+    /// <summary>Varsayılan paletin sürümü (<see cref="UsePalette"/> ya da tema dosyasındaki <c>"palette"</c>).</summary>
+    public TwPaletteVersion Palette { get; private set; }
+
+    /// <summary>
+    /// Varsayılan paletin 22 rengini (red … rose, slate … stone) verilen sürümünkilerle değiştirir. Özel renkler
+    /// (<c>brand</c> gibi) korunur; aynı adla ezilmiş varsayılan renkler sürümün değerine döner.
+    /// </summary>
+    public void UsePalette(TwPaletteVersion palette)
+    {
+        LoadPalette(palette);
+        _cache.Clear();
+    }
+
+    private void LoadPalette(TwPaletteVersion palette)
+    {
+        Palette = palette;
+        foreach (var pair in palette == TwPaletteVersion.V4 ? V4Colors.Value : V3Colors.Value)
+        {
+            for (int i = 0; i < TwPalette.Shades.Length; i++)
+                SetColorCore(pair.Key, TwPalette.Shades[i], pair.Value[i]);
+        }
+    }
+
+    private static Dictionary<string, Color[]> Resolve(IReadOnlyDictionary<string, string[]> source)
+    {
+        var colors = new Dictionary<string, Color[]>(StringComparer.Ordinal);
+        foreach (var pair in source)
+        {
+            var shades = new Color[pair.Value.Length];
+            for (int i = 0; i < shades.Length; i++) shades[i] = ParseColor(pair.Value[i], pair.Key + "-" + TwPalette.Shades[i]);
+            colors[pair.Key] = shades;
+        }
+        return colors;
+    }
+
     /// <summary>Paletteki bir rengi ekler ya da ezer. <paramref name="shade"/> boşsa renk tonsuz kullanılır (<c>bg-brand</c>).</summary>
     public void SetColor(string name, string shade, Color color)
     {
@@ -297,6 +339,15 @@ public sealed class TwTheme
                 var path = font.GetString();
                 if (!string.IsNullOrWhiteSpace(path)) TwFonts.TryRegister(Path.Combine(directory, path!));
             }
+        }
+
+        // "palette": "v4" — Tailwind v4 renkleri; "colors" bunun üzerine eklenir.
+        if (root.TryGetProperty("palette", out var palette))
+        {
+            var version = palette.GetString();
+            UsePalette(string.Equals(version, "v4", StringComparison.OrdinalIgnoreCase) ? TwPaletteVersion.V4
+                : string.Equals(version, "v3", StringComparison.OrdinalIgnoreCase) ? TwPaletteVersion.V3
+                : throw new FormatException($"tw.config.json: 'palette' için geçersiz değer: {version} (v3 ya da v4)."));
         }
 
         if (root.TryGetProperty("fontFamily", out var sans))
@@ -393,6 +444,12 @@ public sealed class TwTheme
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new FormatException($"tw.config.json: '{key}' için renk değeri boş.");
+        // Tailwind v4 biçimi: oklch(62.3% 0.214 259.8)
+        if (value!.TrimStart().StartsWith("oklch", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TwOklch.TryParse(value, out var oklch)) return oklch;
+            throw new FormatException($"tw.config.json: '{key}' için geçersiz renk: {value}");
+        }
         try
         {
             return ColorTranslator.FromHtml(value);

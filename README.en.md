@@ -58,7 +58,7 @@ btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold ho
 | Other | `cursor-pointer`, `cursor-text`, `hidden`, `visible`, `truncate` | | `Cursor`, `Visible`, `AutoEllipsis` |
 
 - The spacing unit is 4 px (configurable with `spacingUnit`). Numbers always use a dot, in every culture: `p-0.5`.
-- Palette: the 22 colors × 11 shades (50–950) of Tailwind v3, plus `white`, `black`, `transparent`.
+- Palette: the 22 colors × 11 shades (50–950) of Tailwind v3, plus `white`, `black`, `transparent`. The Tailwind v4 palette can be selected too (see [Theme file](#theme-file-twconfigjson)).
 - Within the same variant the later class wins: `p-2 px-4` → 8 px vertical, 16 px horizontal.
 - Unknown classes are reported through the `TailwindProvider.UnknownClasses` event (or the Debug output when nobody listens).
 - In CSS, padding grows the box; in WinForms, on a fixed-size (`AutoSize` off) button or label it shrinks the content. On these controls padding is reduced just enough for the text to fit on one line (e.g. `py-2` shrinks when `btn` is applied to a 25 px tall button). It is recalculated when the control grows or its font or text changes, and returns to the full value when there is room.
@@ -341,6 +341,8 @@ Later overrides earlier: base → `dark:` → `checked:` → `focus:` → `focus
 ```
 
 `fontFamily` can be a comma-separated stack (`"Inter, Segoe UI"`): the first installed or registered family is used. Fonts shipped with the application are registered without installation via `"fonts": ["Assets/fonts/Inter-Regular.ttf", "Assets/fonts/Inter-SemiBold.ttf"]` (paths are relative to the theme file; missing files are skipped); in code, `TwFonts.Register(path)`. Fonts are registered with both GDI+ (`PrivateFontCollection`) and GDI (`AddFontResourceEx`, process-private), so they also work in standard controls drawn with `TextRenderer`. Distribute the font license (e.g. SIL OFL) with your application.
+
+**Tailwind v4 palette.** `"palette": "v4"` (in code `new TwTheme(TwPaletteVersion.V4)` or `theme.UsePalette(...)`) uses the v4 shades of the same 22 colors. v4 colors are defined in OKLCH (`TwPaletteV4`); those outside sRGB are approximated with CSS Color 4 gamut mapping, as browsers do, so `blue-500` becomes `#2b7fff` just like on the Tailwind site. Colors in the theme file can also be written as `oklch(62.3% 0.214 259.8)`; in code, `TwOklch.TryParse`. The default components pass the contrast audit with both palettes.
 
 The file is added on top of the default palette and components. Default components: `btn`, `btn-primary`, `btn-ghost`, `btn-danger`, `card`, `input`, `table` (see `TwTheme.DefaultComponents`). The Designer does not read the theme file, so the design-time preview uses the defaults.
 
