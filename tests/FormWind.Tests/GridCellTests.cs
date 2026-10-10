@@ -49,7 +49,7 @@ public sealed class GridCellTests : IDisposable
         var column = _grid.Columns[0];
         Assert.Equal("text-right font-bold text-red-600 header:text-center w-40 min-w-20", _provider.GetColumnClasses(column));
         Assert.Equal(DataGridViewContentAlignment.MiddleRight, column.DefaultCellStyle.Alignment);
-        Assert.True(column.DefaultCellStyle.Font.Bold);
+        Assert.True(column.DefaultCellStyle.Font!.Bold);
         Assert.Equal(Argb("#dc2626"), column.DefaultCellStyle.ForeColor.ToArgb());
         Assert.Equal(DataGridViewContentAlignment.MiddleCenter, column.HeaderCell.Style.Alignment);
         Assert.Equal(160, column.Width);
@@ -106,7 +106,7 @@ public sealed class GridCellTests : IDisposable
         using var image = new Bitmap(10, 10);
         using (var g = Graphics.FromImage(image)) g.Clear(Color.Red);
         _grid.Rows.Add("check", image);
-        _grid.Rows.Add("not-an-icon", null);
+        _grid.Rows.Add("not-an-icon", null!);
 
         using var bitmap = Render();
         var avatar = Rectangle.Intersect(_grid.GetColumnDisplayRectangle(1, false), _grid.GetRowDisplayRectangle(0, false));
@@ -119,7 +119,7 @@ public sealed class GridCellTests : IDisposable
         _grid.Columns.Add("status", "Durum");
         _grid.Rows.Add("İptal");
         _grid.Rows.Add("Kargoda");
-        _provider.SetRowClasses(_grid, r => (string)r.Cells[0].Value == "İptal" ? "bg-red-100 text-red-800" : null);
+        _provider.SetRowClasses(_grid, r => (string?)r.Cells[0].Value == "İptal" ? "bg-red-100 text-red-800" : null);
 
         DataGridViewCellStyle Format(int row)
         {

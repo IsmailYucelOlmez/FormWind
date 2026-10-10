@@ -18,9 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Kütüphane net8.0-windows hedefler; testler .NET 9 ve 10 çalışma zamanlarında da koşar (net10 için SDK 10 gerekir).
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Build
         run: dotnet build FormWind.sln -c Release
@@ -31,6 +35,18 @@ jobs:
 
       - name: Test (net8.0-windows)
         run: dotnet test tests/FormWind.Tests -c Release --no-build -f net8.0-windows --logger "trx" --settings tests/coverage.runsettings --collect "Code Coverage" --results-directory TestResults/net8.0-windows
+
+      - name: Test (net9.0-windows)
+        run: dotnet test tests/FormWind.Tests -c Release --no-build -f net9.0-windows --logger "trx" --results-directory TestResults/net9.0-windows
+
+      - name: Test (net10.0-windows)
+        run: dotnet test tests/FormWind.Tests -c Release --no-build -f net10.0-windows --logger "trx" --results-directory TestResults/net10.0-windows
+
+      # Application.SetColorMode süreç geneline etki eder ve ilk pencereden önce çağrılmalı; ayrı süreçte çalışır.
+      - name: Test (Application.SetColorMode)
+        run: dotnet test tests/FormWind.Tests -c Release --no-build -f net10.0-windows --filter Category=ColorMode
+        env:
+          FORMWIND_COLORMODE: "1"
 
       # FormWind satır kapsamı %78'in altına düşerse iş akışı düşer (şu an ~%81-83); tablo iş akışı özetine yazılır.
       - name: Coverage

@@ -146,8 +146,8 @@ public class GridStep3Tests
         var check = new TwCheckColumn { Width = 60, AccentColor = ColorTranslator.FromHtml("#16a34a") };
         var button = new TwButtonColumn { Width = 120, Text = "Sil", UseColumnTextForButtonValue = true, Classes = "rounded-md bg-red-600 text-white" };
         grid.Columns.AddRange(check, button);
-        grid.Rows.Add(true, null);
-        grid.Rows.Add(false, null);
+        grid.Rows.Add(true, null!);
+        grid.Rows.Add(false, null!);
         grid.DefaultCellStyle.BackColor = Color.White;
         grid.DefaultCellStyle.SelectionBackColor = Color.White;
         using var form = HostForm(grid);

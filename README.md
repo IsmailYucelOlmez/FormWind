@@ -8,7 +8,7 @@ WinForms kontrolleri için Tailwind benzeri utility-class stil sistemi. Forma bi
 btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold hover:bg-blue-700"
 ```
 
-- Hedefler: .NET Framework 4.7.2+ ve .NET 8+ (`net472`, `net8.0-windows`)
+- Hedefler: .NET Framework 4.7.2+ ve .NET 8+ (`net472`, `net8.0-windows`); testler .NET 9 ve 10'da da çalışır
 - Çekirdek paketin .NET dışında bağımlılığı yok (`net472` için yalnızca `System.Text.Json`)
 - Durum varyantları: `hover:`, `focus:`, `active:`, `disabled:`, `checked:`, `dark:` ve birleşimleri (`dark:hover:`)
 - Flex ve grid yerleşimi (`flex`, `gap-4`, `justify-between`, `flex-1`, `w-1/2`, `grid-cols-3`, `col-span-2`)
@@ -500,6 +500,18 @@ tw.StyleError += (s, e) => logger.LogWarning(e.Exception, "{Target} stillenemedi
 - Bellek yetersizliği gibi kritik istisnalar yakalanmaz.
 - Hatalı kontrol bir sonraki durum değişikliğinde (hover, tema …) yeniden denenir.
 
+## .NET 9+ renk modu (`Application.SetColorMode`)
+
+.NET 9 ve sonrasında `Application.SetColorMode(SystemColorMode.Dark)` sistem renklerini ve native kontrolleri koyulaştırır. FormWind bununla birlikte çalışır:
+
+- Class renkleri sistem renklerinin önüne geçer; class'lar kaldırılınca kontrol koyu sistem rengine döner.
+- `dark:` varyantları için `DarkMode` uygulamanın renk moduna bağlanmalıdır: `tw.DarkMode = Application.IsDarkModeEnabled;`
+- Bu davranış .NET 9 ve 10'da `ColorModeTests` ile doğrulanır (süreç geneline etki ettiğinden ayrı çalışır):
+
+```powershell
+$env:FORMWIND_COLORMODE = "1"; dotnet test tests/FormWind.Tests -f net10.0-windows --filter Category=ColorMode
+```
+
 ## Krypton Toolkit
 
 ```csharp
@@ -562,7 +574,7 @@ tw.SetClasses(lblTitle, "text-lg lg:text-2xl");
 src/FormWind/             Çekirdek: parser, tema, durum motoru, WinFormsApplier, Tw* kontrolleri, Designer editörü
 src/FormWind.Krypton/     KryptonApplier
 src/FormWind.Analyzers/   FW001 Roslyn çözümleyicisi (FormWind paketine eklenir)
-tests/FormWind.Tests/     xUnit testleri (net472 + net8.0-windows)
+tests/FormWind.Tests/     xUnit testleri (net472, net8.0, net9.0, net10.0-windows)
 samples/FormWind.Showcase/ Vitrin uygulaması (net472)
 samples/Rickipedia/       Rick and Morty API ile örnek sayfa (net472)
 tools/FormWind.Convert/   Designer dosyalarını class'lara çeviren komut satırı aracı (net8.0-windows)
@@ -671,7 +683,7 @@ Font çizimi ortama bağlı olduğundan referanslar ortam başına ayrı klasör
 $env:FORMWIND_UPDATE_BASELINES = "1"; dotnet test tests/FormWind.Tests -f net472 --filter Category=Visual; $env:FORMWIND_UPDATE_BASELINES = ""
 ```
 
-**CI.** `.github/workflows/ci.yml` her push ve PR'da derler, iki hedefte test eder, kapsamı denetler, paketler. `FORMWIND_VISUAL_EXPORT` ayarlı olduğundan görsel testler çizimlerini `visual-snapshots` yapıtına yazar; CI ortamının referansı henüz yoksa testler yalnızca dışa aktarır ve iş akışı bir uyarı yazar. CI `windows-2022` imajına sabitlidir; imaj değişirse referans klasörünün adı da değişir. Yapıttaki `win…` klasörünü `tests/FormWind.Tests/Baselines/` altına ekleyip commit'lemek, o ortam için karşılaştırmayı açar.
+**CI.** `.github/workflows/ci.yml` her push ve PR'da derler, dört hedefte (net472, .NET 8, 9, 10) test eder, kapsamı denetler, paketler. `FORMWIND_VISUAL_EXPORT` ayarlı olduğundan görsel testler çizimlerini `visual-snapshots` yapıtına yazar; CI ortamının referansı henüz yoksa testler yalnızca dışa aktarır ve iş akışı bir uyarı yazar. CI `windows-2022` imajına sabitlidir; imaj değişirse referans klasörünün adı da değişir. Yapıttaki `win…` klasörünü `tests/FormWind.Tests/Baselines/` altına ekleyip commit'lemek, o ortam için karşılaştırmayı açar.
 
 ### Dönüştürme aracı
 

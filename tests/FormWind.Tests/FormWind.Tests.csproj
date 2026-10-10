@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <!-- Kütüphane net8.0-windows ile derlenir; testler .NET 9 ve 10 çalışma zamanlarında da çalışır. -->
+    <TargetFrameworks>net472;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -26,8 +27,8 @@
     <Reference Include="System.Design" />
   </ItemGroup>
 
-  <!-- Dönüştürme aracı yalnızca net8.0-windows. -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+  <!-- Dönüştürme aracı ve çözümleyici testleri .NET (Core) hedeflerinde. -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
     <ProjectReference Include="..\..\tools\FormWind.Convert\FormWind.Convert.csproj" />
     <!-- FW001 çözümleyicisi derlenen örnek kodla test edilir. -->
     <ProjectReference Include="..\..\src\FormWind.Analyzers\FormWind.Analyzers.csproj" />

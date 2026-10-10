@@ -8,7 +8,7 @@ A Tailwind-style utility-class styling system for WinForms controls. Drop a `Tai
 btnSave  →  Classes: "bg-blue-600 text-white px-4 py-2 rounded-md font-bold hover:bg-blue-700"
 ```
 
-- Targets: .NET Framework 4.7.2+ and .NET 8+ (`net472`, `net8.0-windows`)
+- Targets: .NET Framework 4.7.2+ and .NET 8+ (`net472`, `net8.0-windows`); tests also run on .NET 9 and 10
 - The core package has no dependencies beyond .NET (only `System.Text.Json` on `net472`)
 - State variants: `hover:`, `focus:`, `active:`, `disabled:`, `checked:`, `dark:` and combinations (`dark:hover:`)
 - Flex and grid layout (`flex`, `gap-4`, `justify-between`, `flex-1`, `w-1/2`, `grid-cols-3`, `col-span-2`)
@@ -500,6 +500,18 @@ tw.StyleError += (s, e) => logger.LogWarning(e.Exception, "Could not style {Targ
 - Critical exceptions such as out-of-memory are not caught.
 - The failing control is retried on the next state change (hover, theme …).
 
+## .NET 9+ color mode (`Application.SetColorMode`)
+
+On .NET 9 and later, `Application.SetColorMode(SystemColorMode.Dark)` darkens system colors and native controls. FormWind works together with it:
+
+- Class colors take precedence over system colors; when classes are removed, the control returns to the dark system color.
+- For `dark:` variants, bind `DarkMode` to the application's color mode: `tw.DarkMode = Application.IsDarkModeEnabled;`
+- This behavior is verified on .NET 9 and 10 by `ColorModeTests` (run separately because it affects the whole process):
+
+```powershell
+$env:FORMWIND_COLORMODE = "1"; dotnet test tests/FormWind.Tests -f net10.0-windows --filter Category=ColorMode
+```
+
 ## Krypton Toolkit
 
 ```csharp
@@ -562,7 +574,7 @@ tw.SetClasses(lblTitle, "text-lg lg:text-2xl");
 src/FormWind/             Core: parser, theme, state engine, WinFormsApplier, Tw* controls, Designer editor
 src/FormWind.Krypton/     KryptonApplier
 src/FormWind.Analyzers/   FW001 Roslyn analyzer (included in the FormWind package)
-tests/FormWind.Tests/     xUnit tests (net472 + net8.0-windows)
+tests/FormWind.Tests/     xUnit tests (net472, net8.0, net9.0, net10.0-windows)
 samples/FormWind.Showcase/ Showcase application (net472)
 samples/Rickipedia/       Sample page using the Rick and Morty API (net472)
 tools/FormWind.Convert/   Command-line tool that converts Designer files to classes (net8.0-windows)
@@ -671,7 +683,7 @@ Because font rendering depends on the environment, baselines are kept per enviro
 $env:FORMWIND_UPDATE_BASELINES = "1"; dotnet test tests/FormWind.Tests -f net472 --filter Category=Visual; $env:FORMWIND_UPDATE_BASELINES = ""
 ```
 
-**CI.** `.github/workflows/ci.yml` builds, tests on both targets, checks coverage and packs on every push and PR. Because `FORMWIND_VISUAL_EXPORT` is set, the visual tests write their renderings to the `visual-snapshots` artifact; if there is no baseline for the CI environment yet, the tests only export and the workflow prints a warning. CI is pinned to the `windows-2022` image; if the image changes, the baseline folder name changes too. Adding the `win…` folder from the artifact under `tests/FormWind.Tests/Baselines/` and committing it enables comparison for that environment.
+**CI.** `.github/workflows/ci.yml` builds, tests on four targets (net472, .NET 8, 9, 10), checks coverage and packs on every push and PR. Because `FORMWIND_VISUAL_EXPORT` is set, the visual tests write their renderings to the `visual-snapshots` artifact; if there is no baseline for the CI environment yet, the tests only export and the workflow prints a warning. CI is pinned to the `windows-2022` image; if the image changes, the baseline folder name changes too. Adding the `win…` folder from the artifact under `tests/FormWind.Tests/Baselines/` and committing it enables comparison for that environment.
 
 ### Conversion tool
 

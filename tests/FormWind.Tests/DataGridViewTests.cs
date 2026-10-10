@@ -35,7 +35,7 @@ public sealed class DataGridViewTests : IDisposable
         var header = _grid.ColumnHeadersDefaultCellStyle;
         Assert.Equal(Argb("#f9fafb"), header.BackColor.ToArgb());
         Assert.Equal(Argb("#6b7280"), header.ForeColor.ToArgb());
-        Assert.True(header.Font.Bold);
+        Assert.True(header.Font!.Bold);
         Assert.Equal(12, header.Padding.Left);
         Assert.Equal(DataGridViewTriState.False, header.WrapMode);
         Assert.Equal(header.BackColor, header.SelectionBackColor);
