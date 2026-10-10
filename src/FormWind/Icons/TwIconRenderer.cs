@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
@@ -12,8 +12,29 @@ namespace FormWind;
 public static class TwIconRenderer
 {
     /// <summary>Font boyutuna karşılık gelen kare ikon kutusu (web'deki gibi: 20 px font = 20 px ikon).</summary>
+    /// <remarks>
+    /// GDI fontları puntoyu sürecin sistem DPI'ıyla piksele çevirir; PerMonitorV2'de başka DPI'lı bir ekrandaki kontrolün
+    /// fontu zaten büyütülmüş olduğundan ikon da sistem DPI'ıyla hesaplanır. <paramref name="dpi"/> artık kullanılmıyor
+    /// (eski çağrılar için duruyor).
+    /// </remarks>
     public static int EmPixels(float sizeInPoints, int dpi) =>
-        Math.Max(1, (int)Math.Round(sizeInPoints * dpi / 72f));
+        Math.Max(1, (int)Math.Round(sizeInPoints * TwDpi.SystemDpi / 72f));
+
+    /// <summary>
+    /// Adı verilen ikonu çizer: önce temadaki SVG ikon, yoksa ikon fontundaki glyph. İkon bulunamazsa <c>false</c>.
+    /// </summary>
+    public static bool DrawIcon(Graphics graphics, string? name, int emPixels, Rectangle bounds, Color color, TwTheme? theme = null)
+    {
+        theme ??= TwTheme.Current;
+        if (theme.TryGetSvgIcon(name, out var svg))
+        {
+            svg!.Draw(graphics, emPixels, bounds, color);
+            return true;
+        }
+        if (!theme.TryGetIcon(name, out var glyph)) return false;
+        Draw(graphics, glyph, theme.IconFontFamily, emPixels, bounds, color);
+        return true;
+    }
 
     public static void Draw(Graphics graphics, char glyph, string fontFamily, int emPixels, Rectangle bounds, Color color)
     {

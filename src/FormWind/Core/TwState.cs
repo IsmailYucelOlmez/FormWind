@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace FormWind;
 
@@ -14,10 +14,34 @@ public enum TwState
     Checked = 1 << 1,
     Focus = 1 << 2,
 
-    /// <summary><c>group</c> class'lı bir üst kontrolün üzerindeyken (<c>group-hover:</c>).</summary>
-    GroupHover = 1 << 3,
+    /// <summary>Odak klavyeyle geldiyse (<c>focus-visible:</c>); fareyle tıklanınca uygulanmaz.</summary>
+    FocusVisible = 1 << 3,
 
-    Hover = 1 << 4,
-    Active = 1 << 5,
-    Disabled = 1 << 6,
+    /// <summary><c>group</c> class'lı bir üst kontrolün üzerindeyken (<c>group-hover:</c>).</summary>
+    GroupHover = 1 << 4,
+
+    Hover = 1 << 5,
+    Active = 1 << 6,
+    Disabled = 1 << 7,
+
+    /// <summary>Kontrolün doğrulama hatası var (<c>invalid:</c>; bkz. <see cref="TailwindProvider.SetError"/>).</summary>
+    Invalid = 1 << 8,
+
+    /// <summary>Formun genişliği en az 640 px (<c>sm:</c>; bkz. <see cref="TwBreakpoints"/>).</summary>
+    Sm = 1 << 9,
+
+    /// <summary>En az 768 px (<c>md:</c>).</summary>
+    Md = 1 << 10,
+
+    /// <summary>En az 1024 px (<c>lg:</c>).</summary>
+    Lg = 1 << 11,
+
+    /// <summary>En az 1280 px (<c>xl:</c>).</summary>
+    Xl = 1 << 12,
+
+    /// <summary>En az 1536 px (<c>2xl:</c>).</summary>
+    Xxl = 1 << 13,
+
+    /// <summary>Tüm genişlik eşikleri.</summary>
+    Breakpoints = Sm | Md | Lg | Xl | Xxl,
 }

@@ -53,6 +53,18 @@ internal static class TwAnimator
 
     public static void Cancel(Control control, TwColorChannel channel) => _active?.Remove((control, channel));
 
+    /// <summary>Kanalın şu an geçişte olduğu hedef renk.</summary>
+    public static bool TryGetTarget(Control control, TwColorChannel channel, out Color target)
+    {
+        if (_active != null && _active.TryGetValue((control, channel), out var animation))
+        {
+            target = animation.To;
+            return true;
+        }
+        target = Color.Empty;
+        return false;
+    }
+
     /// <summary>Animasyonları <paramref name="now"/> anına ilerletir (zamanlayıcı ve testler kullanır).</summary>
     internal static void Step(DateTime now)
     {

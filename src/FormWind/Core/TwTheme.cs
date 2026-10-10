@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,6 +15,9 @@ namespace FormWind;
 /// </summary>
 public sealed class TwTheme
 {
+    // İlk statik alan: GDI+ başlamadan WinForms DPI ayarı uygulanır (bkz. TwDpi).
+    private static readonly bool DpiReady = TwDpi.EnsureInitialized();
+
     private static readonly Regex ColorNameRx = new Regex("^[a-z][a-z0-9]*$", RegexOptions.CultureInvariant);
 
     private readonly Dictionary<string, Dictionary<string, Color>> _colors =
@@ -26,6 +29,7 @@ public sealed class TwTheme
     private readonly Dictionary<string, SortedDictionary<int, string>> _fontWeights =
         new Dictionary<string, SortedDictionary<int, string>>(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, char> _icons = new Dictionary<string, char>(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, TwSvgIcon> _svgIcons = new Dictionary<string, TwSvgIcon>(StringComparer.OrdinalIgnoreCase);
 
     private string _fontFamilySans = "Segoe UI";
     private string _fontFamilyMono = "Consolas";
@@ -120,6 +124,25 @@ public sealed class TwTheme
         _icons[name] = glyph;
     }
 
+    /// <summary>
+    /// SVG ikon ekler ya da aynı adlı glyph ikonunu ezer (SVG önceliklidir). Lucide/Heroicons gibi setlerin dosya içeriği
+    /// doğrudan verilebilir; renk çizildiği yerin metin rengidir.
+    /// </summary>
+    public void SetSvgIcon(string name, string svg)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("İkon adı boş olamaz.", nameof(name));
+        _svgIcons[name] = TwSvgIcon.Parse(svg);
+    }
+
+    public bool TryGetSvgIcon(string? name, out TwSvgIcon? icon)
+    {
+        icon = null;
+        return !string.IsNullOrWhiteSpace(name) && _svgIcons.TryGetValue(name!, out icon);
+    }
+
+    /// <summary>Adın bir SVG ya da glyph ikonu olup olmadığı.</summary>
+    public bool HasIcon(string? name) => TryGetSvgIcon(name, out _) || TryGetIcon(name, out _);
+
     /// <summary>İkon adını glyph'e çevirir: önce tema ikonları, sonra <see cref="TwIcons"/>; <c>#E710</c> biçimi de kabul edilir.</summary>
     public bool TryGetIcon(string? name, out char glyph)
     {
@@ -148,11 +171,14 @@ public sealed class TwTheme
     public static IReadOnlyDictionary<string, string> DefaultComponents { get; } = new Dictionary<string, string>
     {
         ["btn"] = "px-4 py-2 rounded-md text-sm font-semibold cursor-pointer transition",
-        ["btn-primary"] = "btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 disabled:text-gray-500 dark:bg-blue-500 dark:hover:bg-blue-400",
+        // Koyu temada da blue-600/700: beyaz yazı blue-500 üzerinde 3,7:1, blue-400 üzerinde 2,5:1 ile WCAG AA'yı geçmez.
+        ["btn-primary"] = "btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 disabled:text-gray-500 dark:bg-blue-600 dark:hover:bg-blue-700",
         ["btn-ghost"] = "btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 active:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700",
         ["btn-danger"] = "btn bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-gray-300 disabled:text-gray-500",
+        ["field"] = "label:text-sm label:font-medium label:text-gray-700 hint:text-xs hint:text-gray-500 error:text-xs error:text-red-600 " +
+                    "dark:label:text-gray-200 dark:hint:text-gray-400 dark:error:text-red-400",
         ["card"] = "bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700",
-        ["input"] = "bg-white text-gray-900 border border-gray-300 rounded-md px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400",
+        ["input"] = "bg-white text-gray-900 border border-gray-300 rounded-md px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-600 dark:focus:border-blue-400 invalid:border-red-500 invalid:ring-2 invalid:ring-red-500/20 dark:invalid:border-red-400",
         ["table"] = "bg-white text-sm text-gray-700 border border-gray-200 divide-y divide-gray-200 " +
                     "header:bg-gray-50 header:text-gray-500 header:text-xs header:font-bold header:h-10 header:px-3 header:whitespace-nowrap " +
                     "cell:px-3 row:h-10 row:hover:bg-gray-50 selected:bg-blue-50 selected:text-blue-900 row-header:hidden " +
@@ -242,17 +268,36 @@ public sealed class TwTheme
         return theme;
     }
 
-    public static TwTheme Load(string path) => FromJson(File.ReadAllText(path));
+    /// <summary>Tema dosyasını yükler; <c>fonts</c> listesindeki yollar dosyanın klasörüne göre çözülür.</summary>
+    public static TwTheme Load(string path)
+    {
+        var theme = new TwTheme();
+        theme.ApplyJson(File.ReadAllText(path), Path.GetDirectoryName(Path.GetFullPath(path)));
+        return theme;
+    }
 
     /// <summary>Dosya varsa yükler (geçersizse hata fırlatır), yoksa varsayılan temayı döner.</summary>
     public static TwTheme LoadIfExists(string path) => File.Exists(path) ? Load(path) : new TwTheme();
 
     /// <summary><c>tw.config.json</c> biçimindeki ayarları bu temanın üzerine uygular.</summary>
-    public void ApplyJson(string json)
+    /// <param name="json">Tema içeriği.</param>
+    /// <param name="baseDirectory"><c>fonts</c> yollarının göreli olduğu klasör (varsayılan: uygulama klasörü).</param>
+    public void ApplyJson(string json, string? baseDirectory = null)
     {
         var options = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
         using var document = JsonDocument.Parse(json, options);
         var root = document.RootElement;
+
+        // "fonts": ["Assets/fonts/Quicksand.ttf"] — kurulum gerektirmeden kaydedilir; bulunamayan dosya atlanır.
+        if (root.TryGetProperty("fonts", out var fonts))
+        {
+            var directory = baseDirectory ?? AppDomain.CurrentDomain.BaseDirectory;
+            foreach (var font in fonts.EnumerateArray())
+            {
+                var path = font.GetString();
+                if (!string.IsNullOrWhiteSpace(path)) TwFonts.TryRegister(Path.Combine(directory, path!));
+            }
+        }
 
         if (root.TryGetProperty("fontFamily", out var sans))
             FontFamilySans = sans.GetString() ?? FontFamilySans;
@@ -306,14 +351,30 @@ public sealed class TwTheme
         if (root.TryGetProperty("iconFont", out var iconFont))
             IconFontFamily = iconFont.GetString() ?? IconFontFamily;
 
-        // "icons": { "invoice": "E8A5" }
+        // "icons": { "invoice": "E8A5", "box": "Assets/icons/box.svg", "dot": "<svg ...>...</svg>" }
         if (root.TryGetProperty("icons", out var icons))
         {
             foreach (var icon in icons.EnumerateObject())
             {
-                if (!TwIcons.TryParseCodePoint(icon.Value.GetString(), out var glyph))
-                    throw new FormatException($"tw.config.json: 'icons.{icon.Name}' için geçersiz kod noktası: {icon.Value.GetString()}");
-                SetIcon(icon.Name, glyph);
+                var value = icon.Value.GetString() ?? "";
+                if (value.TrimStart().StartsWith("<", StringComparison.Ordinal))
+                {
+                    SetSvgIcon(icon.Name, value);
+                }
+                else if (value.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+                {
+                    var path = Path.Combine(baseDirectory ?? AppDomain.CurrentDomain.BaseDirectory, value);
+                    if (!File.Exists(path)) throw new FormatException($"tw.config.json: 'icons.{icon.Name}' dosyası bulunamadı: {path}");
+                    SetSvgIcon(icon.Name, File.ReadAllText(path));
+                }
+                else if (TwIcons.TryParseCodePoint(value, out var glyph))
+                {
+                    SetIcon(icon.Name, glyph);
+                }
+                else
+                {
+                    throw new FormatException($"tw.config.json: 'icons.{icon.Name}' için geçersiz değer (kod noktası, .svg yolu ya da <svg>): {value}");
+                }
             }
         }
     }

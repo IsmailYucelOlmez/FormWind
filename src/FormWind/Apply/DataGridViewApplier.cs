@@ -1,3 +1,4 @@
+﻿using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
@@ -30,6 +31,7 @@ public class DataGridViewApplier : WinFormsApplier
         var original = Originals.GetValue(grid, GridOriginal.Capture);
 
         base.Apply(control, style, context);
+        TwGridState.SetDark(grid, (context.State & TwState.Dark) != 0);
         var parsed = context.Parsed;
         var scale = context.Scale;
 
@@ -43,7 +45,9 @@ public class DataGridViewApplier : WinFormsApplier
         var rowHeader = parsed.ResolvePart("row-header", state);
 
         // Kontrol alanı ve kenarlık (renkli kenarlığı WinFormsApplier çizer; native kenarlık kapatılır).
-        Set(grid.BackgroundColor, style.BackColor ?? original.BackgroundColor, v => grid.BackgroundColor = v);
+        // BackgroundColor saydamlığı desteklemez (atama ArgumentException fırlatır); saydam bg-* özgün renge düşer.
+        var background = style.BackColor is Color back && back.A == 255 ? back : original.BackgroundColor;
+        Set(grid.BackgroundColor, background, v => grid.BackgroundColor = v);
         var borderStyle = style.BorderWidth.HasValue ? BorderStyle.None : original.BorderStyle;
         if (grid.BorderStyle != borderStyle) grid.BorderStyle = borderStyle;
 
@@ -59,12 +63,12 @@ public class DataGridViewApplier : WinFormsApplier
         cells.BackColor = style.BackColor;
         cells.ForeColor = style.ForeColor;
         cells.MergeFrom(cell);
-        var cellStyle = BuildCellStyle(original.DefaultCellStyle, cells, grid.Font, scale, context.Theme);
+        var cellStyle = BuildCellStyle(original.DefaultCellStyle, cells, grid.Font, scale, context.Theme, TwDpi.FontScale(grid), TwDpi.DeviceDpi(grid) / (float)original.Dpi);
         if (selected.BackColor is Color selectionBack) cellStyle.SelectionBackColor = selectionBack;
         if (selected.ForeColor is Color selectionFore) cellStyle.SelectionForeColor = selectionFore;
         Assign(grid.DefaultCellStyle, cellStyle, v => grid.DefaultCellStyle = v);
 
-        var altStyle = BuildCellStyle(original.AlternatingRowsDefaultCellStyle, alt, grid.Font, scale, context.Theme);
+        var altStyle = BuildCellStyle(original.AlternatingRowsDefaultCellStyle, alt, grid.Font, scale, context.Theme, TwDpi.FontScale(grid), TwDpi.DeviceDpi(grid) / (float)original.Dpi);
         Assign(grid.AlternatingRowsDefaultCellStyle, altStyle, v => grid.AlternatingRowsDefaultCellStyle = v);
 
         ApplyHeader(grid, original, header, scale, context.Theme);
@@ -79,6 +83,28 @@ public class DataGridViewApplier : WinFormsApplier
                 : new TwStyle();
             TwGridHover.For(grid).Update(hover.BackColor, hover.ForeColor);
         }
+
+#if NETFRAMEWORK
+        // .NET Framework'te DataGridView ekran değişince kolon genişliklerini ölçeklemez (PerMonitorV2).
+        int dpi = TwDpi.DeviceDpi(grid);
+        if (original.LastDpi != dpi && original.LastDpi > 0)
+        {
+            float ratio = dpi / (float)original.LastDpi;
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                column.MinimumWidth = Math.Max(2, (int)Math.Round(column.MinimumWidth * ratio));
+                if (column.InheritedAutoSizeMode != DataGridViewAutoSizeColumnMode.Fill)
+                    column.Width = Math.Max(column.MinimumWidth, (int)Math.Round(column.Width * ratio));
+            }
+            if (grid.RowHeadersVisible) grid.RowHeadersWidth = Math.Max(4, (int)Math.Round(grid.RowHeadersWidth * ratio));
+        }
+        original.LastDpi = dpi;
+#endif
+
+        // Sıralama oku ve düzenleme kontrolleri: accent-* ile renklenir.
+        var decorator = TwGridDecorator.For(grid);
+        decorator.Accent = style.AccentColor ?? ColorTranslator.FromHtml((context.State & TwState.Dark) != 0 ? "#60a5fa" : "#2563eb");
+        decorator.Styled = true;
     }
 
     private static void ApplyHeader(DataGridView grid, GridOriginal original, TwStyle header, float scale, TwTheme theme)
@@ -88,7 +114,7 @@ public class DataGridViewApplier : WinFormsApplier
         var visualStyles = styled ? false : original.EnableHeadersVisualStyles;
         if (grid.EnableHeadersVisualStyles != visualStyles) grid.EnableHeadersVisualStyles = visualStyles;
 
-        var headerStyle = BuildCellStyle(original.ColumnHeadersDefaultCellStyle, header, grid.Font, scale, theme);
+        var headerStyle = BuildCellStyle(original.ColumnHeadersDefaultCellStyle, header, grid.Font, scale, theme, TwDpi.FontScale(grid), TwDpi.DeviceDpi(grid) / (float)original.Dpi);
         if (styled)
         {
             // Seçim sırasında başlıklar vurgulanmasın.
@@ -121,14 +147,30 @@ public class DataGridViewApplier : WinFormsApplier
 
     private static void ApplyRows(DataGridView grid, GridOriginal original, TwStyle row, float scale)
     {
-        var height = row.Height is { IsPixels: true } length
+        int? classHeight = row.Height is { IsPixels: true } length
             ? System.Math.Max(2, (int)System.Math.Round(length.Value * scale))
-            : original.RowHeight;
-        if (grid.RowTemplate.Height == height) return;
+            : null;
+        var height = classHeight ?? original.RowHeight;
 
+        // VirtualMode/DataSource'ta grid satır yüksekliğini RowHeightInfoNeeded ile sorar: satırlar paylaşımdan
+        // çıkarılmaz ve tek tek yerleşim yapılmaz (17 bin satırda ~10 sn yerine birkaç ms).
+        if (TwGridRowHeights.Applies(grid))
+        {
+            var heights = TwGridRowHeights.For(grid);
+            if (grid.RowTemplate.Height == height && heights.Height == classHeight) return;
+            grid.RowTemplate.Height = height;
+            heights.Height = classHeight;
+            if (grid.RowCount > 0) grid.UpdateRowHeightInfo(0, updateToEnd: true);
+            return;
+        }
+
+        if (grid.RowTemplate.Height == height) return;
         grid.RowTemplate.Height = height;
-        foreach (DataGridViewRow existing in grid.Rows)
-            existing.Height = height;
+        // SharedRow okumak satırı paylaşımdan çıkarmaz; yalnızca yüksekliği farklı olanlara dokunulur.
+        for (int i = 0; i < grid.Rows.Count; i++)
+        {
+            if (grid.Rows.SharedRow(i).Height != height) grid.Rows[i].Height = height;
+        }
     }
 
     private static void ApplyRowHeaders(DataGridView grid, GridOriginal original, TwStyle rowHeader, float scale, TwTheme theme)
@@ -136,13 +178,16 @@ public class DataGridViewApplier : WinFormsApplier
         var visible = rowHeader.Hidden is bool hidden ? !hidden : original.RowHeadersVisible;
         if (grid.RowHeadersVisible != visible) grid.RowHeadersVisible = visible;
 
-        var style = BuildCellStyle(original.RowHeadersDefaultCellStyle, rowHeader, grid.Font, scale, theme);
+        var style = BuildCellStyle(original.RowHeadersDefaultCellStyle, rowHeader, grid.Font, scale, theme, TwDpi.FontScale(grid), TwDpi.DeviceDpi(grid) / (float)original.Dpi);
         Assign(grid.RowHeadersDefaultCellStyle, style, v => grid.RowHeadersDefaultCellStyle = v);
     }
 
-    private static DataGridViewCellStyle BuildCellStyle(DataGridViewCellStyle original, TwStyle part, Font gridFont, float scale, TwTheme theme)
+    private static DataGridViewCellStyle BuildCellStyle(DataGridViewCellStyle original, TwStyle part, Font gridFont, float scale, TwTheme theme, float fontScale, float dpiRatio)
     {
         var style = new DataGridViewCellStyle(original);
+        // Özgün fontlar yakalandıkları DPI'dadır; ekran değiştiyse orana göre büyütülür.
+        var originalFont = original.Font is Font own ? ScaleFont(own, dpiRatio) : null;
+        if (originalFont != null) style.Font = originalFont;
         if (part.BackColor is Color back) style.BackColor = back;
         if (part.ForeColor is Color fore) style.ForeColor = fore;
         if (!part.Padding.IsEmpty) style.Padding = part.Padding.ApplyTo(original.Padding, scale);
@@ -151,7 +196,7 @@ public class DataGridViewApplier : WinFormsApplier
 
         if (part.HasFont)
         {
-            style.Font = TwFonts.Create(part, original.Font ?? gridFont, theme);
+            style.Font = TwFonts.Create(part, originalFont ?? gridFont, theme, fontScale);
         }
         else if (original.Font is null)
         {
@@ -199,6 +244,10 @@ public class DataGridViewApplier : WinFormsApplier
         public int RowHeight;
         public bool RowHeadersVisible;
         public DataGridViewCellStyle DefaultCellStyle = null!;
+
+        /// <summary>Özgün değerlerin yakalandığı DPI ve son uygulanan DPI (kolon genişliklerini ölçeklemek için).</summary>
+        public int Dpi = 96;
+        public int LastDpi;
         public DataGridViewCellStyle AlternatingRowsDefaultCellStyle = null!;
         public DataGridViewCellStyle ColumnHeadersDefaultCellStyle = null!;
         public DataGridViewCellStyle RowHeadersDefaultCellStyle = null!;
@@ -219,8 +268,33 @@ public class DataGridViewApplier : WinFormsApplier
             AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle(grid.AlternatingRowsDefaultCellStyle),
             ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle(grid.ColumnHeadersDefaultCellStyle),
             RowHeadersDefaultCellStyle = new DataGridViewCellStyle(grid.RowHeadersDefaultCellStyle),
+            Dpi = TwDpi.DeviceDpi(grid),
+            LastDpi = TwDpi.DeviceDpi(grid),
         };
     }
+}
+
+/// <summary><c>row:h-*</c> yüksekliğini VirtualMode/DataSource grid'lerine satırları paylaşımdan çıkarmadan verir.</summary>
+internal sealed class TwGridRowHeights
+{
+    private static readonly ConditionalWeakTable<DataGridView, TwGridRowHeights> Table = new ConditionalWeakTable<DataGridView, TwGridRowHeights>();
+
+    private TwGridRowHeights(DataGridView grid)
+    {
+        grid.RowHeightInfoNeeded += (_, e) =>
+        {
+            if (Height is int height) e.Height = height;
+        };
+    }
+
+    /// <summary>Class'tan gelen yükseklik; <c>null</c> = satırlar kendi yüksekliğinde.</summary>
+    public int? Height { get; set; }
+
+    /// <summary>Grid RowHeightInfoNeeded'ı yalnızca bu koşullarda tetikler.</summary>
+    public static bool Applies(DataGridView grid) =>
+        (grid.VirtualMode || grid.DataSource != null) && grid.AutoSizeRowsMode == DataGridViewAutoSizeRowsMode.None;
+
+    public static TwGridRowHeights For(DataGridView grid) => Table.GetValue(grid, g => new TwGridRowHeights(g));
 }
 
 /// <summary>DataGridView'a satır hover'ı ekler: imlecin altındaki satır <c>row:hover:</c> renkleriyle boyanır.</summary>

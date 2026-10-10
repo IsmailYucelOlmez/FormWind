@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -54,7 +54,7 @@ public class TwIcon : Control
     protected override Size DefaultSize => new Size(16, 16);
 
     /// <summary>Kare ikon kutusunun kenarı (font boyutunun piksel karşılığı).</summary>
-    internal int EmPixels => TwIconRenderer.EmPixels(Font.SizeInPoints, DeviceDpi);
+    internal int EmPixels => TwIconRenderer.EmPixels(Font.SizeInPoints, TwDpi.DeviceDpi(this));
 
     public override Size GetPreferredSize(Size proposedSize)
     {
@@ -80,13 +80,13 @@ public class TwIcon : Control
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        if (!TwTheme.Current.TryGetIcon(_iconName, out var glyph)) return;
+        if (!TwTheme.Current.HasIcon(_iconName)) return;
 
         var bounds = new Rectangle(
             Padding.Left,
             Padding.Top,
             Math.Max(0, Width - Padding.Horizontal),
             Math.Max(0, Height - Padding.Vertical));
-        TwIconRenderer.Draw(e.Graphics, glyph, TwTheme.Current.IconFontFamily, EmPixels, bounds, ForeColor);
+        TwIconRenderer.DrawIcon(e.Graphics, _iconName, EmPixels, bounds, ForeColor);
     }
 }

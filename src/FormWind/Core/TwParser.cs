@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -28,7 +28,7 @@ public static class TwParser
     private static readonly Regex RingOffsetRx = new Regex(@"^ring-offset-(0|1|2|4|8)$", Options);
     private static readonly Regex GradientRx = new Regex(@"^bg-gradient-to-(r|l|t|b|tr|tl|br|bl)$", Options);
     private static readonly Regex DurationRx = new Regex(@"^duration-(0|75|100|150|200|300|500|700|1000|\[\d+ms\])$", Options);
-    private static readonly Regex FontSizeRx = new Regex(@"^text-(xs|sm|base|lg|xl|2xl|3xl|4xl)$", Options);
+    private static readonly Regex FontSizeRx = new Regex(@"^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|\[\d{1,3}(?:\.\d{1,2})?px\])$", Options);
     private static readonly Regex SpacingRx = new Regex(@"^([pm])([xytrbl]?)-(\d+(?:\.5)?|px|\[\d+px\])$", Options);
     private static readonly Regex SizeRx = new Regex(@"^([wh])-(\d+(?:\.5)?|px|\[\d+px\]|full|\d+/\d+)$", Options);
     private static readonly Regex MinMaxRx = new Regex(@"^(min|max)-([wh])-(\d+(?:\.5)?|px|\[\d+px\]|xs|sm|md|lg|xl|2xl|3xl|4xl|5xl|6xl|7xl)$", Options);
@@ -129,6 +129,7 @@ public static class TwParser
         "item", "menu",                                            // ToolStrip / MenuStrip / TwSelect
         "caption",                                                 // Form başlık çubuğu
         "placeholder",                                             // TwTextBox
+        "label", "hint", "error",                                  // TwField
     };
 
     private static bool TryParseConditions(string name, out TwState conditions, out string? part)
@@ -144,10 +145,17 @@ public static class TwParser
                 case "dark": conditions |= TwState.Dark; break;
                 case "checked": conditions |= TwState.Checked; break;
                 case "focus": conditions |= TwState.Focus; break;
+                case "focus-visible": conditions |= TwState.FocusVisible; break;
                 case "hover": conditions |= TwState.Hover; break;
                 case "group-hover": conditions |= TwState.GroupHover; break;
                 case "active": conditions |= TwState.Active; break;
                 case "disabled": conditions |= TwState.Disabled; break;
+                case "invalid": conditions |= TwState.Invalid; break;
+                case "sm": conditions |= TwState.Sm; break;
+                case "md": conditions |= TwState.Md; break;
+                case "lg": conditions |= TwState.Lg; break;
+                case "xl": conditions |= TwState.Xl; break;
+                case "2xl": conditions |= TwState.Xxl; break;
                 default:
                     if (part != null || !Parts.Contains(segment)) return false;
                     part = segment;
@@ -240,7 +248,11 @@ public static class TwParser
 
         if ((match = FontSizeRx.Match(utility)).Success)
         {
-            style.FontSizePx = FontSizes[match.Groups[1].Value];
+            var size = match.Groups[1].Value;
+            // text-[13px]: keyfi boyut (dönüştürme aracı ve tasarım dosyalarındaki ara değerler için).
+            style.FontSizePx = size[0] == '['
+                ? float.Parse(size.Substring(1, size.Length - 4), System.Globalization.CultureInfo.InvariantCulture)
+                : FontSizes[size];
             return true;
         }
 
@@ -407,6 +419,10 @@ public static class TwParser
             case "transition-none": style.Transition = false; return true;
 
             case "truncate": style.Truncate = true; style.NoWrap = true; return true;
+            case "backdrop-mica": style.Backdrop = TwBackdrop.Mica; return true;
+            case "backdrop-acrylic": style.Backdrop = TwBackdrop.Acrylic; return true;
+            case "backdrop-tabbed": style.Backdrop = TwBackdrop.Tabbed; return true;
+            case "backdrop-none": style.Backdrop = TwBackdrop.None; return true;
             case "whitespace-nowrap": style.NoWrap = true; return true;
             case "whitespace-normal": style.NoWrap = false; return true;
 

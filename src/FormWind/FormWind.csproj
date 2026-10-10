@@ -19,6 +19,12 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
+  <!-- FW001 çözümleyicisi pakete eklenir (analyzers/dotnet/cs); kütüphanenin kendisine referans olmaz. -->
+  <ItemGroup>
+    <ProjectReference Include="..\FormWind.Analyzers\FormWind.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" SetTargetFramework="TargetFramework=netstandard2.0" />
+    <None Include="..\FormWind.Analyzers\bin\$(Configuration)\netstandard2.0\FormWind.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <InternalsVisibleTo Include="FormWind.Tests" />

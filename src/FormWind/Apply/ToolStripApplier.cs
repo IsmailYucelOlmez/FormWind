@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -118,6 +118,25 @@ public class TwToolStripRenderer : ToolStripRenderer
 /// </summary>
 public class ToolStripApplier : WinFormsApplier
 {
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolStripDropDown, object> SharedDropDowns =
+        new System.Runtime.CompilerServices.ConditionalWeakTable<ToolStripDropDown, object>();
+
+    // Class'lar kaldırılınca geri yüklenecek özgün renderer (uygulamanın kendi renderer'ı ya da yöneticininki).
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, OriginalRenderer> Originals =
+        new System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, OriginalRenderer>();
+
+    private sealed class OriginalRenderer
+    {
+        public OriginalRenderer(ToolStrip strip)
+        {
+            Mode = strip.RenderMode;
+            Renderer = strip.RenderMode == ToolStripRenderMode.Custom ? strip.Renderer : null;
+        }
+
+        public ToolStripRenderMode Mode { get; }
+        public ToolStripRenderer? Renderer { get; }
+    }
+
     public override bool CanApply(Control control) => control is ToolStrip;
 
     public override void Apply(Control control, TwStyle style, TwApplyContext context)
@@ -125,9 +144,82 @@ public class ToolStripApplier : WinFormsApplier
         base.Apply(control, style, context);
 
         var strip = (ToolStrip)control;
-        strip.RenderMode = ToolStripRenderMode.ManagerRenderMode; // Renderer atanınca Custom'a geçer
-        strip.Renderer = new TwToolStripRenderer(BuildColors(style, context));
+        // Kendi class'ları olan menü artık sahibinin renderer'ını almaz.
+        if (strip is ToolStripDropDown ownDropDown) SharedDropDowns.Remove(ownDropDown);
+        var original = Originals.GetValue(strip, s => new OriginalRenderer(s));
+        if (context.Parsed.Variants.Count == 0)
+        {
+            Restore(strip, original);
+            return;
+        }
+        var colors = BuildColors(style, context);
+        // Renderer değişimi şeridi yeniden yerleştirir; renkler aynıysa mevcut renderer korunur.
+        if (!(strip.Renderer is TwToolStripRenderer current && SameColors(current.Colors, colors)))
+        {
+            strip.RenderMode = ToolStripRenderMode.ManagerRenderMode; // Renderer atanınca Custom'a geçer
+            strip.Renderer = new TwToolStripRenderer(colors);
+        }
+        ShareWithDropDowns(strip.Items, strip.Renderer);
     }
+
+    private static void Restore(ToolStrip strip, OriginalRenderer original)
+    {
+        if (!(strip.Renderer is TwToolStripRenderer)) return;
+        var ours = strip.Renderer;
+        if (original.Renderer != null) strip.Renderer = original.Renderer;
+        else strip.RenderMode = original.Mode;
+        // Bu şeritten paylaşılan alt menüler de özgün renderer'larına döner.
+        RestoreDropDowns(strip.Items, ours);
+    }
+
+    private static void RestoreDropDowns(ToolStripItemCollection items, ToolStripRenderer ours)
+    {
+        foreach (ToolStripItem item in items)
+        {
+            if (item is not ToolStripDropDownItem { HasDropDown: true } owner) continue;
+            var dropDown = owner.DropDown;
+            if (dropDown.Renderer != ours || !SharedDropDowns.TryGetValue(dropDown, out _)) continue;
+            SharedDropDowns.Remove(dropDown);
+            dropDown.RenderMode = ToolStripRenderMode.ManagerRenderMode;
+            RestoreDropDowns(dropDown.Items, ours);
+        }
+    }
+
+    // Kendiliğinden oluşan alt menüler sahibinin renderer'ını devralır, öğeye elle atanmış bir ContextMenuStrip ise
+    // devralmaz ve açık temada kalırdı. Uygulamanın kendi renderer'ını atamadığı (ya da daha önce buradan paylaşılmış)
+    // menülere şeridin renderer'ı verilir; kendi class'ları ya da özel renderer'ı olanlara dokunulmaz.
+    private static void ShareWithDropDowns(ToolStripItemCollection items, ToolStripRenderer renderer)
+    {
+        foreach (ToolStripItem item in items)
+        {
+            if (item is not ToolStripDropDownItem { HasDropDown: true } owner) continue;
+            var dropDown = owner.DropDown;
+            if (dropDown.Renderer != renderer
+                && (dropDown.RenderMode == ToolStripRenderMode.ManagerRenderMode || SharedDropDowns.TryGetValue(dropDown, out _)))
+            {
+                dropDown.Renderer = renderer;
+                SharedDropDowns.GetValue(dropDown, _ => new object());
+            }
+            if (dropDown.Renderer == renderer) ShareWithDropDowns(dropDown.Items, renderer);
+        }
+    }
+
+    private static Color Mix(Color back, Color fore, float amount) => Color.FromArgb(
+        (int)Math.Round(back.R + (fore.R - back.R) * amount),
+        (int)Math.Round(back.G + (fore.G - back.G) * amount),
+        (int)Math.Round(back.B + (fore.B - back.B) * amount));
+
+    private static bool SameColors(TwMenuColors a, TwMenuColors b) =>
+        a.Back.ToArgb() == b.Back.ToArgb()
+        && a.Fore.ToArgb() == b.Fore.ToArgb()
+        && a.MenuBack.ToArgb() == b.MenuBack.ToArgb()
+        && a.MenuBorder.ToArgb() == b.MenuBorder.ToArgb()
+        && a.ItemHoverBack.ToArgb() == b.ItemHoverBack.ToArgb()
+        && a.ItemHoverFore.ToArgb() == b.ItemHoverFore.ToArgb()
+        && a.Separator.ToArgb() == b.Separator.ToArgb()
+        && a.Accent.ToArgb() == b.Accent.ToArgb()
+        && a.BottomBorder?.ToArgb() == b.BottomBorder?.ToArgb()
+        && a.ItemRadius == b.ItemRadius;
 
     /// <summary>Şerit/menü renklerini temel class'lar ile <c>menu:</c> ve <c>item:</c> parçalarından kurar.</summary>
     public static TwMenuColors BuildColors(TwStyle style, TwApplyContext context)
@@ -144,8 +236,18 @@ public class ToolStripApplier : WinFormsApplier
         colors.MenuBack = menu.BackColor ?? style.BackColor ?? colors.MenuBack;
         if (menu.BorderColor is Color menuBorder) colors.MenuBorder = menuBorder;
         if (item.ForeColor is Color itemFore) colors.Fore = itemFore;
+        // Varsayılan hover/ayırıcı/kenarlık renkleri açık şerit içindir; koyu şeritte (açık yazı) beyaz hover kutusunda
+        // yazı kaybolurdu. Verilmemişlerse şeridin zemin ve yazı renginden türetilir.
+        bool darkStrip = style.BackColor is Color stripBack && stripBack.GetBrightness() < 0.5f;
+        if (darkStrip)
+        {
+            colors.ItemHoverBack = Mix(colors.Back, colors.Fore, 0.12f);
+            colors.MenuBorder = Mix(colors.MenuBack, colors.Fore, 0.2f);
+            colors.Separator = Mix(colors.Back, colors.Fore, 0.2f);
+        }
         if (itemHover.BackColor is Color hoverBack) colors.ItemHoverBack = hoverBack;
         colors.ItemHoverFore = itemHover.ForeColor ?? colors.Fore;
+        if (darkStrip && menu.BorderColor is Color darkMenuBorder) colors.MenuBorder = darkMenuBorder;
         if (style.DivideColor is Color divide) colors.Separator = divide;
         if (style.AccentColor is Color accent) colors.Accent = accent;
         if (item.Radius is int radius) colors.ItemRadius = radius * context.Scale;
@@ -175,6 +277,7 @@ public class FormApplier : WinFormsApplier
             (context.State & TwState.Dark) != 0,
             caption.BackColor,
             caption.ForeColor,
-            caption.BorderColor);
+            caption.BorderColor,
+            style.Backdrop);
     }
 }

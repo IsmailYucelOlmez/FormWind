@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace FormWind;
@@ -75,6 +75,9 @@ public sealed class TwStyle
 
     /// <summary><c>truncate</c>: sığmayan metin "…" ile kısaltılır (Label.AutoEllipsis).</summary>
     public bool? Truncate { get; set; }
+
+    /// <summary>Windows 11 pencere zemini (<c>backdrop-mica</c>, <c>backdrop-acrylic</c>, <c>backdrop-tabbed</c>, <c>backdrop-none</c>); yalnızca Form.</summary>
+    public TwBackdrop? Backdrop { get; set; }
 
     public Cursor? Cursor { get; set; }
     public bool? Hidden { get; set; }
@@ -159,6 +162,7 @@ public sealed class TwStyle
         TextAlign = other.TextAlign ?? TextAlign;
         NoWrap = other.NoWrap ?? NoWrap;
         Truncate = other.Truncate ?? Truncate;
+        Backdrop = other.Backdrop ?? Backdrop;
         Cursor = other.Cursor ?? Cursor;
         Hidden = other.Hidden ?? Hidden;
 
@@ -181,4 +185,16 @@ public sealed class TwStyle
         DivideY = other.DivideY ?? DivideY;
         DivideColor = other.DivideColor ?? DivideColor;
     }
+}
+
+/// <summary>Windows 11 sistem zemini (DWMWA_SYSTEMBACKDROP_TYPE).</summary>
+public enum TwBackdrop
+{
+    /// <summary>Sistem varsayılanı.</summary>
+    Auto = 0,
+    None = 1,
+    Mica = 2,
+    Acrylic = 3,
+    /// <summary>Sekmeli pencereler için Mica Alt.</summary>
+    Tabbed = 4,
 }

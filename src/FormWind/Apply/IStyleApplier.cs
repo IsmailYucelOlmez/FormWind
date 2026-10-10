@@ -36,6 +36,9 @@ public sealed class TwApplyContext
     public TwTheme Theme { get; }
     public TwOriginal Original { get; }
     public bool DesignMode { get; }
+
+    /// <summary>Koyu temada native kaydırma çubukları da koyulaştırılsın mı (<see cref="TailwindProvider.DarkScrollbars"/>).</summary>
+    public bool DarkScrollbars { get; init; } = true;
 }
 
 /// <summary>

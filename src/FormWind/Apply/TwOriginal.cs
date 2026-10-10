@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
@@ -27,6 +27,9 @@ public sealed class TwOriginal
 
     public Color? ForeColor { get; private set; }
     public Font? Font { get; private set; }
+
+    /// <summary><see cref="Font"/> yakalandığında kontrolün DPI'ı; ekran değişince font bu orana göre ölçeklenir.</summary>
+    public int FontDpi { get; private set; } = 96;
     public Cursor? Cursor { get; private set; }
     public Padding Padding { get; private set; }
     public Padding Margin { get; private set; }
@@ -55,6 +58,7 @@ public sealed class TwOriginal
             Cursor = IsSet(ShouldSerializeCursor, nameof(Control.Cursor)) ? control.Cursor : null,
             Padding = control.Padding,
             Margin = control.Margin,
+            FontDpi = TwDpi.DeviceDpi(control),
         };
 
         if (control is ButtonBase button)

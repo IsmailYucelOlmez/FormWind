@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace FormWind;
@@ -63,6 +63,14 @@ public sealed class TwParsed
     }
 
     /// <summary>Kontrolün kendisi için koşulları arasında <paramref name="condition"/> bulunan bir varyant var mı.</summary>
+    /// <summary>Herhangi bir varyant (parçalılar dahil) verilen durumlardan birini kullanıyor mu.</summary>
+    public bool UsesAny(TwState condition)
+    {
+        foreach (var variant in Variants)
+            if ((variant.Conditions & condition) != 0) return true;
+        return false;
+    }
+
     public bool HasCondition(TwState condition)
     {
         foreach (var variant in Variants)

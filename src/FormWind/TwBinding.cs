@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -17,6 +17,7 @@ internal sealed class TwBinding
 
     private TwParsed? _lastParsed;
     private TwState _lastState;
+    private bool _focusVisible;
     private float _lastScale;
 
     public TwBinding(TailwindProvider owner, Control control)
@@ -28,16 +29,35 @@ internal sealed class TwBinding
         _control.MouseLeave += OnMouseLeave;
         _control.MouseDown += OnMouseDown;
         _control.MouseUp += OnMouseUp;
-        _control.Enter += OnStateChanged;
+        _control.Enter += OnEnter;
         _control.Leave += OnStateChanged;
         _control.EnabledChanged += OnStateChanged;
-        _control.DpiChangedAfterParent += OnStateChanged;
+        _control.DpiChangedAfterParent += OnDpiChanged;
         _control.Disposed += OnDisposed;
+        // Ekran değişimi formun DpiChanged olayıyla güvenilir biçimde gelir (alt kontrollerin olayları .NET Framework'te
+        // her zaman tetiklenmez); kontrolün formu bulunduğunda sağlayıcı ona abone olur.
+        _control.ParentChanged += (_, _) => _owner.HookForm(_control);
+        _control.HandleCreated += (_, _) => _owner.HookForm(_control);
+        _owner.HookForm(_control);
+        if (_control is Form form) form.DpiChanged += OnDpiChanged;
         if (_control is CheckBox checkBox) checkBox.CheckedChanged += OnStateChanged;
         if (_control is RadioButton radioButton) radioButton.CheckedChanged += OnStateChanged;
+
+        // Class'lar imleç zaten kontrolün üzerindeyken atanırsa (örn. tıklayınca class'ı değişen buton) MouseEnter
+        // tekrar gelmez; hover durumu baştan doğru başlar.
+        if (IsCursorInside())
+        {
+            _hovered = true;
+            _owner.StartHoverTracking();
+        }
     }
 
     public Control Control => _control;
+
+    public TwParsed Parsed => _parsed;
+
+    /// <summary>Class'larda <c>sm:</c>/<c>md:</c>… varyantı var mı (form boyutu değişince yeniden uygulanır).</summary>
+    public bool UsesBreakpoints => _parsed.UsesAny(TwState.Breakpoints);
 
     public string Classes { get; private set; } = "";
 
@@ -48,6 +68,7 @@ internal sealed class TwBinding
 
     public void SetClasses(string classes, TwTheme theme)
     {
+        if (classes != Classes) WinFormsApplier.ResetColorOverrides(_control);
         Classes = classes;
         Reparse(theme);
     }
@@ -71,7 +92,7 @@ internal sealed class TwBinding
         _original ??= TwOriginal.Capture(_control, _owner.IsDesignMode);
 
         var state = CurrentState();
-        var scale = _owner.ScaleWithDpi ? _control.DeviceDpi / 96f : 1f;
+        var scale = _owner.ScaleWithDpi ? TwDpi.DeviceDpi(_control) / 96f : 1f;
         if (!force && ReferenceEquals(_parsed, _lastParsed) && state == _lastState && scale == _lastScale) return;
 
         _lastParsed = _parsed;
@@ -79,7 +100,10 @@ internal sealed class TwBinding
         _lastScale = scale;
 
         var style = _parsed.Resolve(state);
-        var context = new TwApplyContext(_parsed, state, scale, _owner.Theme, _original, _owner.IsDesignMode);
+        var context = new TwApplyContext(_parsed, state, scale, _owner.Theme, _original, _owner.IsDesignMode)
+        {
+            DarkScrollbars = _owner.DarkScrollbars,
+        };
         TwAppliers.Find(_control).Apply(_control, style, context);
     }
 
@@ -103,10 +127,10 @@ internal sealed class TwBinding
         _control.MouseLeave -= OnMouseLeave;
         _control.MouseDown -= OnMouseDown;
         _control.MouseUp -= OnMouseUp;
-        _control.Enter -= OnStateChanged;
+        _control.Enter -= OnEnter;
         _control.Leave -= OnStateChanged;
         _control.EnabledChanged -= OnStateChanged;
-        _control.DpiChangedAfterParent -= OnStateChanged;
+        _control.DpiChangedAfterParent -= OnDpiChanged;
         _control.Disposed -= OnDisposed;
         if (_control is CheckBox checkBox) checkBox.CheckedChanged -= OnStateChanged;
         if (_control is RadioButton radioButton) radioButton.CheckedChanged -= OnStateChanged;
@@ -140,19 +164,35 @@ internal sealed class TwBinding
 
     private void OnDescendantMouseEnter(object? sender, EventArgs e) => OnMouseEnter(sender, e);
 
+    // Odağın klavyeyle gelip gelmediği girişte kaydedilir (focus-visible:).
+    private void OnEnter(object? sender, EventArgs e)
+    {
+        _focusVisible = TwFocusVisible.LastInputWasKeyboard;
+        OnStateChanged(sender, e);
+    }
+
     private TwState CurrentState()
     {
         var state = _owner.DarkMode ? TwState.Dark : TwState.None;
         if (_control is CheckBox { Checked: true } || _control is RadioButton { Checked: true })
             state |= TwState.Checked;
 
+        if (_owner.HasError(_control)) state |= TwState.Invalid;
+        if (UsesBreakpoints) state |= TwBreakpoints.For(_control);
+
         // Devre dışı kontrolde etkileşim durumları uygulanmaz.
         if (!_control.Enabled) return state | TwState.Disabled;
 
-        if (_control.ContainsFocus) state |= TwState.Focus;
+        if (_control.ContainsFocus)
+        {
+            state |= TwState.Focus;
+            if (_focusVisible) state |= TwState.FocusVisible;
+        }
         if (_owner.IsInHoveredGroup(_control)) state |= TwState.GroupHover;
-        if (_hovered) state |= TwState.Hover;
-        if (_pressed) state |= TwState.Active;
+        // hover:/active: varyantı yoksa fare durumu stili değiştirmez; her girip çıkışta yeniden uygulanmaz
+        // (ToolStrip gibi kontrollerde bu, fare üzerindeyken yeniden yerleşim ve takılı kalan tooltip demekti).
+        if (_hovered && _parsed.HasCondition(TwState.Hover)) state |= TwState.Hover;
+        if (_pressed && _parsed.HasCondition(TwState.Active)) state |= TwState.Active;
         return state;
     }
 
@@ -182,6 +222,14 @@ internal sealed class TwBinding
     }
 
     private void OnStateChanged(object? sender, EventArgs e) => Refresh();
+
+    // DPI değişiminde WinForms fontları ve boyutları kendi sırasıyla ölçekler; class'lar bu bittikten sonra bir kez,
+    // tüm kontroller için yeniden uygulanır (aksi halde bazı fontlar iki kez, bazıları hiç ölçeklenmez).
+    private void OnDpiChanged(object? sender, EventArgs e)
+    {
+        Refresh();
+        _owner.ScheduleDpiRefresh(_control);
+    }
 
     private void OnDisposed(object? sender, EventArgs e)
     {

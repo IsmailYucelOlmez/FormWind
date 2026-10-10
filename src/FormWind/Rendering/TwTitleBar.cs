@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -14,6 +14,7 @@ internal sealed class TwTitleBar
     private const int DwmwaBorderColor = 34;
     private const int DwmwaCaptionColor = 35;
     private const int DwmwaTextColor = 36;
+    private const int DwmwaSystemBackdropType = 38;
     private const int DwmwaColorDefault = unchecked((int)0xFFFFFFFF);
 
     private static readonly ConditionalWeakTable<Form, TwTitleBar> Table = new ConditionalWeakTable<Form, TwTitleBar>();
@@ -30,14 +31,18 @@ internal sealed class TwTitleBar
     public Color? Caption { get; private set; }
     public Color? Text { get; private set; }
     public Color? Border { get; private set; }
+    public TwBackdrop? Backdrop { get; private set; }
+
+    private bool BackdropPushed { get; set; }
 
     /// <summary>Son DWM çağrılarının hepsi başarılı oldu mu (eski Windows'ta false).</summary>
     public bool Applied { get; private set; }
 
     public static TwTitleBar For(Form form) => Table.GetValue(form, f => new TwTitleBar(f));
 
-    public void Update(bool dark, Color? caption, Color? text, Color? border)
+    public void Update(bool dark, Color? caption, Color? text, Color? border, TwBackdrop? backdrop = null)
     {
+        Backdrop = backdrop;
         Dark = dark;
         Caption = caption;
         Text = text;
@@ -57,6 +62,15 @@ internal sealed class TwTitleBar
         ok &= SetColor(handle, DwmwaTextColor, Text);
         ok &= SetColor(handle, DwmwaBorderColor, Border);
         Applied = ok;
+
+        // Windows 11 22H2+: Mica/Acrylic başlık çubuğunda ve çerçevede görünür. İstemci alanı WinForms'ta opak çizildiğinden
+        // zemin orada görünmez (bkz. README). Desteklenmeyen sistemlerde çağrı hata döner ve yok sayılır.
+        if (Backdrop is TwBackdrop backdrop || BackdropPushed)
+        {
+            int type = (int)(Backdrop ?? TwBackdrop.Auto);
+            DwmSetWindowAttribute(handle, DwmwaSystemBackdropType, ref type, sizeof(int));
+            BackdropPushed = Backdrop != null;
+        }
 
         // Başlık çubuğu, pencere çerçevesi yeniden çizilene kadar eski rengini koruyabilir.
         SetWindowPos(handle, IntPtr.Zero, 0, 0, 0, 0, SwpFrameChanged | SwpNoMove | SwpNoSize | SwpNoZOrder | SwpNoActivate);
