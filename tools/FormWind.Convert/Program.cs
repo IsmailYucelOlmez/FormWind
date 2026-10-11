@@ -8,7 +8,7 @@ namespace FormWind.Convert;
 
 /// <summary>
 /// <code>
-/// formwind-convert &lt;dosya.Designer.cs | klasör&gt; [--write] [--config tw.config.json] [--report rapor.md] [--tolerance 10]
+/// formwind-convert &lt;dosya.Designer.cs | dosya.Designer.vb | klasör&gt; [--write] [--config tw.config.json] [--report rapor.md] [--tolerance 10]
 /// </code>
 /// Varsayılan kuru çalıştırmadır: ne değişeceğini yazar, dosyaya dokunmaz. <c>--write</c> dosyaları yerinde günceller
 /// (önce değişiklikleri commit'leyin; geri dönüş git ile yapılır).
@@ -20,7 +20,7 @@ public static class Program
         Console.OutputEncoding = Encoding.UTF8;
         if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
         {
-            Console.WriteLine("Kullanım: formwind-convert <dosya.Designer.cs | klasör> [--write] [--config tw.config.json] [--report rapor.md] [--tolerance 10]");
+            Console.WriteLine("Kullanım: formwind-convert <dosya.Designer.cs | dosya.Designer.vb | klasör> [--write] [--config tw.config.json] [--report rapor.md] [--tolerance 10]");
             Console.WriteLine("Sabit BackColor/ForeColor/Font/Padding/FlatAppearance atamalarını TailwindProvider class'larına çevirir.");
             Console.WriteLine("Varsayılan kuru çalıştırmadır; --write dosyaları günceller.");
             return args.Length == 0 ? 1 : 0;
@@ -33,7 +33,9 @@ public static class Program
         double tolerance = double.TryParse(Option(args, "--tolerance"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var t) ? t : 10;
 
         var files = Directory.Exists(target)
-            ? Directory.GetFiles(target, "*.Designer.cs", SearchOption.AllDirectories).Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)).ToArray()
+            ? Directory.GetFiles(target, "*.Designer.cs", SearchOption.AllDirectories)
+                .Concat(Directory.GetFiles(target, "*.Designer.vb", SearchOption.AllDirectories))
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)).ToArray()
             : File.Exists(target) ? new[] { target } : Array.Empty<string>();
         if (files.Length == 0)
         {
@@ -48,6 +50,7 @@ public static class Program
         var root = Directory.Exists(target) ? Path.GetFullPath(target) : Path.GetDirectoryName(Path.GetFullPath(target))!;
         var searchRoot = Directory.GetParent(root)?.FullName ?? root;
         var sources = Directory.EnumerateFiles(searchRoot, "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(searchRoot, "*.vb", SearchOption.AllDirectories))
             .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar))
             .Select(f => { try { return File.ReadAllText(f); } catch (IOException) { return ""; } });

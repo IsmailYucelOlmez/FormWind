@@ -320,5 +320,155 @@ public class ConverterTests
         Assert.Equal(control, DesignerConverter.IsControlType(type, out var isUnverified));
         Assert.Equal(unverified, isUnverified);
     }
+
+    private const string VbDesigner = """
+        <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+        Partial Class OrderForm
+            Inherits System.Windows.Forms.Form
+
+            'Form overrides dispose to clean up the component list.
+            <System.Diagnostics.DebuggerNonUserCode()> _
+            Protected Overrides Sub Dispose(ByVal disposing As Boolean)
+                Try
+                    If disposing AndAlso components IsNot Nothing Then
+                        components.Dispose()
+                    End If
+                Finally
+                    MyBase.Dispose(disposing)
+                End Try
+            End Sub
+
+            Private components As System.ComponentModel.IContainer
+
+            <System.Diagnostics.DebuggerStepThrough()> _
+            Private Sub InitializeComponent()
+                Me.btnSave = New System.Windows.Forms.Button()
+                Me.lblTitle = New System.Windows.Forms.Label()
+                Me.colName = New System.Windows.Forms.DataGridViewTextBoxColumn()
+                Me.SuspendLayout()
+                '
+                'btnSave
+                '
+                Me.btnSave.BackColor = System.Drawing.Color.FromArgb(CType(CType(37, Byte), Integer), CType(CType(99, Byte), Integer), CType(CType(235, Byte), Integer))
+                Me.btnSave.FlatAppearance.BorderSize = 0
+                Me.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+                Me.btnSave.Font = New System.Drawing.Font("Segoe UI Semibold", 10.5!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(162, Byte))
+                Me.btnSave.ForeColor = System.Drawing.Color.White
+                Me.btnSave.Padding = New System.Windows.Forms.Padding(12, 6, 12, 6)
+                Me.btnSave.Text = "Kaydet"
+                '
+                'lblTitle
+                '
+                Me.lblTitle.BackColor = System.Drawing.SystemColors.Control
+                Me.lblTitle.Font = New System.Drawing.Font("Segoe UI", 12.0!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle))
+                Me.lblTitle.Text = "Siparişler"
+                '
+                'colName
+                '
+                Me.colName.DefaultCellStyle.BackColor = System.Drawing.Color.White
+                '
+                'OrderForm
+                '
+                Me.BackColor = System.Drawing.Color.White
+                Me.Controls.Add(Me.btnSave)
+                Me.Controls.Add(Me.lblTitle)
+                Me.ResumeLayout(False)
+            End Sub
+
+            Friend WithEvents btnSave As System.Windows.Forms.Button
+            Friend WithEvents lblTitle As System.Windows.Forms.Label
+            Friend WithEvents colName As System.Windows.Forms.DataGridViewTextBoxColumn
+        End Class
+        """;
+
+    [Fact]
+    public void Converts_visual_basic_designer_files()
+    {
+        var result = new DesignerConverter().Convert(VbDesigner);
+
+        Assert.Equal("TailwindProvider1", result.ProviderName);
+        Assert.True(result.ProviderAdded);
+        var source = result.Source.Replace("\r\n", "\n");
+        // SetClasses kontrolün son çevrilen satırından (Padding) sonra gelir.
+        Assert.Contains("        Me.TailwindProvider1.SetClasses(Me.btnSave, \"bg-blue-600 border-0 text-sm font-semibold text-white px-3 py-1.5\")\n        Me.btnSave.Text = \"Kaydet\"", source);
+        Assert.Contains("Me.TailwindProvider1.SetClasses(Me.lblTitle, \"text-base font-bold italic\")", result.Source);
+        Assert.Contains("Me.TailwindProvider1.SetClasses(Me, \"bg-white\")", result.Source);
+        Assert.DoesNotContain("Me.btnSave.ForeColor", result.Source);
+        // Sistem rengi ve Control olmayan kolon bırakılır.
+        Assert.Contains("Me.lblTitle.BackColor = System.Drawing.SystemColors.Control", result.Source);
+        Assert.Contains("Me.colName.DefaultCellStyle.BackColor = System.Drawing.Color.White", result.Source);
+        // VB sözdizimi: noktalı virgül yok; provider components'a eklenir, alanı WithEvents.
+        Assert.DoesNotContain(";", result.Source);
+        Assert.Contains("        Me.components = New System.ComponentModel.Container()", result.Source);
+        Assert.Contains("        Me.TailwindProvider1 = New FormWind.TailwindProvider(Me.components)", result.Source);
+        Assert.Contains("    Friend WithEvents colName As System.Windows.Forms.DataGridViewTextBoxColumn\n    Friend WithEvents TailwindProvider1 As FormWind.TailwindProvider", source);
+        Assert.Empty(result.FileNotes); // components alanı ve Dispose zaten var
+    }
+
+    [Fact]
+    public void Visual_basic_conversion_merges_into_existing_set_classes_and_keeps_unqualified_names()
+    {
+        const string source = """
+            Partial Class SettingsForm
+                Inherits System.Windows.Forms.Form
+
+                Private Sub InitializeComponent()
+                    Me.components = New System.ComponentModel.Container()
+                    buttonOk = New Button()
+                    Me.Tw = New FormWind.TailwindProvider(Me.components)
+                    buttonOk.BackColor = Color.White
+                    Me.Tw.SetClasses(buttonOk, "rounded-md")
+                    BackColor = Color.Black
+                End Sub
+
+                Friend WithEvents buttonOk As Button
+                Friend WithEvents Tw As FormWind.TailwindProvider
+                Private components As System.ComponentModel.IContainer
+            End Class
+            """;
+
+        var result = new DesignerConverter().Convert(source);
+
+        Assert.False(result.ProviderAdded);
+        Assert.Equal("Tw", result.ProviderName);
+        Assert.Contains("Me.Tw.SetClasses(buttonOk, \"rounded-md bg-white\")", result.Source);
+        Assert.Contains("Me.Tw.SetClasses(Me, \"bg-black\")", result.Source);
+        Assert.DoesNotContain("buttonOk.BackColor", result.Source);
+    }
+
+    [Fact]
+    public void Visual_basic_file_without_fields_gets_them_before_end_class()
+    {
+        const string source = """
+            Partial Class EmptyForm
+                Private Sub InitializeComponent()
+                    Me.BackColor = System.Drawing.Color.White
+                End Sub
+            End Class
+            """;
+
+        var result = new DesignerConverter().Convert(source);
+        var lines = result.Source.Replace("\r\n", "\n").Split('\n');
+
+        int endClass = System.Array.FindIndex(lines, l => l.Trim() == "End Class");
+        Assert.Equal("    Friend WithEvents TailwindProvider1 As FormWind.TailwindProvider", lines[endClass - 1]);
+        Assert.Equal("    Private components As System.ComponentModel.IContainer", lines[endClass - 2]);
+        Assert.Contains("Dispose", Assert.Single(result.FileNotes));
+    }
+
+    [Fact]
+    public void Base_types_are_collected_from_visual_basic_sources()
+    {
+        var map = DesignerConverter.CollectBaseTypes(new[]
+        {
+            "Public Class FontComboBox\r\n    Inherits ToolStripComboBox\r\nEnd Class",
+            "Friend NotInheritable Class Badge : Inherits System.Windows.Forms.Label\nEnd Class",
+            "Public Class Repository(Of T)\n    Inherits Base(Of T)\nEnd Class",
+        });
+
+        Assert.Equal("ToolStripComboBox", map["FontComboBox"]);
+        Assert.Equal("System.Windows.Forms.Label", map["Badge"]);
+        Assert.True(DesignerConverter.IsControlType("FontComboBox", map, out var unverified) == false && !unverified);
+    }
 }
 #endif
