@@ -703,7 +703,7 @@ For every bug these tests found, `ApplierTests` also keeps an explicit regressio
 | Parameter / environment variable | Effect |
 | --- | --- |
 | `-Dark` / `FORMWIND_DARK=1` | Starts in dark mode. **Ctrl+Alt+Shift+D** toggles the theme while running. |
-| `-SelfTest` / `FORMWIND_SELFTEST=1` | Renders every new form in light and dark mode (`DrawToBitmap`; other windows on screen do not end up in the image) and audits its contrast. |
+| `-SelfTest` / `FORMWIND_SELFTEST=1` | Captures every new form in light and dark mode and audits its contrast both from the class colors and from the image. |
 | `-ExitAfter 60` / `FORMWIND_EXIT_AFTER` | Ends the process after the given number of seconds (unattended runs). |
 | `-Skip DataGridView,ToolStrip` / `FORMWIND_SKIP` | Does not style these types; to narrow a problem down to one control type. |
 | `FORMWIND_DISABLE=1` | Turns the harness off; to compare the same scenario without FormWind. |
@@ -720,6 +720,7 @@ Logs and images are written to `%TEMP%\FormWind-Harness\<process>-<time>\`:
 | `FORM` | Form, number of styled controls and duration; `unstyled` lists unrecognized control types |
 | `ADDED` | Controls added and styled later |
 | `CONTRAST` | Pairs found by the contrast audit (light and dark mode) |
+| `SCREEN` | Text below 3:1 in a self-test image: within the control's area the most frequent color counts as the background and the pixel with the highest contrast against it as the text. Catches what the class colors cannot show (disabled text drawn by Windows, controls painting with their own palette); the measurement is approximate because of font smoothing |
 | `OWNERDRAW` | Controls that paint their own colors (`TwContrast.FindOwnerDrawn`): the contrast audit cannot measure them and the classes' cell/item colors may be ignored; check them by eye in dark mode |
 | `UI STALL` | The UI thread froze for more than 250 ms |
 | `PAINT STORM` | More than 100 paints per second for 3 seconds in a row: an invalidate-while-painting loop |
@@ -727,7 +728,7 @@ Logs and images are written to `%TEMP%\FormWind-Harness\<process>-<time>\`:
 
 - Startup hooks only exist in .NET (Core) applications; they are not loaded in trimmed applications or when hooks are disabled. For .NET Framework applications, add `FormWindHarness.cs` from `FormWind.Harness` to the project and call `FormWindHarness.Install()` on the UI thread.
 - The harness only descends into containers that carry content (forms, panels, GroupBox, tabs, SplitContainer, UserControl, ToolStrip containers). The inner parts of composite controls (e.g. the `TextBox` inside a `KryptonTextBox`, the help pane of a `PropertyGrid`, the edit box of a `NumericUpDown`) belong to the control itself and are not styled.
-- Self-test images are taken with `DrawToBitmap`: the title bar does not look as Windows draws it and `RichTextBox` is drawn incorrectly. Both are artifacts of the image, not of the application.
+- Self-test images of top-level windows are taken with `PrintWindow`: the title bar, `RichTextBox` and MDI children look as on screen, and it works even when the window is covered by another one. MDI children (where `PrintWindow` also captures sibling windows on top) and failed captures fall back to `DrawToBitmap`, where the title bar does not look as Windows draws it and `RichTextBox` is drawn incorrectly.
 - Forms are found with a timer, so this works whether the application runs a WinForms or a WPF message loop (e.g. Greenshot). Classes are applied after a form is shown, so it may appear unstyled for a moment at startup; colors the application assigned at that point count as original values.
 - When you find a problem, first reproduce it without FormWind using `FORMWIND_DISABLE=1`; if it still happens, it belongs to the application. Then narrow it down to one control type with `-Skip`.
 - Applications tried: Git Extensions (.NET 10, startup hook), Greenshot (.NET Framework 4.8, WPF loop), Greenshot 1.3 (.NET Framework 4.7.2, WinForms loop, harness as code), mRemoteNG (.NET 10, DockPanelSuite), the Krypton Toolkit samples (.NET 9: grid, input form, ribbon, docking), the ScottPlot WinForms demo (.NET 10, 45 demos, with `FORMWIND_WALK`), an MDI shell (.NET 8: merged menus, window list, maximized child, children opened later). The problems found became the behaviors and tests described in this README. In applications with their own theme engine (mRemoteNG) dark mode shows only partially, because colors assigned by the application are kept; this is expected.

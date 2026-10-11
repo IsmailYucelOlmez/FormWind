@@ -17,7 +17,8 @@ namespace FormWind.Harness;
 /// <list type="bullet">
 /// <item><description><c>FORMWIND_DARK=1</c> koyu temayla başlar; Ctrl+Alt+Shift+D çalışırken açar/kapatır.</description></item>
 /// <item><description><c>FORMWIND_SKIP=DataGridView,ToolStrip</c> bu tipleri stillemez.</description></item>
-/// <item><description><c>FORMWIND_SELFTEST=1</c> her yeni formu açık ve koyu temada çizer (DrawToBitmap), kontrastını denetler.</description></item>
+/// <item><description><c>FORMWIND_SELFTEST=1</c> her yeni formun açık ve koyu temada ekran görüntüsünü alır (PrintWindow), kontrastını
+/// class renklerinden ve görüntüden (<see cref="ScreenContrast"/>) denetler.</description></item>
 /// <item><description><c>FORMWIND_EXIT_AFTER=60</c> verilen saniye sonra süreci sonlandırır (gözetimsiz çalıştırma).</description></item>
 /// <item><description><c>FORMWIND_DUMP=1</c> hiç stil uygulamaz; her formun kontrollerinin renk, font ve padding değerlerini
 /// <c>dump-&lt;form&gt;.txt</c> dosyasına yazar (örn. dönüştürme aracından önce ve sonra karşılaştırmak için).</description></item>
@@ -505,7 +506,8 @@ public static class FormWindHarness
                 return;
             }
             string mode = provider.DarkMode ? "dark" : "light";
-            Snapshot(form, $"{index:00}-{form.GetType().Name}-{mode}");
+            using (var image = Snapshot(form, $"{index:00}-{form.GetType().Name}-{mode}"))
+                if (image != null) AuditScreen(form, image, mode);
             if (phase++ == 1)
             {
                 timer.Dispose();
@@ -520,19 +522,44 @@ public static class FormWindHarness
         timer.Start();
     }
 
-    private static void Snapshot(Form form, string name)
+    // Görüntü PrintWindow ile alınır: başlık çubuğu, RichTextBox ve MDI çocukları ekrandaki gibi çıkar; pencere başka bir
+    // pencerenin altında kalsa da çalışır. Olmazsa DrawToBitmap'e düşülür (başlık çubuğu ve RichTextBox yanlış çizilir).
+    private static Bitmap? Snapshot(Form form, string name)
     {
         try
         {
-            using var bitmap = new Bitmap(Math.Max(1, form.Width), Math.Max(1, form.Height));
-            form.DrawToBitmap(bitmap, new Rectangle(Point.Empty, form.Size));
+            var bitmap = ScreenContrast.Capture(form) ?? DrawToBitmap(form);
             string path = Path.Combine(_directory, name + ".png");
             bitmap.Save(path);
             Log($"SNAPSHOT {path}");
+            return bitmap;
         }
         catch (Exception ex)
         {
             Log($"SNAPSHOT failed for {name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static Bitmap DrawToBitmap(Form form)
+    {
+        var bitmap = new Bitmap(Math.Max(1, form.Width), Math.Max(1, form.Height));
+        form.DrawToBitmap(bitmap, new Rectangle(Point.Empty, form.Size));
+        return bitmap;
+    }
+
+    // Class renklerinden yapılan denetimin göremediklerini (uygulamanın ya da Windows'un kendi çizdiği renkler) yakalar.
+    private static void AuditScreen(Form form, Bitmap image, string mode)
+    {
+        try
+        {
+            foreach (var issue in ScreenContrast.Audit(form, image, ScreenContrast.WindowOrigin(form)))
+                if (Reported.Add($"screen {mode} {Describe(issue.Control)}"))
+                    Log($"SCREEN {mode} {Describe(issue.Control)}: {issue.Ratio:0.0}:1 (yazı #{issue.Foreground.ToArgb() & 0xFFFFFF:X6}, zemin #{issue.Background.ToArgb() & 0xFFFFFF:X6})");
+        }
+        catch (Exception ex)
+        {
+            Log($"EXCEPTION in screen audit: {ex.Message}");
         }
     }
 
@@ -567,4 +594,137 @@ public static class FormWindHarness
             return true;
         }
     }
+}
+
+/// <summary>
+/// Ekran görüntüsünden kontrast: metin taşıyan her kontrolün alanında en sık renk zemin, zemine en zıt piksel yazı sayılır.
+/// Class renkleriyle yapılan denetimin (<see cref="TwContrast"/>) bilemediği durumları yakalar: Windows'un kendi çizdiği
+/// devre dışı yazı, kendi paletiyle çizen kontroller (Krypton), uygulamanın elle çizdiği yerler. Kenarlık pikselleri dışarıda
+/// bırakılır; yazı yumuşatması nedeniyle ölçüm yaklaşıktır, bu yüzden eşik büyük metninki (3:1).
+/// </summary>
+internal static class ScreenContrast
+{
+    public const double Minimum = 3.0;
+    private const int Inset = 3;
+
+    public sealed class Issue
+    {
+        public Issue(Control control, Color foreground, Color background, double ratio)
+        {
+            Control = control;
+            Foreground = foreground;
+            Background = background;
+            Ratio = ratio;
+        }
+
+        public Control Control { get; }
+        public Color Foreground { get; }
+        public Color Background { get; }
+        public double Ratio { get; }
+    }
+
+    /// <summary>Pencerenin ekrandaki sol üst köşesi (çerçeve dahil); görüntüdeki koordinatların başlangıcı.</summary>
+    public static Point WindowOrigin(Control window) =>
+        GetWindowRect(window.Handle, out var rect) ? new Point(rect.Left, rect.Top) : window.PointToScreen(Point.Empty);
+
+    /// <summary>
+    /// Üst düzey pencerenin PrintWindow ile alınmış görüntüsü; alınamazsa <c>null</c>. Alt pencerelerde (MDI çocukları)
+    /// PrintWindow üstteki kardeş pencereleri de yakaladığından <c>null</c> döner; onlar DrawToBitmap ile çizilmeli.
+    /// </summary>
+    public static Bitmap? Capture(Control window)
+    {
+        if (window is Form { TopLevel: false }) return null;
+        if (!window.IsHandleCreated || !GetWindowRect(window.Handle, out var rect)) return null;
+        int width = rect.Right - rect.Left, height = rect.Bottom - rect.Top;
+        if (width <= 0 || height <= 0) return null;
+        var bitmap = new Bitmap(width, height);
+        using (var g = Graphics.FromImage(bitmap))
+        {
+            var hdc = g.GetHdc();
+            bool ok;
+            try
+            {
+                ok = PrintWindow(window.Handle, hdc, 2 /* PW_RENDERFULLCONTENT */);
+            }
+            finally
+            {
+                g.ReleaseHdc(hdc);
+            }
+            if (ok) return bitmap;
+        }
+        bitmap.Dispose();
+        return null;
+    }
+
+    public static List<Issue> Audit(Control root, Bitmap image, Point origin, double minimum = Minimum)
+    {
+        var issues = new List<Issue>();
+        Visit(root, root, image, origin, minimum, issues);
+        return issues;
+    }
+
+    private static void Visit(Control root, Control control, Bitmap image, Point origin, double minimum, List<Issue> issues)
+    {
+        if (!control.Visible || !control.IsHandleCreated) return;
+        // İç içe formlar (MDI çocukları) kendi görüntüleriyle denetlenir; üst formun görüntüsünde birbirlerinin altında kalabilirler.
+        if (control is Form && control != root) return;
+        if (CarriesText(control) && Measure(control, image, origin) is var (fore, back) && fore is Color f && back is Color b)
+        {
+            double ratio = TwContrast.Ratio(f, b);
+            if (ratio < minimum) issues.Add(new Issue(control, f, b, ratio));
+        }
+        foreach (Control child in control.Controls) Visit(root, child, image, origin, minimum, issues);
+    }
+
+    private static bool CarriesText(Control control) =>
+        !string.IsNullOrWhiteSpace(control.Text)
+        && (control is Label || control is ButtonBase || control is TextBoxBase || control is ComboBox);
+
+    /// <summary>Kontrolün görüntüdeki yazı ve zemin rengi; ölçülemiyorsa <c>(null, null)</c>.</summary>
+    public static (Color? Fore, Color? Back) Measure(Control control, Bitmap image, Point origin)
+    {
+        // Görünen alan: kontrolün ekrandaki dikdörtgeni, üst kontrollerin istemci alanlarıyla kesilir.
+        var visible = control.RectangleToScreen(control.ClientRectangle);
+        for (var parent = control.Parent; parent != null; parent = parent.Parent)
+            visible.Intersect(parent.RectangleToScreen(parent.ClientRectangle));
+        visible.Offset(-origin.X, -origin.Y);
+        visible.Intersect(new Rectangle(Point.Empty, image.Size));
+        visible.Inflate(-Inset, -Inset);
+        if (visible.Width < 4 || visible.Height < 4) return (null, null);
+
+        var counts = new Dictionary<int, int>();
+        for (int y = visible.Top; y < visible.Bottom; y++)
+            for (int x = visible.Left; x < visible.Right; x++)
+            {
+                int argb = image.GetPixel(x, y).ToArgb();
+                counts[argb] = counts.TryGetValue(argb, out int n) ? n + 1 : 1;
+            }
+        var back = Color.FromArgb(counts.OrderByDescending(c => c.Value).First().Key);
+
+        Color fore = back;
+        double best = 1;
+        foreach (var argb in counts.Keys)
+        {
+            var color = Color.FromArgb(argb);
+            double ratio = TwContrast.Ratio(color, back);
+            if (ratio > best)
+            {
+                best = ratio;
+                fore = color;
+            }
+        }
+        return (fore, back);
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct Rect
+    {
+        public int Left, Top, Right, Bottom;
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool PrintWindow(IntPtr hwnd, IntPtr hdc, uint flags);
 }

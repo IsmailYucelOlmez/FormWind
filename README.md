@@ -703,7 +703,7 @@ Bu testlerin bulduğu her hata için `ApplierTests` içinde ayrıca açık bir r
 | Parametre / ortam değişkeni | Etki |
 | --- | --- |
 | `-Dark` / `FORMWIND_DARK=1` | Koyu temayla başlar. Çalışırken **Ctrl+Alt+Shift+D** temayı değiştirir. |
-| `-SelfTest` / `FORMWIND_SELFTEST=1` | Her yeni formu açık ve koyu temada çizer (`DrawToBitmap`; ekrandaki başka pencereler görüntüye girmez) ve kontrastını denetler. |
+| `-SelfTest` / `FORMWIND_SELFTEST=1` | Her yeni formun açık ve koyu temada görüntüsünü alır ve kontrastını hem class renklerinden hem görüntüden denetler. |
 | `-ExitAfter 60` / `FORMWIND_EXIT_AFTER` | Verilen saniye sonra süreci sonlandırır (gözetimsiz çalıştırma). |
 | `-Skip DataGridView,ToolStrip` / `FORMWIND_SKIP` | Bu tipleri stillemez; bir sorunu bir kontrol tipine indirmek için. |
 | `FORMWIND_DISABLE=1` | Harness'i kapatır; aynı senaryoyu FormWind'siz karşılaştırmak için. |
@@ -720,6 +720,7 @@ Log ve görüntüler `%TEMP%\FormWind-Harness\<süreç>-<zaman>\` altına yazıl
 | `FORM` | Form, stillenen kontrol sayısı ve süre; `unstyled` tanınmayan kontrol tipleri |
 | `ADDED` | Sonradan eklenen ve stillenen kontroller |
 | `CONTRAST` | Kontrast denetiminin bulduğu çiftler (açık ve koyu tema) |
+| `SCREEN` | Self-test görüntüsünde 3:1'in altında kalan yazılar: kontrolün alanında en sık renk zemin, zemine en zıt piksel yazı sayılır. Class renklerinin göremediğini yakalar (Windows'un çizdiği devre dışı yazı, kendi paletiyle çizen kontroller); ölçüm yazı yumuşatması nedeniyle yaklaşıktır |
 | `OWNERDRAW` | Renklerini uygulamanın kendisi çizen kontroller (`TwContrast.FindOwnerDrawn`): kontrast denetimi bunları ölçemez, class'ların hücre/öğe renkleri yok sayılabilir; koyu temada elle bakılmalı |
 | `UI STALL` | UI iş parçacığının 250 ms'den uzun donması |
 | `PAINT STORM` | 3 saniye üst üste saniyede 100'den fazla çizim: çizim sırasında yeniden geçersiz kılma döngüsü |
@@ -727,7 +728,7 @@ Log ve görüntüler `%TEMP%\FormWind-Harness\<süreç>-<zaman>\` altına yazıl
 
 - Startup hook yalnızca .NET (Core) uygulamalarında vardır; trim edilmiş ya da hook'u kapatılmış uygulamalarda yüklenmez. .NET Framework uygulamalarında projeye `FormWind.Harness`'teki `FormWindHarness.cs` eklenip UI iş parçacığında `FormWindHarness.Install()` çağrılmalıdır.
 - Harness yalnızca içerik taşıyan konteynerlere (form, panel, GroupBox, sekme, SplitContainer, UserControl, ToolStrip konteynerleri) iner. Bileşik kontrollerin iç parçaları (örn. `KryptonTextBox`'ın içindeki `TextBox`, `PropertyGrid`'in yardım paneli, `NumericUpDown`'ın düzenleme kutusu) kontrolün kendisine aittir ve stillenmez.
-- Self-test görüntüleri `DrawToBitmap` ile alınır: başlık çubuğu Windows'un çizdiği gibi görünmez ve `RichTextBox` yanlış çizilir. Bu ikisi görüntüdeki hatalardır, uygulamada yoktur.
+- Self-test görüntüleri üst düzey pencerelerde `PrintWindow` ile alınır: başlık çubuğu, `RichTextBox` ve MDI çocukları ekrandaki gibi çıkar, pencere başka bir pencerenin altında kalsa da çalışır. MDI çocuklarında (`PrintWindow` üstteki kardeş pencereleri de yakaladığından) ve `PrintWindow` başarısız olursa `DrawToBitmap` kullanılır; orada başlık çubuğu Windows'un çizdiği gibi görünmez ve `RichTextBox` yanlış çizilir.
 - Formlar bir zamanlayıcıyla bulunur; uygulama WinForms ya da WPF mesaj döngüsüyle çalışsa da (örn. Greenshot) olur. Class'lar form gösterildikten sonra uygulandığından açılışta kısa bir an stilsiz görünebilir; o anda uygulamanın atadığı renkler özgün değer sayılır.
 - Bir sorun bulunduğunda önce `FORMWIND_DISABLE=1` ile FormWind'siz tekrarlayın; sorun yine oluyorsa uygulamanındır. Sonra `-Skip` ile sorunu bir kontrol tipine indirin.
 - Denenen uygulamalar: Git Extensions (.NET 10, startup hook), Greenshot (.NET Framework 4.8, WPF döngüsü), Greenshot 1.3 (.NET Framework 4.7.2, WinForms döngüsü, harness kod olarak), mRemoteNG (.NET 10, DockPanelSuite), Krypton Toolkit örnekleri (.NET 9: grid, giriş formu, ribbon, docking), ScottPlot WinForms demosu (.NET 10, 45 demo, `FORMWIND_WALK` ile), bir MDI kabuğu (.NET 8: birleşen menüler, pencere listesi, büyütülmüş çocuk, sonradan açılan çocuklar). Bulunan sorunlar bu README'deki davranışlara ve testlere dönüştü. Kendi tema motoru olan uygulamalarda (mRemoteNG) uygulamanın atadığı renkler korunduğu için koyu tema kısmen görünür; bu beklenen davranıştır.

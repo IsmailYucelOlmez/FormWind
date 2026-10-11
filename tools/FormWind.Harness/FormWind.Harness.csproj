@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FormWind\FormWind.csproj" />
+    <InternalsVisibleTo Include="FormWind.Tests" />
   </ItemGroup>
 
 </Project>
