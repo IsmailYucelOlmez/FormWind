@@ -664,6 +664,8 @@ tools/run-harness.ps1     Bir .NET WinForms uygulamasını harness'le çalışt�
 
 ## Geliştirme
 
+Katkı kuralları, test kategorileri, public API ve sürümleme politikası: [CONTRIBUTING.md](CONTRIBUTING.md). Değişiklikler: [CHANGELOG.md](CHANGELOG.md). Güvenlik açıkları: [SECURITY.md](SECURITY.md).
+
 ```bash
 dotnet build FormWind.sln
 ```

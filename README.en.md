@@ -664,6 +664,8 @@ tools/run-harness.ps1     Runs a .NET WinForms application with the harness and 
 
 ## Development
 
+Contribution guidelines, test categories, public API and versioning policy: [CONTRIBUTING.md](CONTRIBUTING.md). Changes: [CHANGELOG.md](CHANGELOG.md). Security issues: [SECURITY.md](SECURITY.md).
+
 ```bash
 dotnet build FormWind.sln
 ```
