@@ -7,6 +7,9 @@
     <Nullable>disable</Nullable>
     <RootNamespace>FormWind.Showcase</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Ana form bilerek Designer'ın varsayılanıyla (AutoScaleMode.Font) kurulu: DPI testleri Font modundaki ekran değişimini
+         bununla dener. Vitrin PerMonitorV2 çalışmadığından FW002'nin anlattığı ölçeklenmeme sorunu burada görünmez. -->
+    <NoWarn>$(NoWarn);FW002</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -563,13 +563,14 @@ FormWind.Krypton.KryptonApplier.Register();   // Program.Main içinde
 | --- | --- |
 | DPI-unaware (4.7.2 varsayılanı) | Windows bitmap olarak büyütür; yerleşim doğru, metin bulanık. |
 | PerMonitorV2 + `AutoScaleMode.Dpi` | Yerleşim, font ve FormWind boşlukları birlikte ölçeklenir. |
-| PerMonitorV2 + `AutoScaleMode.Font` | Kodla kurulan formlar ölçeklenmedi; boşluklar büyüdü, kontroller büyümedi. |
+| PerMonitorV2 + `AutoScaleMode.Font` | Kodla kurulan formlar ve (.NET Framework'te) fontu `AutoScaleDimensions`'tan sonra atanan Designer formları ölçeklenmedi; boşluklar ve fontlar büyüdü, kontroller büyümedi. |
 
 - 4.7.2'de PerMonitorV2 `app.config` içindeki `System.Windows.Forms.ApplicationConfigurationSection` (`DpiAwareness`) ile açılır. Bu dosyayı elle düzenlerken derlemenin ürettiği `bindingRedirect`'leri silmeyin; `System.Text.Json` bağımlılıkları yüklenemez ve uygulama açılışta düşer.
 - .NET Framework'te WinForms DPI ayarını ilk `Control` oluşturulurken uygular; GDI+ ise ekran DPI'ını başladığı anda bir kez okur. Bundan önce bir `Font` oluşturulursa (örn. tema yüklenirken) GDI+ 96 DPI'da kalır ve native kontrollerin (TextBox) fontları küçük çizilir. FormWind GDI+'ya dokunmadan önce WinForms'un DPI başlatmasını tetikler; kendi kodunuzda `Program.Main` içinde form oluşturmadan önce `Font` üretiyorsanız önce `new Control().Dispose()` çağırın.
 - PerMonitorV2 yalnızca uygulama manifestinde Windows 10 uyumluluğu (`supportedOS`) bildirildiyse açılır; yoksa süreç sessizce system-aware kalır.
 - **Ekran değişimi (%150, %200):** form başka DPI'lı bir ekrana taşınınca FormWind class'ları WinForms ölçeklemeyi bitirdikten sonra bir kez yeniden uygular. `AutoScaleMode.Dpi` ile kurulan formlarda fontlar, boşluklar, owner-draw kontroller ve DataGridView (font ve kolon genişlikleri) doğru ölçeklenir; bu `ControlsForm` ve bir grid formu için %150 ve %200'de doğrulandı.
-- `AutoScaleMode.Font` ile tasarlanmış formlarda ekran değişiminde hâlâ sorunlar var (iç TextBox fontu, native buton metni kırpılması, dar grid kolonları); `AutoScaleMode.Dpi` önerilir.
+- **`AutoScaleMode.Font` ve .NET Framework:** Designer formun `Font`'unu `AutoScaleDimensions`'tan sonra yazar. .NET Framework WinForms, PerMonitorV2 açıkken bu font atamasında ölçeklemeyi atlar ve `AutoScaleDimensions`'ı ölçeklenmiş gibi günceller: kontroller 96 DPI boyutunda kalır, fontlar (ve FormWind boşlukları) ekran DPI'ıyla büyür; yazılar kırpılır, grid kolonları dar kalır. Bu FormWind'siz de olur (aynı form `Font` önce atanınca doğru ölçeklenir) ve .NET 8'de yoktur. Çalışma anında düzeltilemez: ezilen değerden formun hangi DPI'da tasarlandığı anlaşılamaz. **FW002** çözümleyicisi bu formları uyarır; çözüm `AutoScaleMode.Dpi` ve `AutoScaleDimensions = new SizeF(96F, 96F)`.
+- Font modundaki formlarda .NET Framework ekran değişiminde fontları olay tetiklemeden değiştirir; `TwTextBox`'ın iç kutusu silinmiş font handle'ını tutup yazıyı sistem fontuyla küçük çiziyordu. `TwTextBox` artık formun `DpiChanged` olayında iç fontu yeniler (`Text_boxes_keep_a_valid_native_font_after_moving_to_200_percent`).
 - Test: `Controls_*_at_150/200_percent` görsel testleri vitrini ayrı bir PerMonitorV2 sürecinde açıp WM_DPICHANGED ile ölçekler (`FormWind.Showcase.exe --snapshot x.png --controls --dpi 192`; yalnızca PerMonitorV2 yapılandırmasıyla etkili). Referans adı sürecin sistem DPI'ını da içerir.
 
 Piksel değerleri kontrolün `DeviceDpi / 96` oranıyla ölçeklenir; class'lardaki değerler 96 DPI birimidir (`p-2` %125'te 10 px). Uygulamanın kendisinin DPI'a göre ölçeklemediği kontrollerde (örn. AutoScale'i çalışmayan UserControl'ler) bu, özgün değerlerden farklı sonuç verir.
@@ -601,6 +602,10 @@ btnSave.BackColor = Color.Red;   // FW001: 'btnSave' kontrolünün class'ları v
 Çalışma zamanında renk ataması kazanır: FormWind o renk kanalını uygulamaya bırakır (bkz. [Uygulama kodunun atadığı renkler](#uygulama-kodunun-atadığı-renkler)); durum rengi gibi bilinçli atamalarda uyarı bastırılabilir. Padding ve margin atamaları ise geri alınır, class kazanır (bkz. [DPI](#dpi)); bu durumda uyarı gerçek bir çakışmayı gösterir.
 
 Yalnızca class metni sabit olan çağrılar ve class'ların gerçekten yönettiği özellikler denetlenir (`bg-*` → BackColor, `text-{renk}` → ForeColor, `text-{boyut}` → Font, `p-*` → Padding, `m-*` → Margin, `cursor-*` → Cursor; varsayılan bileşenler dahil). `font-sans` ya da `font-semibold` varken temel `Font` ataması uyarı vermez. Kapatmak için `.editorconfig`'te `dotnet_diagnostic.FW001.severity = none`.
+
+### FW002 çözümleyicisi
+
+.NET Framework projelerinde, `SetClasses` kullanan bir `InitializeComponent` `AutoScaleMode.Font` kuruyor ve formun `Font`'unu `AutoScaleDimensions`'tan sonra atıyorsa uyarır (bkz. [DPI](#dpi)): PerMonitorV2'de form ölçeklenmez. Hedef çerçeve `build_property.TargetFramework`'ten, o yoksa referans verilen WinForms'un sürümünden anlaşılır. Uygulama PerMonitorV2 çalışmıyorsa uyarı `.editorconfig`'te `dotnet_diagnostic.FW002.severity = none` ile kapatılabilir.
 
 ## Animasyonlar ve responsive varyantlar
 
@@ -815,7 +820,6 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 - [x] PerMonitorV2'de native kontrol fontlarının küçük kalması (GDI+ başlatma sırası)
 - [x] CI ve ortam başına görsel referanslar
 - [x] %150/%200 DPI doğrulaması ve ekran değişiminde yeniden ölçekleme (`AutoScaleMode.Dpi` formları)
-- [ ] `AutoScaleMode.Font` formlarında ekran değişimi
 - [x] Formlar: `TwField`, doğrulama, `invalid:`, maske, `TwDialog`, `TwToast`
 - [x] `TwDataList` çoklu seçim, gruplar, parça parça yükleme; grid süzme menüsü, kolon seçimi, `TwPager`
 - [x] `TwListBox`, `TwCheckedListBox`, `TwTreeView`

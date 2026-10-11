@@ -6,3 +6,4 @@
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 FW001 | FormWind | Warning | StyleOverrideAnalyzer
+FW002 | FormWind | Warning | FontScalingAnalyzer

@@ -100,5 +100,92 @@ public class AnalyzerTests
     [InlineData("item:hover:bg-gray-100 caption:bg-white", "")]
     public void Maps_classes_to_managed_properties(string classes, string expected) =>
         Assert.Equal(expected, string.Join(",", StyleOverrideAnalyzer.ManagedProperties(classes).Distinct()));
+
+    private sealed class TestOptionsProvider : AnalyzerConfigOptionsProvider
+    {
+        private readonly Options _options;
+
+        public TestOptionsProvider(string targetFramework) => _options = new Options(targetFramework);
+
+        public override AnalyzerConfigOptions GlobalOptions => _options;
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => _options;
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => _options;
+
+        private sealed class Options : AnalyzerConfigOptions
+        {
+            private readonly string _targetFramework;
+
+            public Options(string targetFramework) => _targetFramework = targetFramework;
+
+            public override bool TryGetValue(string key, out string value)
+            {
+                value = _targetFramework;
+                return key == "build_property.TargetFramework";
+            }
+        }
+    }
+
+    // Designer'ın .NET Framework formu: font AutoScaleDimensions'tan sonra.
+    private const string FontModeForm = """
+        using System.Drawing;
+        using System.Windows.Forms;
+        using FormWind;
+
+        partial class OrderForm : Form
+        {
+            private TailwindProvider tailwindProvider1 = new TailwindProvider();
+            private Button btnSave = new Button();
+
+            private void InitializeComponent()
+            {
+                this.tailwindProvider1.SetClasses(this.btnSave, "btn-primary");
+                this.btnSave.Font = new Font("Segoe UI", 10F);
+                EARLY
+                this.AutoScaleDimensions = new SizeF(7F, 15F);
+                this.AutoScaleMode = AutoScaleMode.MODE;
+                this.ClientSize = new Size(800, 450);
+                LATE
+            }
+        }
+        """;
+
+    private const string FormFont = "this.Font = new Font(\"Segoe UI\", 9F);";
+
+    private static string FontModeSource(string mode, bool fontFirst = false) => FontModeForm
+        .Replace("MODE", mode).Replace("EARLY", fontFirst ? FormFont : "").Replace("LATE", fontFirst ? "" : FormFont);
+
+    private static ImmutableArray<Diagnostic> AnalyzeFontScaling(string source, string targetFramework)
+    {
+        var platform = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator);
+        var references = platform.Select(path => MetadataReference.CreateFromFile(path))
+            .Concat(new[] { MetadataReference.CreateFromFile(typeof(Control).Assembly.Location), MetadataReference.CreateFromFile(typeof(TailwindProvider).Assembly.Location) })
+            .GroupBy(r => Path.GetFileName(r.FilePath)).Select(g => g.First());
+        var compilation = CSharpCompilation.Create("Sample", new[] { CSharpSyntaxTree.ParseText(source) }, references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var options = new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, new TestOptionsProvider(targetFramework));
+        return compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new FontScalingAnalyzer()), options)
+            .GetAnalyzerDiagnosticsAsync().GetAwaiter().GetResult();
+    }
+
+    [Fact]
+    public void Reports_font_assigned_after_auto_scale_dimensions_on_net_framework()
+    {
+        var diagnostic = Assert.Single(AnalyzeFontScaling(FontModeSource("Font"), "net472"));
+        Assert.Equal("FW002", diagnostic.Id);
+        Assert.Contains("OrderForm", diagnostic.GetMessage());
+        Assert.Equal(FormFont.TrimEnd(';'), diagnostic.Location.SourceTree!.ToString().Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length));
+    }
+
+    [Theory]
+    [InlineData("Dpi", "net472")]          // Dpi modu etkilenmez
+    [InlineData("Font", "net8.0-windows")]  // .NET (Core) WinForms doğru ölçekler
+    public void Ignores_dpi_mode_and_modern_dotnet(string mode, string targetFramework) =>
+        Assert.Empty(AnalyzeFontScaling(FontModeSource(mode), targetFramework));
+
+    [Fact]
+    public void Ignores_font_assigned_before_auto_scale_dimensions() =>
+        Assert.Empty(AnalyzeFontScaling(FontModeSource("Font", fontFirst: true), "net472"));
 }
 #endif

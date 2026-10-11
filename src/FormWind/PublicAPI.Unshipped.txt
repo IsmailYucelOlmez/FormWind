@@ -1087,6 +1087,8 @@ override FormWind.TwTabStrip.OnSizeChanged(System.EventArgs! e) -> void
 override FormWind.TwTextBox.OnBackColorChanged(System.EventArgs! e) -> void
 override FormWind.TwTextBox.OnDpiChangedAfterParent(System.EventArgs! e) -> void
 override FormWind.TwTextBox.OnFontChanged(System.EventArgs! e) -> void
+override FormWind.TwTextBox.OnHandleCreated(System.EventArgs! e) -> void
+override FormWind.TwTextBox.Dispose(bool disposing) -> void
 override FormWind.TwTextBox.OnForeColorChanged(System.EventArgs! e) -> void
 override FormWind.TwTextBox.OnGotFocus(System.EventArgs! e) -> void
 override FormWind.TwTextBox.OnMouseDown(System.Windows.Forms.MouseEventArgs! e) -> void

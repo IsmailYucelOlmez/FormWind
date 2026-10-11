@@ -17,6 +17,8 @@ namespace FormWind;
 public class TwTextBox : TwPanel
 {
     private readonly PlaceholderTextBox _inner;
+    private bool _fontSyncPending;
+    private Form? _dpiForm;
     private MaskedTextProvider? _mask;
 
     public TwTextBox()
@@ -165,6 +167,32 @@ public class TwTextBox : TwPanel
     {
         base.OnFontChanged(e);
         UpdateHeight();
+        ScheduleFontSync();
+    }
+
+    // .NET Framework'te (PerMonitorV2) ekran değişince WinForms fontları olay tetiklemeden değiştirir (ne FontChanged ne
+    // DpiChangedAfterParent gelir); iç TextBox'a WM_SETFONT gitmez, native kutu silinmiş eski font handle'ını tutar ve
+    // yazıyı sistem fontuyla küçük çizer. Formun DpiChanged olayı her durumda geldiği için ona abone olunur.
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        var form = FindForm();
+        if (form == _dpiForm) return;
+        if (_dpiForm != null) _dpiForm.DpiChanged -= OnFormDpiChanged;
+        _dpiForm = form;
+        if (form != null) form.DpiChanged += OnFormDpiChanged;
+    }
+
+    private void OnFormDpiChanged(object? sender, DpiChangedEventArgs e) => ScheduleFontSync();
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && _dpiForm != null)
+        {
+            _dpiForm.DpiChanged -= OnFormDpiChanged;
+            _dpiForm = null;
+        }
+        base.Dispose(disposing);
     }
 
     protected override void OnPaddingChanged(EventArgs e)
@@ -298,11 +326,19 @@ public class TwTextBox : TwPanel
         UpdateHeight();
         // İç TextBox'ın native fontu ekran değişince her zaman yenilenmiyor (yazı eski boyutta kalıyor); ölçekleme
         // bittikten sonra font yeniden verilir.
-        if (IsHandleCreated) BeginInvoke((Action)SyncInnerFont);
+        ScheduleFontSync();
+    }
+
+    private void ScheduleFontSync()
+    {
+        if (!IsHandleCreated || _fontSyncPending) return;
+        _fontSyncPending = true;
+        BeginInvoke((Action)SyncInnerFont);
     }
 
     private void SyncInnerFont()
     {
+        _fontSyncPending = false;
         if (IsDisposed) return;
         // Geçici olarak ayrı bir font verip mirasa dönmek, native fontun yeniden gönderilmesini zorlar.
         using (var refresh = new Font(Font, Font.Style))

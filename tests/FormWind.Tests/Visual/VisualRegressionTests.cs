@@ -154,31 +154,57 @@ public class VisualRegressionTests
     [VisualFact]
     public void Controls_dark_at_200_percent() => CheckDpi("controls-dark", 192, "--controls", "--dark");
 
-    private static void CheckDpi(string name, int dpi, params string[] options)
+    // .NET Framework ekran değişiminde fontları olaysız değiştirir; TwTextBox'ın iç kutusu silinmiş font handle'ını tutup
+    // yazıyı sistem fontuyla küçük çiziyordu. Ana form AutoScaleMode.Font ile kurulu (Designer biçimi).
+    [Fact]
+    public void Text_boxes_keep_a_valid_native_font_after_moving_to_200_percent()
+    {
+        var folder = PrepareDpiShowcase();
+        try
+        {
+            var output = Path.Combine(folder, "snapshot.png");
+            int exit = RunShowcase(folder, $"--snapshot \"{output}\" --dpi 192 --check-native-fonts");
+            Assert.True(exit == 0, "Native fontu geçersiz metin kutuları: " + (File.Exists(output + ".fonts.txt") ? File.ReadAllText(output + ".fonts.txt") : "?"));
+        }
+        finally
+        {
+            try { Directory.Delete(folder, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    // Vitrinin PerMonitorV2 yapılandırmayla çalışan bir kopyası.
+    private static string PrepareDpiShowcase()
     {
         var folder = Path.Combine(Path.GetTempPath(), "formwind-dpi-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
+        var source = AppDomain.CurrentDomain.BaseDirectory;
+        foreach (var file in Directory.GetFiles(source, "*.dll").Concat(new[] { Path.Combine(source, "FormWind.Showcase.exe"), Path.Combine(source, "tw.config.json") }))
+            if (File.Exists(file)) File.Copy(file, Path.Combine(folder, Path.GetFileName(file)));
+
+        // Aynı yapılandırma, PerMonitorV2 açık (manifest Windows 10 uyumluluğunu zaten bildiriyor).
+        var config = System.Xml.Linq.XDocument.Load(Path.Combine(source, "FormWind.Showcase.exe.config"));
+        config.Root!.AddFirst(new System.Xml.Linq.XElement("System.Windows.Forms.ApplicationConfigurationSection",
+            new System.Xml.Linq.XElement("add", new System.Xml.Linq.XAttribute("key", "DpiAwareness"), new System.Xml.Linq.XAttribute("value", "PerMonitorV2")),
+            new System.Xml.Linq.XElement("add", new System.Xml.Linq.XAttribute("key", "EnableWindowsFormsHighDpiAutoResizing"), new System.Xml.Linq.XAttribute("value", "true"))));
+        config.Save(Path.Combine(folder, "FormWind.Showcase.exe.config"));
+        return folder;
+    }
+
+    private static int RunShowcase(string folder, string arguments)
+    {
+        using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(folder, "FormWind.Showcase.exe"), arguments)
+            { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = folder })!;
+        Assert.True(process.WaitForExit(60_000), "Vitrin süreci 60 sn içinde bitmedi.");
+        return process.ExitCode;
+    }
+
+    private static void CheckDpi(string name, int dpi, params string[] options)
+    {
+        var folder = PrepareDpiShowcase();
         try
         {
-            var source = AppDomain.CurrentDomain.BaseDirectory;
-            foreach (var file in Directory.GetFiles(source, "*.dll").Concat(new[] { Path.Combine(source, "FormWind.Showcase.exe"), Path.Combine(source, "tw.config.json") }))
-                if (File.Exists(file)) File.Copy(file, Path.Combine(folder, Path.GetFileName(file)));
-
-            // Aynı yapılandırma, PerMonitorV2 açık (manifest Windows 10 uyumluluğunu zaten bildiriyor).
-            var config = System.Xml.Linq.XDocument.Load(Path.Combine(source, "FormWind.Showcase.exe.config"));
-            config.Root!.AddFirst(new System.Xml.Linq.XElement("System.Windows.Forms.ApplicationConfigurationSection",
-                new System.Xml.Linq.XElement("add", new System.Xml.Linq.XAttribute("key", "DpiAwareness"), new System.Xml.Linq.XAttribute("value", "PerMonitorV2")),
-                new System.Xml.Linq.XElement("add", new System.Xml.Linq.XAttribute("key", "EnableWindowsFormsHighDpiAutoResizing"), new System.Xml.Linq.XAttribute("value", "true"))));
-            config.Save(Path.Combine(folder, "FormWind.Showcase.exe.config"));
-
             var output = Path.Combine(folder, "snapshot.png");
-            var arguments = $"--snapshot \"{output}\" --dpi {dpi} " + string.Join(" ", options);
-            using (var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(folder, "FormWind.Showcase.exe"), arguments)
-                   { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = folder })!)
-            {
-                Assert.True(process.WaitForExit(60_000), "Vitrin süreci 60 sn içinde bitmedi.");
-                Assert.Equal(0, process.ExitCode);
-            }
+            Assert.Equal(0, RunShowcase(folder, $"--snapshot \"{output}\" --dpi {dpi} " + string.Join(" ", options)));
 
             // system=120;form=192 → referans adı sistem DPI'ını da içerir (sistem DPI'ı farklı makinede çizim farklıdır).
             var info = File.ReadAllText(output + ".txt").Split(';').Select(p => p.Split('=')).ToDictionary(p => p[0], p => p[1]);
