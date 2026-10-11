@@ -43,7 +43,7 @@ internal sealed class SignInForm : Form
 
         _tw.SetClasses(this, "page");
         _tw.SetClasses(page, "flex items-center justify-center page");
-        _tw.SetClasses(card, "panel flex flex-col gap-3 p-8 shadow-lg w-[380px] h-[400px]");
+        _tw.SetClasses(card, "panel flex flex-col gap-3 p-8 shadow-lg");
         _tw.SetClasses(title, "title");
         _tw.SetClasses(subtitle, "muted mb-2");
         _tw.SetClasses(emailField, "field");

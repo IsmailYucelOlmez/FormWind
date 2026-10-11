@@ -1017,6 +1017,7 @@ override FormWind.TwPanel.DisplayRectangle.get -> System.Drawing.Rectangle
 override FormWind.TwPanel.GetPreferredSize(System.Drawing.Size proposedSize) -> System.Drawing.Size
 override FormWind.TwPanel.LayoutEngine.get -> System.Windows.Forms.Layout.LayoutEngine!
 override FormWind.TwPanel.OnRightToLeftChanged(System.EventArgs! e) -> void
+override FormWind.TwPanel.ScaleControl(System.Drawing.SizeF factor, System.Windows.Forms.BoundsSpecified specified) -> void
 override FormWind.TwPanel.OnPaintBackground(System.Windows.Forms.PaintEventArgs! e) -> void
 override FormWind.TwPictureBox.CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject!
 override FormWind.TwPictureBox.DefaultSize.get -> System.Drawing.Size

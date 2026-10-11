@@ -100,6 +100,13 @@ public class TwPanel : Panel, ITwChrome, ITwLayoutHost
         (int)Math.Ceiling(chrome.BorderRight),
         (int)Math.Ceiling(chrome.BorderBottom));
 
+    // Çocukların doğal boyutları da ölçeklenir (bkz. TwLayout.OnHostScaling); WinForms çocukları bu çağrıdan sonra ölçekler.
+    protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+    {
+        TwLayout.OnHostScaling(this, factor);
+        base.ScaleControl(factor, specified);
+    }
+
     // Sağdan sola değişince flex/grid yerleşimi aynalanır (bkz. TwLayoutEngine).
     protected override void OnRightToLeftChanged(EventArgs e)
     {

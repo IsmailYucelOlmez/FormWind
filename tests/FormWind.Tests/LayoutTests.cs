@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using FormWind.Tests.Performance;
 using Xunit;
 
 namespace FormWind.Tests;
@@ -313,4 +314,35 @@ public sealed class LayoutTests : IDisposable
 
         Assert.Equal(new Point(40, 30), child.Location);
     }
+}
+
+// Form açan yerleşim testleri; UI koleksiyonunda sırayla çalışır.
+[Collection(UiCollection.Name)]
+public class LayoutScalingTests
+{
+    // Konteyner henüz küçükken motor bir öğeyi geçici olarak daraltır; ardından gelen AutoScale bu daraltılmış boyutu
+    // ölçekleyip doğal boyut sanıyordu (ortalanan bir kart kalıcı olarak kısa kalıyordu).
+    [Fact]
+    public void AutoScale_keeps_the_natural_size_of_a_temporarily_squeezed_item() => Sta.Run(() =>
+    {
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        using var tw = new TailwindProvider();
+        form.SuspendLayout();
+        form.AutoScaleMode = AutoScaleMode.Dpi;
+        form.AutoScaleDimensions = new SizeF(80F, 80F);   // 96 DPI'da 1,2 kat
+        form.ClientSize = new Size(440, 460);
+        var page = new TwPanel { Dock = DockStyle.Fill };
+        var card = new TwPanel { Size = new Size(380, 400) };
+        card.Controls.Add(new Label { Text = "Hoş geldiniz", AutoSize = true });
+        page.Controls.Add(card);
+        form.Controls.Add(page);
+        tw.SetClasses(page, "flex items-center justify-center");
+        tw.SetClasses(card, "flex flex-col gap-3 p-8");
+        form.ResumeLayout();
+        form.Show();
+        Application.DoEvents();
+
+        Assert.Equal(new Size(456, 480), card.Size);
+        Assert.Equal((page.ClientSize.Height - 480) / 2, card.Top);   // dikeyde ortalı
+    });
 }

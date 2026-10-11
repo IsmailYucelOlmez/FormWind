@@ -102,6 +102,18 @@ public static class TwLayout
 
     internal static TwLayoutData Get(Control control) => Table.GetValue(control, c => new TwLayoutData(c));
 
+    /// <summary>
+    /// Yerleşim konteyneri ölçeklenirken (AutoScale, ekran DPI'ı değişimi) çağrılır; WinForms çocukları kaptan sonra ölçekler.
+    /// Çocukların doğal boyutu da ölçeklenir ve ölçeklemenin getireceği boyut değişimi doğal boyut sayılmaz: motor bir öğeyi
+    /// geçici olarak daraltmışsa (konteyner henüz küçükken), daraltılmış boyutun ölçeklenmiş hâli kalıcı olmasın.
+    /// </summary>
+    internal static void OnHostScaling(Control host, SizeF factor)
+    {
+        if (factor.Width == 1f && factor.Height == 1f) return;
+        foreach (Control child in host.Controls)
+            Find(child)?.ExpectScale(child, factor);
+    }
+
     internal static TwLayoutData? Find(Control control) => Table.TryGetValue(control, out var data) ? data : null;
 
     internal static void Enter() => _engineDepth++;
@@ -117,8 +129,22 @@ internal sealed class TwLayoutData
         // Motorun kendi atamaları dışındaki boyut değişiklikleri (Designer, AutoSize, w-32) doğal boyut sayılır.
         control.SizeChanged += (_, _) =>
         {
-            if (!TwLayout.InEngine) NaturalSize = control.Size;
+            if (TwLayout.InEngine) return;
+            var expected = _scaledSize;
+            _scaledSize = null;
+            // Konteynerin ölçeklemesinden gelen değişim: doğal boyut ExpectScale'de zaten ölçeklendi (yuvarlama payı 1 px).
+            if (expected is Size size && Math.Abs(control.Width - size.Width) <= 1 && Math.Abs(control.Height - size.Height) <= 1) return;
+            NaturalSize = control.Size;
         };
+    }
+
+    private Size? _scaledSize;
+
+    /// <summary>Konteyner ölçeklenirken: doğal boyutu ölçekler, kontrolün gelecek ölçekli boyutunu not eder.</summary>
+    public void ExpectScale(Control control, SizeF factor)
+    {
+        NaturalSize = new Size((int)Math.Round(NaturalSize.Width * factor.Width), (int)Math.Round(NaturalSize.Height * factor.Height));
+        _scaledSize = new Size((int)Math.Round(control.Width * factor.Width), (int)Math.Round(control.Height * factor.Height));
     }
 
     public TwContainerProps? Container { get; set; }
