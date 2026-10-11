@@ -121,7 +121,7 @@ public class TwButton : Button, ITwChrome
         if (TwTheme.Current.HasIcon(_iconName))
             DrawIconAndText(graphics, _iconName, textBounds, flags);
         else
-            TextRenderer.DrawText(graphics, Text, Font, textBounds, ForeColor, flags);
+            TextRenderer.DrawText(graphics, Text, Font, textBounds, TwDisabledText.TextColor(this), flags);
 
         if (Focused && _focusVisible)
         {
@@ -162,11 +162,11 @@ public class TwButton : Button, ITwChrome
         var iconRect = new Rectangle(iconFirst ? x : x + textWidth + gap, bounds.Y, iconSize.Width, bounds.Height);
         var textRect = new Rectangle(iconFirst ? x + iconSize.Width + gap : x, bounds.Y, textWidth, bounds.Height);
 
-        TwIconRenderer.DrawIcon(graphics, icon, em, AlignVertically(iconRect, em, vertical), ForeColor);
+        TwIconRenderer.DrawIcon(graphics, icon, em, AlignVertically(iconRect, em, vertical), TwDisabledText.TextColor(this));
         if (hasText)
         {
             var flags = (textFlags & ~(TextFormatFlags.HorizontalCenter | TextFormatFlags.Right)) | TextFormatFlags.NoPadding;
-            TextRenderer.DrawText(graphics, Text, Font, textRect, ForeColor, flags);
+            TextRenderer.DrawText(graphics, Text, Font, textRect, TwDisabledText.TextColor(this), flags);
         }
     }
 }

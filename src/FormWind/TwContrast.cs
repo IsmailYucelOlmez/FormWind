@@ -31,7 +31,8 @@ public static class TwContrast
     /// kontroller WCAG'ın kapsamı dışında olduğundan varsayılan olarak atlanır; <paramref name="includeDisabled"/> onları da
     /// denetler. Bu, devre dışı bir kontrolün içerik göstermek için kullanıldığı durumlarda (örn. imleç görünmesin diye
     /// devre dışı bırakılmış bir RichTextBox) işe yarar. Devre dışı native metin kutularında zemin, Windows'un çizdiği
-    /// sistem zemini (<see cref="SystemColors.Control"/>) sayılır. <c>transition</c> geçişi süren renkler için varılacak renk denetlenir;
+    /// sistem zemini (<see cref="SystemColors.Control"/>) sayılır. Devre dışı butonlarda ekrana çizilen yazı rengi 3:1 eşiğiyle
+    /// denetlenir (görünmez yazıyı yakalamak için). <c>transition</c> geçişi süren renkler için varılacak renk denetlenir;
     /// böylece tema değişiminin hemen ardından da doğru sonuç verir.
     /// </summary>
     public static IReadOnlyList<TwContrastIssue> Audit(Control root, TailwindProvider? provider = null, double minimum = TextMinimum, bool includeDisabled = false)
@@ -56,6 +57,14 @@ public static class TwContrast
             var disabledFore = TwOriginal.IsExplicit(control, nameof(Control.ForeColor)) ? control.ForeColor : SystemColors.GrayText;
             double disabledRequired = IsLarge(control.Font) ? Math.Min(minimum, LargeTextMinimum) : minimum;
             Check(issues, control, "disabled text", disabledFore, SystemColors.Control, disabledRequired);
+        }
+        else if (!control.Enabled && includeDisabled && control is Button button)
+        {
+            // Devre dışı butonun ekrana çizilen yazı rengi (bkz. TwDisabledText); Windows'un kendi çizdiği standart
+            // butonlar sistem renklerini kullanır ve denetlenmez. Devre dışı öğeler WCAG kapsamında olmadığından eşik
+            // büyük metninki (3:1): amaç görünmez yazıyı yakalamak.
+            if (button is ITwChrome || button.FlatStyle == FlatStyle.Flat)
+                Check(issues, control, "disabled text", TwDisabledText.TextColor(button), EffectiveBack(control), Math.Min(minimum, LargeTextMinimum));
         }
         else if (control.Enabled || includeDisabled)
         {

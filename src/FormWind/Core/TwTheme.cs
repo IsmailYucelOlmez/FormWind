@@ -179,9 +179,9 @@ public sealed class TwTheme
     {
         ["btn"] = "px-4 py-2 rounded-md text-sm font-semibold cursor-pointer transition",
         // Koyu temada da blue-600/700: beyaz yazı blue-500 üzerinde 3,7:1, blue-400 üzerinde 2,5:1 ile WCAG AA'yı geçmez.
-        ["btn-primary"] = "btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 disabled:text-gray-500 dark:bg-blue-600 dark:hover:bg-blue-700",
-        ["btn-ghost"] = "btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 active:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700",
-        ["btn-danger"] = "btn bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-gray-300 disabled:text-gray-500",
+        ["btn-primary"] = "btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 disabled:text-gray-500 dark:bg-blue-600 dark:hover:bg-blue-700 dark:disabled:bg-gray-700 dark:disabled:text-gray-400",
+        ["btn-ghost"] = "btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 active:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-500 dark:disabled:border-gray-700",
+        ["btn-danger"] = "btn bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400",
         ["field"] = "label:text-sm label:font-medium label:text-gray-700 hint:text-xs hint:text-gray-500 error:text-xs error:text-red-600 " +
                     "dark:label:text-gray-200 dark:hint:text-gray-400 dark:error:text-red-400",
         ["card"] = "bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700",

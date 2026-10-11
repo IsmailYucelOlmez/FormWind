@@ -528,4 +528,51 @@ public class ApplierTests
         Apply(auto, TwOriginal.Capture(auto, false), "px-4 py-2 text-sm");
         Assert.Equal(new Padding(16, 8, 16, 8), auto.Padding);
     }
+
+    // Native düz buton devre dışıyken ForeColor'ı yok sayar, yazıyı zeminin koyu tonuyla çizer (koyu zeminde görünmez).
+    // 25 px: btn'in py-2'si sığmaz ve kısılır, yazı alanı yazıdan alçak kalır.
+    [Theory]
+    [InlineData(32)]
+    [InlineData(25)]
+    public void Disabled_native_button_draws_text_with_class_color_in_the_same_place(int height) => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider { DarkMode = true };
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        var button = new Button { Text = "Save", Size = new Size(100, height), Location = new Point(10, 10) };
+        form.Controls.Add(button);
+        provider.SetClasses(button, "btn-ghost");
+        form.Show();
+
+        Rectangle TextBox(out int textPixels, out Color brightest)
+        {
+            using var bitmap = new Bitmap(button.Width, button.Height);
+            button.DrawToBitmap(bitmap, new Rectangle(Point.Empty, button.Size));
+            var back = button.BackColor;
+            int left = int.MaxValue, top = int.MaxValue, right = -1, bottom = -1;
+            textPixels = 0;
+            brightest = back;
+            for (int x = 3; x < bitmap.Width - 3; x++)
+                for (int y = 3; y < bitmap.Height - 3; y++)
+                {
+                    var c = bitmap.GetPixel(x, y);
+                    if (Math.Abs(c.R - back.R) + Math.Abs(c.G - back.G) + Math.Abs(c.B - back.B) < 60) continue;
+                    textPixels++;
+                    if (c.GetBrightness() > brightest.GetBrightness()) brightest = c;
+                    left = Math.Min(left, x); top = Math.Min(top, y); right = Math.Max(right, x); bottom = Math.Max(bottom, y);
+                }
+            return Rectangle.FromLTRB(left, top, right, bottom);
+        }
+
+        var enabled = TextBox(out _, out _);
+        button.Enabled = false;
+        var disabled = TextBox(out int pixels, out var brightest);
+
+        Assert.True(pixels > 20, "devre dışı yazı zeminden ayırt edilmeli");
+        Assert.True(brightest.GetBrightness() > button.BackColor.GetBrightness(), "koyu zeminde yazı zeminden açık olmalı");
+        // Soluk yazının kenar pikselleri eşiğin altında kalabilir; kutular değil merkezler karşılaştırılır.
+        float dx = (disabled.Left + disabled.Right - enabled.Left - enabled.Right) / 2f;
+        float dy = (disabled.Top + disabled.Bottom - enabled.Top - enabled.Bottom) / 2f;
+        Assert.True(Math.Abs(dx) <= 1.5f && Math.Abs(dy) <= 1.5f, $"etkin {enabled}, devre dışı {disabled}");
+        form.Close();
+    });
 }

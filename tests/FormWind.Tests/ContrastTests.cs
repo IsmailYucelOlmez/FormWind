@@ -163,4 +163,53 @@ public class ContrastTests
         form.Close();
         Assert.True(issues.Count == 0, string.Join(Environment.NewLine, issues.Select(i => i.ToString())));
     });
+
+    // Devre dışı butonlar: yazı okunabilir kalmalı (3:1), varsayılan bileşenlerin koyu temada açık blok olmamalı.
+    [Theory]
+    [InlineData(false, TwPaletteVersion.V3)]
+    [InlineData(true, TwPaletteVersion.V3)]
+    [InlineData(false, TwPaletteVersion.V4)]
+    [InlineData(true, TwPaletteVersion.V4)]
+    public void Disabled_default_buttons_stay_readable(bool dark, TwPaletteVersion palette) => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider { Theme = new TwTheme(palette), DarkMode = dark };
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        provider.SetClasses(form, "bg-white dark:bg-gray-900");
+        var buttons = new Control[]
+        {
+            new TwButton { Name = "tw-primary", Text = "Kaydet", Enabled = false },
+            new TwButton { Name = "tw-ghost", Text = "İptal", Enabled = false },
+            new TwButton { Name = "tw-danger", Text = "Sil", Enabled = false },
+            new Button { Name = "native-primary", Text = "Kaydet", Enabled = false },
+            new Button { Name = "native-ghost", Text = "İptal", Enabled = false },
+            new Button { Name = "native-danger", Text = "Sil", Enabled = false },
+        };
+        form.Controls.AddRange(buttons);
+        foreach (var button in buttons) provider.SetClasses(button, "btn-" + button.Name.Split('-')[1]);
+        form.Show();
+
+        var issues = TwContrast.Audit(form, provider, includeDisabled: true);
+        Assert.True(issues.Count == 0, string.Join(Environment.NewLine, issues.Select(i => i.ToString())));
+        if (dark)
+            foreach (var button in buttons)
+                Assert.True(button.BackColor.GetBrightness() < 0.5f, $"{button.Name} koyu temada açık zeminli: {button.BackColor}");
+        form.Close();
+    });
+
+    [Fact]
+    public void Disabled_button_without_disabled_variant_is_dimmed_and_audited_with_drawn_color() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form { BackColor = ColorTranslator.FromHtml("#111827") };
+        var button = new TwButton { Text = "OK", Enabled = false };
+        form.Controls.Add(button);
+        provider.SetClasses(button, "bg-gray-800 text-gray-100");
+
+        var drawn = TwDisabledText.TextColor(button);
+        Assert.NotEqual(button.ForeColor.ToArgb(), drawn.ToArgb());
+        Assert.True(TwContrast.Ratio(drawn, button.BackColor) < TwContrast.Ratio(button.ForeColor, button.BackColor));
+
+        provider.SetClasses(button, "bg-gray-800 text-gray-100 disabled:text-gray-400");
+        Assert.Equal(ColorTranslator.FromHtml("#9ca3af").ToArgb(), TwDisabledText.TextColor(button).ToArgb());
+    });
 }
