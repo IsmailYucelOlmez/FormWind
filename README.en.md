@@ -76,7 +76,12 @@ dotnet new formwind-app -n MyApp --Framework net8.0-windows --Palette v4
 - Within the same variant the later class wins: `p-2 px-4` → 8 px vertical, 16 px horizontal.
 - Unknown classes are reported through the `TailwindProvider.UnknownClasses` event (or the Debug output when nobody listens).
 - In CSS, padding grows the box; in WinForms, on a fixed-size (`AutoSize` off) button or label it shrinks the content. On these controls padding is reduced just enough for the text to fit on one line (e.g. `py-2` shrinks when `btn` is applied to a 25 px tall button). It is recalculated when the control grows or its font or text changes, and returns to the full value when there is room.
+- Padding fitting cannot shrink the font: if a fixed-size control gets a class that enlarges its font (e.g. `text-sm font-semibold` in `btn`), the text may not fit even with zero padding; do not give such controls a font class, or make the control larger.
 - Removing `hidden` makes a control hidden by FormWind visible again.
+- **MDI:** the `bg-*` color of an `IsMdiContainer` form is also given to the area behind the child windows (`MdiClient`); otherwise that area keeps the system gray and becomes a light gap in dark mode. A color the application assigned to the `MdiClient` is kept. The minimize/restore/close buttons that a maximized child adds to the menu are drawn in the strip's text color. Windows does not draw dark title bars on MDI children (classic frame), and the `MdiClient`'s sunken edge shows as a light line in dark mode; both are outside FormWind's control.
+- **Boxes hosted in a strip:** `ToolStripTextBox` and `ToolStripComboBox` are not drawn by the strip's renderer and stayed white on a dark strip. They take the strip's text color and a background derived from the strip (white on a light strip, slightly lighter than the background on a dark one); the combo box's frame and arrow button are drawn with these colors too. Boxes in sub-menus that share the strip's renderer and boxes added later are included. Colors the application assigned to these boxes are kept.
+- **Disabled native text boxes** (`TextBox`, `RichTextBox`, `MaskedTextBox`): Windows does not reliably honor the background color of a disabled text box (depending on when the color was assigned it may paint the system background), but it does honor the text color; in dark mode this produced light text on a light background. So while disabled, only the colors of `disabled:` variants are applied; otherwise Windows' own disabled look (gray text on a light background) remains. Controls FormWind draws itself (including `TwTextBox`) are not affected.
+- **Disabled buttons:** Windows draws the text of a disabled flat button in a darkened shade of its background instead of `ForeColor`, which made the text invisible on a dark background. On buttons styled by FormWind the text of a disabled button is redrawn with the `disabled:text-*` color, or, without one, with the text color mixed halfway toward the background (`TwButton` follows the same rule). Native buttons with an image keep Windows' drawing. The default `btn-primary`, `btn-ghost` and `btn-danger` components define `disabled:` colors for light and dark mode; `disabled:` takes precedence over `dark:`, so give your own components `dark:disabled:` colors for dark mode as well.
 - A class color is assigned explicitly even when it equals the inherited parent color; it does not change when the parent's color changes later.
 - When classes are removed (`SetClasses(control, "")`), color, font, padding, margin, cursor, visibility, corners and the ToolStrip renderer return to their values from before the classes. Sizes (`w-*`, `h-*`) are not reverted, because the layout may have resized the control since.
 
@@ -499,7 +504,8 @@ foreach (var issue in TwContrast.Audit(this, tw))
 | DataGridView cells, selected cells and headers | `cell`, `selected`, `header` |
 
 - The threshold is 4.5:1 for normal text and 3:1 for large text (18 pt, or 14 pt bold) (WCAG AA). It can be changed with the `minimum` parameter.
-- Transparent backgrounds are blended with the parent's background. Disabled and hidden controls are skipped (WCAG does not cover disabled elements).
+- Transparent backgrounds are blended with the parent's background. Hidden controls are skipped.
+- Disabled controls are outside WCAG's scope and are skipped by default. `includeDisabled: true` checks them too (part name `disabled text`); this catches disabled controls used to display content (e.g. a description box disabled so that no caret shows). For disabled native text boxes the background is the system background Windows paints. The harness runs the audit with this option. For disabled buttons the text color actually drawn is checked against 3:1: the aim is to catch invisible text, not to enforce contrast.
 - For colors in the middle of a `transition`, the target color is checked; the audit can be called right after a theme change.
 - `TwContrast.Ratio(foreground, background)` returns the ratio between two colors.
 - The default components (`btn-primary`, `btn-ghost`, `card`, `input`, `table`) pass this audit in light and dark mode (`ContrastTests`). `btn-primary` uses `blue-600`/`blue-700` in dark mode too; white text stays below the threshold on `blue-500` (3.7:1) and `blue-400` (2.5:1).
@@ -563,7 +569,16 @@ Recommended setup: `AutoScaleMode = AutoScaleMode.Dpi` and `AutoScaleDimensions 
 - Forms designed with `AutoScaleMode.Font` still have issues when moving between screens (inner TextBox font, clipped native button text, narrow grid columns); `AutoScaleMode.Dpi` is recommended.
 - Tests: the `Controls_*_at_150/200_percent` visual tests open the showcase in a separate PerMonitorV2 process and scale it with WM_DPICHANGED (`FormWind.Showcase.exe --snapshot x.png --controls --dpi 192`; only effective with the PerMonitorV2 configuration). The baseline name includes the process's system DPI.
 
-Pixel values are scaled by the control's `DeviceDpi / 96`. If the application runs DPI-aware (e.g. `PerMonitorV2`) but the forms' AutoScale does not enlarge the layout, spacing grows while controls do not, and text does not fit. In that case fix AutoScale or set `TailwindProvider.ScaleWithDpi = false`. In DPI-unaware applications (the default for most 4.7.2 projects) Windows does the scaling and no extra setup is needed.
+Pixel values are scaled by the control's `DeviceDpi / 96`; values in classes are 96 DPI units (`p-2` is 10 px at 125%). On controls the application itself does not scale for DPI (e.g. UserControls whose AutoScale does not work), this gives different results than the original values.
+
+- **The form's AutoScale:** `SetClasses` in `InitializeComponent` assigns the scaled value; the form's AutoScale (the final `ResumeLayout`) would then scale the same padding again (8 → 10 → 12 px at 125%). In nested UserControls with their own `AutoScaleMode` this scaling also happens after the handle is created. FormWind prevents this in two ways:
+  - If the classes define padding or margin, FormWind's value is written back when it changes (`PaddingChanged`/`MarginChanged`).
+  - The classes are reapplied once when the control's first handle is created (after scaling, before `Load`); size and font are corrected too.
+- **Consequence:** as long as the classes manage padding/margin, run-time assignments to these properties by application code are undone (FW001 warns about them); to keep the application's value, remove padding/margin from the classes. Tracking stops when the classes are removed. Colors work the other way round: the application's assignment [is kept](#colors-assigned-by-application-code). No tracking happens in the Designer. When moving between screens, WinForms' scaling is undone for a moment and the DPI refresh then applies the new scale.
+- Verification: compared with the original application at 125% on the converted Git Extensions forms; the remaining differences come from 1 px rounding and from controls the application never scales.
+- Scaled pixels are rounded like WinForms does (.5 up).
+
+If the application runs DPI-aware (e.g. `PerMonitorV2`) but the forms' AutoScale does not enlarge the layout, spacing grows while controls do not, and text does not fit. In that case fix AutoScale or set `TailwindProvider.ScaleWithDpi = false`. In DPI-unaware applications (the default for most 4.7.2 projects) Windows does the scaling and no extra setup is needed.
 
 ## Designer
 
@@ -580,7 +595,7 @@ tw.SetClasses(btnSave, "btn-primary");
 btnSave.BackColor = Color.Red;   // FW001: control 'btnSave' has classes; assigning 'BackColor' conflicts with them.
 ```
 
-At run time such an assignment wins: FormWind leaves that color channel to the application (see [Colors assigned by application code](#colors-assigned-by-application-code)). The warning is there to make you ask whether this was intended; it can be suppressed for deliberate assignments such as status colors.
+At run time a color assignment wins: FormWind leaves that color channel to the application (see [Colors assigned by application code](#colors-assigned-by-application-code)); the warning can be suppressed for deliberate assignments such as status colors. Padding and margin assignments, on the other hand, are undone and the class wins (see [DPI](#dpi)); here the warning points to a real conflict.
 
 Only calls with constant class strings and properties the classes actually manage are checked (`bg-*` → BackColor, `text-{color}` → ForeColor, `text-{size}` → Font, `p-*` → Padding, `m-*` → Margin, `cursor-*` → Cursor; default components included). A plain `Font` assignment does not warn when only `font-sans` or `font-semibold` is present. To turn it off: `dotnet_diagnostic.FW001.severity = none` in `.editorconfig`.
 
@@ -684,6 +699,11 @@ For every bug these tests found, `ApplierTests` also keeps an explicit regressio
 | `-ExitAfter 60` / `FORMWIND_EXIT_AFTER` | Ends the process after the given number of seconds (unattended runs). |
 | `-Skip DataGridView,ToolStrip` / `FORMWIND_SKIP` | Does not style these types; to narrow a problem down to one control type. |
 | `FORMWIND_DISABLE=1` | Turns the harness off; to compare the same scenario without FormWind. |
+| `-Dump` / `FORMWIND_DUMP=1` | Applies no styles; writes the color, font and padding values of each form's controls to `dump-<form>.txt`. Run before and after the conversion tool and compare. |
+| `FORMWIND_CLOSE=FormSettings` | Closes the named forms after processing them; to reach forms behind modal windows shown at startup without supervision. |
+| `FORMWIND_WALK=Launch` | Clicks the buttons with this text on the first form one by one; processes and closes each form that opens and moves on; exits the process when done (e.g. every sample of a demo application). `FORMWIND_WALK_WAIT` is the wait per form (ms, default 4000), `FORMWIND_WALK_SKIP=33,40` the positions of buttons to skip. |
+| `FORMWIND_OPEN=SettingsForm,AboutForm` | Finds these form types in the loaded assemblies and opens, processes and closes them one by one with their parameterless constructor; to reach forms opened from menus or the tray without supervision (reflection for testing). Forms that refuse to close are disposed. |
+| `-Skip '*'` / `FORMWIND_SKIP=*` | Styles no controls but still measures; to compare the same scenario without FormWind (stalls, paint counts, application errors). |
 
 Logs and images are written to `%TEMP%\FormWind-Harness\<process>-<time>\`:
 
@@ -697,9 +717,11 @@ Logs and images are written to `%TEMP%\FormWind-Harness\<process>-<time>\`:
 | `EXCEPTION`, `UNKNOWN` | An error while applying styles; an unknown class |
 
 - Startup hooks only exist in .NET (Core) applications; they are not loaded in trimmed applications or when hooks are disabled. For .NET Framework applications, add `FormWindHarness.cs` from `FormWind.Harness` to the project and call `FormWindHarness.Install()` on the UI thread.
+- The harness only descends into containers that carry content (forms, panels, GroupBox, tabs, SplitContainer, UserControl, ToolStrip containers). The inner parts of composite controls (e.g. the `TextBox` inside a `KryptonTextBox`, the help pane of a `PropertyGrid`, the edit box of a `NumericUpDown`) belong to the control itself and are not styled.
+- Self-test images are taken with `DrawToBitmap`: the title bar does not look as Windows draws it and `RichTextBox` is drawn incorrectly. Both are artifacts of the image, not of the application.
 - Forms are found with a timer, so this works whether the application runs a WinForms or a WPF message loop (e.g. Greenshot). Classes are applied after a form is shown, so it may appear unstyled for a moment at startup; colors the application assigned at that point count as original values.
 - When you find a problem, first reproduce it without FormWind using `FORMWIND_DISABLE=1`; if it still happens, it belongs to the application. Then narrow it down to one control type with `-Skip`.
-- Git Extensions (.NET 10, via the startup hook) and Greenshot (.NET Framework 4.8, WPF loop) were tried this way; the problems found became the behaviors and tests described in this README.
+- Applications tried: Git Extensions (.NET 10, startup hook), Greenshot (.NET Framework 4.8, WPF loop), Greenshot 1.3 (.NET Framework 4.7.2, WinForms loop, harness as code), mRemoteNG (.NET 10, DockPanelSuite), the Krypton Toolkit samples (.NET 9: grid, input form, ribbon, docking), the ScottPlot WinForms demo (.NET 10, 45 demos, with `FORMWIND_WALK`), an MDI shell (.NET 8: merged menus, window list, maximized child, children opened later). The problems found became the behaviors and tests described in this README. In applications with their own theme engine (mRemoteNG) dark mode shows only partially, because colors assigned by the application are kept; this is expected.
 
 ### Visual regression tests
 
@@ -742,9 +764,15 @@ dotnet run --project tools/FormWind.Convert -- src/MyApp --write
 | `Padding` | `p-*`, `px-*`/`py-*` or per side (4 px = 1 unit; `[7px]`) |
 | `FlatAppearance` | `BorderSize` → `border-0`/`border`, `BorderColor` → `border-*`, `MouseOverBackColor` → `hover:bg-*`, `MouseDownBackColor` → `active:bg-*` |
 
-- The default is a dry run: it prints what would change and the notes. `--write` updates the files in place; commit first.
-- Converted lines are removed and a `SetClasses` call is written instead; if the control already has a `SetClasses` call, the classes are appended to it. A `TailwindProvider` is added if the file has none.
-- System colors (`SystemColors.*`) and font families other than the theme's are not converted; the line stays and is noted in the report.
+- The default is a dry run: it prints what would change and the notes. `--write` updates the files in place; commit first. The files' BOM is preserved.
+- Converted lines are removed and a `SetClasses` call is written instead; if the control already has a `SetClasses` call, the classes are appended to it. A `TailwindProvider` is added if the file has none, and it is added to the `components` container so it is disposed with the form. If the class has no `components` field, one is added; if `Dispose` does not call it, a note is added to the report.
+- Code from Visual Studio's new Designer, which does not write `this.` (`buttonOk.BackColor = ...`), and controls generated as local variables (`GenerateMember = false`) are supported; the control is passed to `SetClasses` the way it is written in the source.
+- Only **Control**s created in `InitializeComponent` are converted. ToolStrip items, columns and local cell styles (`dataGridViewCellStyle1`) cannot take `SetClasses`; their lines stay. The application's own types are resolved to a WinForms type by following the `class X : Y` declarations in the target folder and its parent folder (sibling projects) (e.g. a class deriving from `ToolStripComboBox` is not converted); types that cannot be resolved are converted with a note.
+- The old Designer format (`this.` prefix, brace on the same line as the method, tab indentation) is supported too.
+- **Visual Basic:** `.Designer.vb` files are converted too (a folder is searched for both; the language is detected from the file's content). The output uses VB syntax: `Me.TailwindProvider1.SetClasses(btnSave, "...")`, the field is `Friend WithEvents TailwindProvider1 As FormWind.TailwindProvider`; without fields it is added before `End Class`. Font sizes like `10.5!`, color components like `CType(CType(37, Byte), Integer)` and `CByte(37)`, and lines with or without the `Me.` prefix (new Designer) are recognized. The application's own types are resolved from `Class X` / `Inherits Y` declarations. On a form created with `dotnet new winforms -lang VB` and styled by hand, the converted project built without warnings or errors, and colors and fonts were identical in a `-Dump` comparison.
+- System colors (`SystemColors.*`), the application's own color expressions (`AppColor.X.GetThemeColor()`), derived fonts (`new Font(Font, FontStyle.Bold)`) and font families other than the theme's are not converted; the line stays and is noted in the report.
+- **Verified on a real project (Greenshot 1.3, .NET Framework 4.7.2):** the converted project built with Visual Studio's MSBuild without warnings or errors; colors and fonts were identical on 311 controls in 7 forms, padding differed by 1 px (DPI rounding).
+- **Verified on a real project:** 360 classes were generated in 74 Designer files of Git Extensions; the result built without warnings or errors (in a project that treats warnings as errors and uses StyleCop). In values taken with the harness's `-Dump` mode before and after the conversion, colors and fonts of 270 controls were identical; the padding differences came from DPI behavior and revealed two library bugs (double scaling; see [DPI](#dpi)).
 - `--config tw.config.json` uses the application's own palette; `--tolerance` changes the closest-color threshold.
 
 Screenshot of the showcase form (`--controls` opens the controls form):
@@ -767,6 +795,7 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 - [ ] Quick component selection via smart tag (for standard controls; `TwTabControl` has a smart tag)
 - [ ] `AutoScaleMode.Font` forms when moving between screens
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
+- [ ] `KryptonDataGridView` draws headers with the Krypton palette: FormWind's header text color is used but the background color is ignored, so headers become unreadable in dark mode. `FormWind.Krypton` does not cover this control yet, and the contrast audit cannot catch it because it does not know the background painted on screen
 - [ ] The dark `btn-primary` colors (`blue-500`/`blue-400`) in the showcase's `tw.config.json` are below the contrast threshold; fixing them requires regenerating the dark-mode visual baselines
 - [ ] `row-span`, `grid-rows` for grid; list rows with varying heights; a DataGridView VirtualMode helper
 - [ ] Shadow animations
