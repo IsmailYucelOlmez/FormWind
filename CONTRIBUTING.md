@@ -13,8 +13,19 @@ Thanks for your interest in FormWind! Bug reports, ideas and pull requests are w
 
 ## Development setup
 
-Requirements: Windows, the .NET 10 SDK (it builds all targets) and, for the .NET Framework targets, the .NET Framework
-4.7.2+ targeting pack (included with Visual Studio).
+Requirements: Windows, the .NET 10 SDK (it builds all targets; the version is pinned in `global.json`) and, for the
+.NET Framework targets, the .NET Framework 4.7.2+ targeting pack (included with Visual Studio).
+
+Before changing code, read [ARCHITECTURE.md](ARCHITECTURE.md): it explains the path from a class string to the screen
+and where each concern lives.
+
+To run everything CI runs (build, tests on all targets, the process-isolated categories, coverage check, packing):
+
+```powershell
+.\build.ps1
+```
+
+`.\build.ps1 -Quick` only builds and tests on .NET 8, for a quick check before committing. Individual commands:
 
 ```bash
 dotnet build FormWind.sln
@@ -37,6 +48,10 @@ Code coverage: see the README (*Code coverage*). CI fails when `FormWind` line c
 `.github/workflows/ci.yml`.
 
 ## Pull requests
+
+By submitting a pull request you agree that your contribution is licensed under the [MIT License](LICENSE) of the
+project. Do not include code, images or fonts whose license is incompatible with it; list new third-party material in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 - Keep a pull request focused on one change; open an issue first for larger features.
 - Add tests: a regression test for every bug fix, and tests for new classes, controls and behavior. Tests that open

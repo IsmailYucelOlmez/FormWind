@@ -375,18 +375,6 @@ Kontrol devre dışıyken `focus`, `hover` ve `active` uygulanmaz.
 
 Dosya varsayılan palet ve bileşenlerin üzerine eklenir. Varsayılan bileşenler: `btn`, `btn-primary`, `btn-ghost`, `btn-danger`, `card`, `input`, `table` (bkz. `TwTheme.DefaultComponents`). Designer tema dosyasını okumadığından tasarım zamanı önizlemesi varsayılanlarla yapılır.
 
-## Örnek: Rickipedia
-
-`samples/Rickipedia`, [The Rick and Morty API](https://rickandmortyapi.com) verisiyle bir karakter listesi sayfasıdır: ada göre arama, durum/tür/cinsiyet filtreleri, satır sayısı seçimi, koyu tema ve satıra tıklayınca ayrıntı penceresi. Sayfanın tamamı FormWind class'larıyla stillenmiş standart WinForms kontrolleri ve `Tw*` kontrolleridir; sayfa bileşenleri `tw.config.json` içindedir.
-
-| Açık tema | Koyu tema |
-| --- | --- |
-| ![Rickipedia açık](docs/rickipedia-light.png) | ![Rickipedia koyu](docs/rickipedia-dark.png) |
-
-```bash
-samples/Rickipedia/bin/Debug/net472/Rickipedia.exe --snapshot sayfa.png --dark --menu --details
-```
-
 ## Kontroller
 
 | Kontrol | Ne zaman |
@@ -653,7 +641,6 @@ src/FormWind.Krypton/     KryptonApplier
 src/FormWind.Analyzers/   FW001 Roslyn çözümleyicisi (FormWind paketine eklenir)
 tests/FormWind.Tests/     xUnit testleri (net472, net8.0, net9.0, net10.0-windows)
 samples/FormWind.Showcase/ Vitrin uygulaması (net472)
-samples/Rickipedia/       Rick and Morty API ile örnek sayfa (net472)
 tools/FormWind.Convert/   Designer dosyalarını class'lara çeviren komut satırı aracı (net8.0-windows)
 tools/FormWind.Harness/   Gerçek uygulamalarda deneme için startup hook ve harness (net8.0-windows)
 tools/FormWind.Docs/      Önizlemeli class referansı sitesini üretir (net8.0-windows)
@@ -664,7 +651,15 @@ tools/run-harness.ps1     Bir .NET WinForms uygulamasını harness'le çalışt�
 
 ## Geliştirme
 
-Katkı kuralları, test kategorileri, public API ve sürümleme politikası: [CONTRIBUTING.md](CONTRIBUTING.md). Değişiklikler: [CHANGELOG.md](CHANGELOG.md). Güvenlik açıkları: [SECURITY.md](SECURITY.md).
+Katkı kuralları, test kategorileri, public API ve sürümleme politikası: [CONTRIBUTING.md](CONTRIBUTING.md). Kodun yapısı (class dizgisinden ekrana giden yol, modüller, tasarım kararları): [ARCHITECTURE.md](ARCHITECTURE.md). Değişiklikler: [CHANGELOG.md](CHANGELOG.md). Güvenlik açıkları: [SECURITY.md](SECURITY.md).
+
+CI'daki adımların tamamı (derleme, dört hedefte test, kapsam denetimi, paketleme) tek komutla çalışır; `-Quick` yalnızca derleyip .NET 8'de test eder. SDK sürümü `global.json` ile sabitlenmiştir (.NET 10 SDK):
+
+```powershell
+.\build.ps1
+```
+
+Tek tek komutlar:
 
 ```bash
 dotnet build FormWind.sln
@@ -701,10 +696,10 @@ dotnet test tests/FormWind.Tests -f net8.0-windows --settings tests/coverage.run
 ```
 
 ```powershell
-.\tools\check-coverage.ps1 -Results TestResults -Minimum 0.78
+.\tools\check-coverage.ps1 -Results TestResults -Minimum 0.80
 ```
 
-CI her iki hedefin raporunu iş akışı özetine tablo olarak yazar ve `FormWind` satır kapsamı %78'in altına düşerse düşer (şu an ~%81–83). Coverlet, WinForms çerçeve derlemelerini çözemediği için kullanılmaz.
+CI her iki hedefin raporunu iş akışı özetine tablo olarak yazar ve `FormWind` satır kapsamı %80'in altına düşerse düşer (şu an ~%85–87). Coverlet, WinForms çerçeve derlemelerini çözemediği için kullanılmaz.
 
 ### Değişmez testleri
 
@@ -861,4 +856,8 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 - [ ] Kendi çizen kontroller (örn. owner-draw grid'ler) hücre stillerini yok sayar; koyu temada açık kalabilirler
 - [x] Grid için `row-span`, `grid-rows`; farklı yükseklikte liste satırları (`ItemHeights`); DataGridView VirtualMode yardımcısı (`TwVirtualRows<T>`)
 - [ ] .NET 8+ out-of-process Designer için `ClassesEditor`'ün Designer SDK ile taşınması
-- [ ] Lisans seçimi (paket yayımlanmadan önce)
+- [x] Lisans: MIT
+
+## Lisans
+
+FormWind [MIT lisansı](LICENSE) ile dağıtılır. Üçüncü taraf bileşenler (Tailwind CSS renk paleti, test fontu): [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

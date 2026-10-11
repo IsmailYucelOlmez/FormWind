@@ -375,18 +375,6 @@ Later overrides earlier: base → `dark:` → `checked:` → `focus:` → `focus
 
 The file is added on top of the default palette and components. Default components: `btn`, `btn-primary`, `btn-ghost`, `btn-danger`, `card`, `input`, `table` (see `TwTheme.DefaultComponents`). The Designer does not read the theme file, so the design-time preview uses the defaults.
 
-## Sample: Rickipedia
-
-`samples/Rickipedia` is a character list page using data from [The Rick and Morty API](https://rickandmortyapi.com): search by name, status/species/gender filters, page size selection, dark mode and a details window on row click. The whole page consists of standard WinForms controls and `Tw*` controls styled with FormWind classes; the page components live in `tw.config.json`.
-
-| Light | Dark |
-| --- | --- |
-| ![Rickipedia light](docs/rickipedia-light.png) | ![Rickipedia dark](docs/rickipedia-dark.png) |
-
-```bash
-samples/Rickipedia/bin/Debug/net472/Rickipedia.exe --snapshot page.png --dark --menu --details
-```
-
 ## Controls
 
 | Control | When to use |
@@ -653,7 +641,6 @@ src/FormWind.Krypton/     KryptonApplier
 src/FormWind.Analyzers/   FW001 Roslyn analyzer (included in the FormWind package)
 tests/FormWind.Tests/     xUnit tests (net472, net8.0, net9.0, net10.0-windows)
 samples/FormWind.Showcase/ Showcase application (net472)
-samples/Rickipedia/       Sample page using the Rick and Morty API (net472)
 tools/FormWind.Convert/   Command-line tool that converts Designer files to classes (net8.0-windows)
 tools/FormWind.Harness/   Startup hook and harness for trying FormWind on real applications (net8.0-windows)
 tools/FormWind.Docs/      Generates the class reference site with previews (net8.0-windows)
@@ -664,7 +651,15 @@ tools/run-harness.ps1     Runs a .NET WinForms application with the harness and 
 
 ## Development
 
-Contribution guidelines, test categories, public API and versioning policy: [CONTRIBUTING.md](CONTRIBUTING.md). Changes: [CHANGELOG.md](CHANGELOG.md). Security issues: [SECURITY.md](SECURITY.md).
+Contribution guidelines, test categories, public API and versioning policy: [CONTRIBUTING.md](CONTRIBUTING.md). How the code is structured (the path from a class string to the screen, modules, design decisions): [ARCHITECTURE.md](ARCHITECTURE.md). Changes: [CHANGELOG.md](CHANGELOG.md). Security issues: [SECURITY.md](SECURITY.md).
+
+All CI steps (build, tests on four targets, coverage check, packing) run with a single command; `-Quick` only builds and tests on .NET 8. The SDK version is pinned in `global.json` (.NET 10 SDK):
+
+```powershell
+.\build.ps1
+```
+
+Individual commands:
 
 ```bash
 dotnet build FormWind.sln
@@ -701,10 +696,10 @@ dotnet test tests/FormWind.Tests -f net8.0-windows --settings tests/coverage.run
 ```
 
 ```powershell
-.\tools\check-coverage.ps1 -Results TestResults -Minimum 0.78
+.\tools\check-coverage.ps1 -Results TestResults -Minimum 0.80
 ```
 
-CI writes both targets' reports to the workflow summary as a table and fails if `FormWind` line coverage drops below 78% (currently ~81–83%). Coverlet is not used because it cannot resolve the WinForms framework assemblies.
+CI writes both targets' reports to the workflow summary as a table and fails if `FormWind` line coverage drops below 80% (currently ~85–87%). Coverlet is not used because it cannot resolve the WinForms framework assemblies.
 
 ### Invariant tests
 
@@ -836,4 +831,8 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
 - [x] `row-span`, `grid-rows` for grid; list rows with varying heights (`ItemHeights`); a DataGridView VirtualMode helper (`TwVirtualRows<T>`)
 - [ ] Porting `ClassesEditor` to the .NET 8+ out-of-process Designer with the Designer SDK
-- [ ] Choosing a license (before publishing the package)
+- [x] License: MIT
+
+## License
+
+FormWind is distributed under the [MIT License](LICENSE). Third-party material (the Tailwind CSS color palette, the test font): [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

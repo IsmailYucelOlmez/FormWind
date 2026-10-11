@@ -9,6 +9,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages</PackageOutputPath>
     <Copyright>© İsmail Yücel Ölmez</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/IsmailYucelOlmez/FormWind</PackageProjectUrl>
     <RepositoryUrl>https://github.com/IsmailYucelOlmez/FormWind</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -26,5 +27,6 @@
 
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <None Include="$(MSBuildThisFileDirectory)docs\icon.png" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

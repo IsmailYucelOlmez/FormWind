@@ -48,10 +48,10 @@ jobs:
         env:
           FORMWIND_COLORMODE: "1"
 
-      # FormWind satır kapsamı %78'in altına düşerse iş akışı düşer (şu an ~%81-83); tablo iş akışı özetine yazılır.
+      # FormWind satır kapsamı %80'in altına düşerse iş akışı düşer (şu an ~%85-87); tablo iş akışı özetine yazılır.
       - name: Coverage
         shell: pwsh
-        run: ./tools/check-coverage.ps1 -Results TestResults -Minimum 0.78
+        run: ./tools/check-coverage.ps1 -Results TestResults -Minimum 0.80
 
       # UI Automation istemcisi süreç genelinde ayar değiştirdiğinden ayrı bir süreçte çalışır.
       - name: Test (UI Automation)
