@@ -598,6 +598,7 @@ If the application runs DPI-aware (e.g. `PerMonitorV2`) but the forms' AutoScale
 ## Designer
 
 - `TwTabControl`: "Add page" / "Remove selected page" commands and a smart tag (style selection); clicking a tab at design time switches the page; only `TwTabPage`s can be dropped onto the control itself, other controls are dropped onto the page. A control dropped from the Toolbox starts with two pages.
+- **Smart tag:** while the form has a `TailwindProvider`, every control's smart tag (standard controls included) shows a FormWind section: the `Classes` editor, components suited to the control type (button → `btn-primary`/`btn-ghost`/`btn-danger`, text box → `input`, panel → `card`, grid → `table`; when defined in the theme) and "Clear classes". Changes go through the `Classes` property, so they are written to Designer.cs and can be undone.
 - The `TwTabControl` designer is built for .NET Framework and .NET 8; in the .NET 8 out-of-process Designer it runs in the server process (the commands are verified on both targets with `DesignSurface` tests).
 - The "…" editor of the `Classes` field (`ClassesEditor`) only opens in the .NET Framework Designer. On .NET 8 the field is a drop-down that suggests the component names in the theme (`btn-primary`, `card` …) (`ClassesConverter`); a selected name replaces the field's value, and free text can be typed too.
 
@@ -813,7 +814,7 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 ## Known limitations and roadmap
 
 - [ ] The Designer may also write the `BackColor`/`Font` values applied in the preview to `Designer.cs`. `SetClasses` overrides them at run time; use `DesignTimePreview = false` to keep the file clean.
-- [ ] Quick component selection via smart tag (for standard controls; `TwTabControl` has a smart tag)
+- [x] Quick component selection via smart tag (standard controls included)
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
 - [x] `row-span`, `grid-rows` for grid; list rows with varying heights (`ItemHeights`); a DataGridView VirtualMode helper (`TwVirtualRows<T>`)
 - [ ] Porting `ClassesEditor` to the .NET 8+ out-of-process Designer with the Designer SDK

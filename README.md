@@ -598,6 +598,7 @@ Uygulama DPI-aware (örn. `PerMonitorV2`) çalışıyor ama formların AutoScale
 ## Designer
 
 - `TwTabControl`: "Sayfa ekle" / "Seçili sayfayı kaldır" komutları ve akıllı etiket (görünüm seçimi), tasarım zamanında sekmeye tıklayınca sayfa değişir; kontrolün içine yalnızca `TwTabPage` bırakılabilir, diğer kontroller sayfaya bırakılır. Araç kutusundan bırakılan kontrol iki sayfayla başlar.
+- **Akıllı etiket:** formda bir `TailwindProvider` varken her kontrolün akıllı etiketinde (standart kontroller dahil) bir FormWind bölümü görünür: `Classes` düzenleyicisi, kontrol tipine uygun bileşenler (buton → `btn-primary`/`btn-ghost`/`btn-danger`, metin kutusu → `input`, panel → `card`, grid → `table`; temada tanımlıysa) ve "Class'ları temizle". Değişiklikler `Classes` özelliği üzerinden yapıldığından Designer.cs'e yazılır ve geri alınabilir.
 - `TwTabControl` tasarımcısı .NET Framework ve .NET 8 için derlenir; .NET 8'in süreç dışı Designer'ında tasarımcı sunucu sürecinde çalışır (komutlar `DesignSurface` testleriyle iki hedefte doğrulanır).
 - `Classes` alanının "…" editörü (`ClassesEditor`) yalnızca .NET Framework Designer'ında açılır. .NET 8'de alan, temadaki bileşen adlarını (`btn-primary`, `card` …) öneren bir açılır listedir (`ClassesConverter`); seçilen ad alanın değerinin yerine geçer, serbest metin de yazılabilir.
 
@@ -813,7 +814,7 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 ## Bilinen sınırlamalar ve yapılacaklar
 
 - [ ] Designer, önizlemede uygulanan `BackColor`/`Font` değerlerini `Designer.cs`'e de yazabilir. Çalışma zamanında `SetClasses` bunları ezer; dosyayı temiz tutmak için `DesignTimePreview = false` kullanılabilir.
-- [ ] Smart tag ile hızlı bileşen seçimi (standart kontroller için; `TwTabControl`'ün akıllı etiketi var)
+- [x] Smart tag ile hızlı bileşen seçimi (standart kontroller dahil)
 - [x] Mevcut formlardaki sabit renk ve font atamalarını class'a çeviren dönüştürme aracı (`tools/FormWind.Convert`)
 - [x] Flex ve grid yerleşimi (`TwPanel`)
 - [x] DataGridView uygulayıcısı ve `table` bileşeni

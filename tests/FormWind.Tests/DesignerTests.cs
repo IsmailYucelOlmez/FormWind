@@ -61,4 +61,43 @@ public class DesignerTests
         Assert.Contains("btn-primary", values);
         Assert.Contains("card", values);
     });
+
+    // Standart kontrollerin akıllı etiketine provider'ın tasarımcısı bir FormWind bölümü ekler.
+    [Fact]
+    public void Smart_tag_of_standard_controls_offers_components() => Sta.Run(() =>
+    {
+        using var surface = new DesignSurface(typeof(Form));
+        var host = (IDesignerHost)surface.GetService(typeof(IDesignerHost))!;
+        var form = (Form)host.RootComponent;
+        // Visual Studio akıllı etiket servisini kendisi sağlar; düz DesignSurface'te oluşturulur (kendini kaydeder).
+        using var actions = new DesignerActionService(surface);
+        var button = (Button)host.CreateComponent(typeof(Button), "btn");
+        form.Controls.Add(button);
+        var provider = (TailwindProvider)host.CreateComponent(typeof(TailwindProvider), "tw");
+        Assert.IsType<TailwindProviderDesigner>(host.GetDesigner(provider));
+        var textBox = (TextBox)host.CreateComponent(typeof(TextBox), "txt");     // provider'dan sonra eklenen
+        form.Controls.Add(textBox);
+
+        DesignerActionItem[] Items(System.ComponentModel.IComponent component) => actions.GetComponentActions(component)
+            .Cast<DesignerActionList>().OfType<TailwindProviderDesigner.ClassesActionList>()
+            .SelectMany(l => l.GetSortedActionItems().Cast<DesignerActionItem>()).ToArray();
+
+        var buttonItems = Items(button);
+        Assert.Equal(new[] { "btn-primary", "btn-ghost", "btn-danger" },
+            buttonItems.OfType<DesignerActionMethodItem>().Select(i => i.DisplayName));
+        Assert.Contains("input", Items(textBox).Select(i => i.DisplayName));
+
+        int changes = 0;
+        ((IComponentChangeService)surface.GetService(typeof(IComponentChangeService))!).ComponentChanged += (_, _) => changes++;
+        buttonItems.OfType<DesignerActionMethodItem>().First(i => i.DisplayName == "btn-ghost").Invoke();
+        Assert.Equal("btn-ghost", provider.GetClasses(button));
+        Assert.True(changes > 0);                                                 // Designer.cs'e yazılır, geri alınabilir
+
+        var clear = Items(button).OfType<DesignerActionMethodItem>().Single(i => i.DisplayName == "Class'ları temizle");
+        clear.Invoke();
+        Assert.Equal("", provider.GetClasses(button));
+
+        host.DestroyComponent(textBox);
+        Assert.Empty(actions.GetComponentActions(textBox).Cast<DesignerActionList>().OfType<TailwindProviderDesigner.ClassesActionList>());
+    });
 }

@@ -14,6 +14,7 @@ namespace FormWind;
 /// Class'lar parse edilir, kontrolün durumuna (hover, focus, active, disabled, dark) göre birleştirilir
 /// ve uygun <see cref="IStyleApplier"/> ile uygulanır.
 /// </summary>
+[Designer(typeof(Design.TailwindProviderDesigner))]
 [ProvideProperty("Classes", typeof(Control))]
 [ProvideProperty("ColumnClasses", typeof(DataGridViewColumn))]
 [ToolboxItemFilter("System.Windows.Forms")]

@@ -18,6 +18,8 @@ FormWind.Design.ClassesEditor
 FormWind.Design.ClassesEditor.ClassesEditor() -> void
 FormWind.Design.TwTabControlDesigner
 FormWind.Design.TwTabControlDesigner.TwTabControlDesigner() -> void
+FormWind.Design.TailwindProviderDesigner
+FormWind.Design.TailwindProviderDesigner.TailwindProviderDesigner() -> void
 FormWind.IStyleApplier
 FormWind.IStyleApplier.Apply(System.Windows.Forms.Control! control, FormWind.TwStyle! style, FormWind.TwApplyContext! context) -> void
 FormWind.IStyleApplier.CanApply(System.Windows.Forms.Control! control) -> bool
@@ -911,6 +913,8 @@ override FormWind.Design.ClassesConverter.GetStandardValuesExclusive(System.Comp
 override FormWind.Design.ClassesConverter.GetStandardValuesSupported(System.ComponentModel.ITypeDescriptorContext? context) -> bool
 override FormWind.Design.ClassesEditor.EditValue(System.ComponentModel.ITypeDescriptorContext? context, System.IServiceProvider! provider, object? value) -> object?
 override FormWind.Design.ClassesEditor.GetEditStyle(System.ComponentModel.ITypeDescriptorContext? context) -> System.Drawing.Design.UITypeEditorEditStyle
+override FormWind.Design.TailwindProviderDesigner.Dispose(bool disposing) -> void
+override FormWind.Design.TailwindProviderDesigner.Initialize(System.ComponentModel.IComponent! component) -> void
 override FormWind.Design.TwTabControlDesigner.ActionLists.get -> System.ComponentModel.Design.DesignerActionListCollection!
 override FormWind.Design.TwTabControlDesigner.CanParent(System.Windows.Forms.Control! control) -> bool
 override FormWind.Design.TwTabControlDesigner.Dispose(bool disposing) -> void
