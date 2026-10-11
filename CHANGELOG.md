@@ -5,6 +5,18 @@ All notable changes to FormWind are documented in this file. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- MIT license (`LICENSE`), `THIRD-PARTY-NOTICES.md` (also included in the packages), and the `MIT` license expression on all NuGet packages.
+- `ARCHITECTURE.md`: the styling pipeline, modules and design decisions for contributors.
+- `build.ps1` runs the same build, test, coverage and pack steps as CI with one command; `global.json` pins the .NET SDK.
+- Tests for mouse, keyboard and painting paths of `TwPager`, `TwNumberBox`, `TwDatePicker` and `TwPictureBox`.
+
+### Removed
+
+- The Rickipedia sample (`samples/Rickipedia`) and its screenshots: it used third-party artwork and data that cannot be
+  distributed under the MIT License. `samples/FormWind.Showcase` remains the sample application.
+
 ## [0.1.0] - Unreleased
 
 First public preview.

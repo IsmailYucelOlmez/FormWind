@@ -106,7 +106,7 @@ internal sealed class TwColumnBinding
 }
 
 /// <summary>
-/// Conditional style per row: the rule returns classes for each row (e.g. dead characters faded, cancelled orders red).
+/// Conditional style per row: the rule returns classes for each row (e.g. inactive customers faded, cancelled orders red).
 /// Background, text color and font are applied to all cells of the row during formatting.
 /// </summary>
 internal sealed class TwRowRule
