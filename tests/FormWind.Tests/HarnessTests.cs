@@ -40,7 +40,16 @@ public class HarnessTests
     {
         using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false, ClientSize = new Size(200, 100) };
         form.Show();
-        using var image = ScreenContrast.Capture(form);
+        // Ekran dışındaki yeni pencerenin yüzeyi birkaç kare sonra hazır olur; o zamana kadar Capture null döner.
+        Bitmap? image = null;
+        for (int i = 0; i < 40 && image is null; i++)
+        {
+            form.Refresh();
+            Application.DoEvents();
+            image = ScreenContrast.Capture(form);
+            if (image is null) System.Threading.Thread.Sleep(25);
+        }
+        using var captured = image;
         Assert.NotNull(image);
         Assert.Equal(form.Size, image!.Size);
         form.Close();

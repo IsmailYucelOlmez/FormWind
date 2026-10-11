@@ -650,10 +650,25 @@ internal static class ScreenContrast
             {
                 g.ReleaseHdc(hdc);
             }
-            if (ok) return bitmap;
+            // Pencerenin DWM yüzeyi henüz hazır değilken (örn. yeni gösterilmiş) PrintWindow başarılı dönüp istemci alanını
+            // düz siyah verebilir; zemini siyah olmayan pencerede böyle bir görüntü başarısız sayılır.
+            if (ok && !(window.BackColor.ToArgb() != Color.Black.ToArgb() && ClientIsBlack(window, bitmap, new Point(rect.Left, rect.Top)))) return bitmap;
         }
         bitmap.Dispose();
         return null;
+    }
+
+    private static bool ClientIsBlack(Control window, Bitmap bitmap, Point origin)
+    {
+        var client = window.RectangleToScreen(window.ClientRectangle);
+        client.Offset(-origin.X, -origin.Y);
+        client.Intersect(new Rectangle(Point.Empty, bitmap.Size));
+        if (client.Width < 2 || client.Height < 2) return false;
+        int black = Color.Black.ToArgb();
+        for (int i = 0; i < 16; i++)
+            for (int j = 0; j < 16; j++)
+                if (bitmap.GetPixel(client.Left + (client.Width - 1) * i / 15, client.Top + (client.Height - 1) * j / 15).ToArgb() != black) return false;
+        return true;
     }
 
     public static List<Issue> Audit(Control root, Bitmap image, Point origin, double minimum = Minimum)
