@@ -207,7 +207,7 @@ Shadows and rings are drawn on the control's **parent** (controls cannot paint o
 
 ## Interaction
 
-- **`transition`** (`transition-colors`, `duration-75` … `duration-1000`, `duration-[250ms]`): background and text color changes are animated (ease-out, 150 ms by default).
+- **`transition`** (`transition-colors`, `duration-75` … `duration-1000`, `duration-[250ms]`): background and text color changes are animated (ease-out, 150 ms by default). Shadow changes (`shadow-sm hover:shadow-lg transition`) are animated over the same duration too, the old shadow fading out as the new one fades in; blurred shadows come from the cache and are not recomputed during the transition.
 - **`hover:` / `active:`**: only controls with these variants are restyled when the mouse enters or leaves; for the others, mouse movement does not trigger styling. If classes are assigned while the cursor is already over the control (e.g. a button whose classes change on click), the hover state is applied immediately.
 - **`group` / `group-hover:`**: hovering a container with the `group` class applies the `group-hover:` variants of the controls inside it. A container that reacts to hover counts as hovered even when the cursor enters directly over a child.
 - **Placeholder**: `TwTextBox.PlaceholderText`; color `placeholder:text-gray-400`.
@@ -816,6 +816,5 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 - [ ] Quick component selection via smart tag (for standard controls; `TwTabControl` has a smart tag)
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
 - [x] `row-span`, `grid-rows` for grid; list rows with varying heights (`ItemHeights`); a DataGridView VirtualMode helper (`TwVirtualRows<T>`)
-- [ ] Shadow animations
 - [ ] Porting `ClassesEditor` to the .NET 8+ out-of-process Designer with the Designer SDK
 - [ ] Choosing a license (before publishing the package)

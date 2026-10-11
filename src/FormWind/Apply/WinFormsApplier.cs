@@ -586,7 +586,7 @@ public class WinFormsApplier : IStyleApplier
         }
 
         if (style.HasOutset || !outset.IsEmpty || TwOutset.IsAttached(control))
-            TwOutset.For(control).Update(outset);
+            TwOutset.For(control).Update(outset, TransitionDuration(control, style, context));
     }
 
     /// <summary>Native TextBox çerçevesi ile metin arasındaki boşluk (96 DPI pikseli).</summary>

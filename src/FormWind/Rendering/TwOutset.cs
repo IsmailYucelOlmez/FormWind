@@ -142,7 +142,9 @@ internal sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
 /// <summary>
 /// Gölge ve halkayı kontrolün <b>ebeveyninde</b> çizer: kontroller kendi sınırlarının dışına çizim yapamaz.
 /// Ebeveynin Paint olayı çocuk pencerelerden önce çizildiği için gölge doğal olarak kontrolün altında kalır.
-/// Form, Panel ve TwPanel gibi Paint olayı tetikleyen her ebeveynde çalışır.
+/// Form, Panel ve TwPanel gibi Paint olayı tetikleyen her ebeveynde çalışır. <c>transition</c> varken gölge değişimi
+/// (örn. <c>shadow-sm hover:shadow-lg</c>) eski ve yeni gölgenin saydamlıkla geçişiyle canlandırılır; bulanık gölge
+/// bitmap'leri önbellekten gelir, karede yeniden hesaplanmaz.
 /// </summary>
 internal sealed class TwOutset
 {
@@ -152,6 +154,11 @@ internal sealed class TwOutset
     private readonly Control _control;
     private Control? _parent;
     private Rectangle _paintedBounds;
+    private readonly Timer _timer = new Timer { Interval = 16 };
+    private IReadOnlyList<TwShadowLayer> _fromShadows = Array.Empty<TwShadowLayer>();
+    private int _fromExtent;
+    private DateTime _start;
+    private int _duration;
 
     private TwOutset(Control control)
     {
@@ -162,8 +169,21 @@ internal sealed class TwOutset
         _control.VisibleChanged += (_, _) => InvalidateParent();
         // Çerçevenin zemini kontrolün o anki rengidir (geçiş animasyonları dahil).
         _control.BackColorChanged += (_, _) => { if (Spec?.Frame != null) InvalidateParent(); };
+        _control.Disposed += (_, _) => _timer.Dispose();
+        _timer.Tick += (_, _) =>
+        {
+            if (Progress >= 1f) _timer.Stop();
+            InvalidateParent();
+        };
         Reattach();
     }
+
+    // Gölge geçişinin ease-out ilerlemesi; geçiş yoksa 1.
+    internal float Progress => _duration > 0 && (DateTime.UtcNow - _start).TotalMilliseconds < _duration
+        ? TwMotion.EaseOut((float)((DateTime.UtcNow - _start).TotalMilliseconds / _duration))
+        : 1f;
+
+    internal bool Animating => Progress < 1f;
 
     public TwOutsetSpec? Spec { get; private set; }
 
@@ -171,28 +191,66 @@ internal sealed class TwOutset
 
     public static TwOutset For(Control control) => Table.GetValue(control, c => new TwOutset(c));
 
-    public void Update(TwOutsetSpec spec)
+    public void Update(TwOutsetSpec spec) => Update(spec, 0);
+
+    /// <param name="spec">Yeni gölge, halka ve çerçeve.</param>
+    /// <param name="durationMs">Gölge değişiminin geçiş süresi (<c>transition</c>); 0 ise anında.</param>
+    public void Update(TwOutsetSpec spec, int durationMs)
     {
         if (Spec != null && Spec.Equals(spec)) return;
+        var oldShadows = Spec?.Shadows ?? Array.Empty<TwShadowLayer>();
+        int oldExtent = Spec?.Extent ?? 0;
         Spec = spec.IsEmpty ? null : spec;
+
+        if (durationMs > 0 && TwMotion.CanAnimate(_control) && !SameShadows(oldShadows, spec.Shadows))
+        {
+            // Geçiş sürerken yeniden değişirse o anki görüntü yerine eski hedeften başlanır (kısa geçişte fark edilmez).
+            _fromShadows = oldShadows;
+            _fromExtent = Math.Max(oldExtent, _fromExtent);
+            _start = DateTime.UtcNow;
+            _duration = durationMs;
+            _timer.Start();
+        }
+        else
+        {
+            _duration = 0;
+            _timer.Stop();
+            _fromShadows = Array.Empty<TwShadowLayer>();
+            _fromExtent = 0;
+        }
         InvalidateParent();
+    }
+
+    private static bool SameShadows(IReadOnlyList<TwShadowLayer> a, IReadOnlyList<TwShadowLayer> b)
+    {
+        if (a.Count != b.Count) return false;
+        for (int i = 0; i < a.Count; i++)
+            if (!a[i].Equals(b[i])) return false;
+        return true;
     }
 
     internal void Paint(Graphics graphics)
     {
         var spec = Spec;
-        if (spec is null || !_control.Visible) return;
+        float progress = Progress;
+        if (!_control.Visible || spec is null && (progress >= 1f || _fromShadows.Count == 0)) return;
 
         var bounds = _control.Bounds;
-        _paintedBounds = Rectangle.Inflate(bounds, spec.Extent, spec.Extent);
+        int extent = Math.Max(spec?.Extent ?? 0, progress < 1f ? _fromExtent : 0);
+        _paintedBounds = Rectangle.Inflate(bounds, extent, extent);
 
         // Çerçeve varsa gölge ve halka onun dışına çizilir.
-        var inset = spec.FrameInset;
+        var inset = spec?.FrameInset ?? Padding.Empty;
         bounds = Rectangle.FromLTRB(bounds.Left - inset.Left, bounds.Top - inset.Top, bounds.Right + inset.Right, bounds.Bottom + inset.Bottom);
+        float shadowRadius = spec?.Radius ?? 0;
 
-        // Gölgeler, en geniş katman önce.
+        // Gölgeler, en geniş katman önce; geçişte eski gölge solarken yenisi belirir.
+        if (progress < 1f)
+            for (int i = _fromShadows.Count - 1; i >= 0; i--)
+                TwShadowRenderer.Draw(graphics, bounds, shadowRadius, _fromShadows[i], 1f - progress);
+        if (spec is null) return;
         for (int i = spec.Shadows.Count - 1; i >= 0; i--)
-            TwShadowRenderer.Draw(graphics, bounds, spec.Radius, spec.Shadows[i]);
+            TwShadowRenderer.Draw(graphics, bounds, spec.Radius, spec.Shadows[i], progress);
 
         if (spec.Frame is TwChrome frame)
         {
@@ -231,7 +289,7 @@ internal sealed class TwOutset
     private void InvalidateParent()
     {
         if (_parent is null) return;
-        var extent = Spec?.Extent ?? 0;
+        var extent = Math.Max(Spec?.Extent ?? 0, _fromExtent);
         var area = Rectangle.Inflate(_control.Bounds, extent, extent);
         _parent.Invalidate(Rectangle.Union(area, _paintedBounds.IsEmpty ? area : _paintedBounds));
         _paintedBounds = area;
@@ -279,9 +337,9 @@ internal static class TwShadowRenderer
     private static readonly Dictionary<(int W, int H, int Radius, int Blur, int Color), Bitmap> Cache =
         new Dictionary<(int W, int H, int Radius, int Blur, int Color), Bitmap>();
 
-    public static void Draw(Graphics graphics, Rectangle bounds, float radius, TwShadowLayer layer)
+    public static void Draw(Graphics graphics, Rectangle bounds, float radius, TwShadowLayer layer, float opacity = 1f)
     {
-        if (layer.Color.A == 0) return;
+        if (layer.Color.A == 0 || opacity <= 0f) return;
         var spread = layer.Spread;
         var rect = RectangleF.Inflate(bounds, spread, spread);
         rect.Offset(0, layer.OffsetY);
@@ -291,7 +349,15 @@ internal static class TwShadowRenderer
         int margin = blur + 2;
         var effectiveRadius = Math.Max(0, TwPainter.EffectiveRadius(radius, bounds.Size) + spread);
         var bitmap = Get((int)Math.Ceiling(rect.Width), (int)Math.Ceiling(rect.Height), (int)Math.Round(effectiveRadius), blur, layer.Color);
-        graphics.DrawImageUnscaled(bitmap, (int)Math.Round(rect.X) - margin, (int)Math.Round(rect.Y) - margin);
+        int x = (int)Math.Round(rect.X) - margin, y = (int)Math.Round(rect.Y) - margin;
+        if (opacity >= 1f)
+        {
+            graphics.DrawImageUnscaled(bitmap, x, y);
+            return;
+        }
+        using var attributes = new ImageAttributes();
+        attributes.SetColorMatrix(new ColorMatrix { Matrix33 = opacity });
+        graphics.DrawImage(bitmap, new Rectangle(x, y, bitmap.Width, bitmap.Height), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, attributes);
     }
 
     private static Bitmap Get(int width, int height, int radius, int blur, Color color)

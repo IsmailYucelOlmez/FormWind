@@ -225,4 +225,56 @@ public class ChromeAndShadowTests
 
     private static readonly System.Reflection.MethodInfo RecreateHandle =
         typeof(Control).GetMethod("RecreateHandle", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+
+    // transition varken gölge değişimi eski ve yeni gölgenin saydamlıkla geçişiyle olur; transition yoksa anında.
+    [Fact]
+    public void Shadow_changes_transition_when_transition_is_set() => Sta.Run(() =>
+    {
+        var previous = TwMotion.Enabled;
+        TwMotion.Enabled = true;
+        try
+        {
+            using var provider = new TailwindProvider();
+            using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false, ClientSize = new Size(300, 200), BackColor = Color.White };
+            var card = new TwPanel { Bounds = new Rectangle(50, 30, 200, 100), BackColor = Color.White };
+            var instant = new TwPanel { Bounds = new Rectangle(10, 10, 20, 20) };
+            form.Controls.Add(card);
+            form.Controls.Add(instant);
+            provider.SetClasses(card, "shadow-none dark:shadow-xl transition duration-300");
+            provider.SetClasses(instant, "shadow-none dark:shadow-xl");
+            form.Show();
+
+            provider.DarkMode = true;
+            var outset = TwOutset.For(card);
+            Assert.True(outset.Animating);
+            Assert.False(TwOutset.For(instant).Animating);
+
+            // Başlangıçta yeni gölge henüz görünmez (eski gölge yoktu); kartın 20 px altı boş.
+            int Below()
+            {
+                using var bitmap = new Bitmap(form.ClientSize.Width, form.ClientSize.Height);
+                using (var g = Graphics.FromImage(bitmap))
+                {
+                    g.Clear(Color.White);
+                    outset.Paint(g);
+                }
+                return bitmap.GetPixel(150, card.Bottom + 20).R;
+            }
+            Assert.True(Below() > 250);
+
+            var until = DateTime.UtcNow.AddMilliseconds(600);
+            while (outset.Animating && DateTime.UtcNow < until)
+            {
+                Application.DoEvents();
+                System.Threading.Thread.Sleep(10);
+            }
+            Assert.False(outset.Animating);
+            Assert.True(Below() < 250);                                   // xl gölge kartın altına taşar
+            form.Close();
+        }
+        finally
+        {
+            TwMotion.Enabled = previous;
+        }
+    });
 }
