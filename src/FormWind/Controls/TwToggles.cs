@@ -6,13 +6,13 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>İşaret kutusu / anahtar renkleri: <c>accent-*</c> (seçili) ve <c>fill-*</c> (seçili değil).</summary>
+/// <summary>Checkbox / switch colors: <c>accent-*</c> (checked) and <c>fill-*</c> (unchecked).</summary>
 internal interface ITwToggle
 {
     void SetToggleColors(Color? accent, Color? fill);
 }
 
-/// <summary>Owner-draw CheckBox, RadioButton ve Switch için ortak çizim.</summary>
+/// <summary>Shared drawing for the owner-drawn CheckBox, RadioButton and Switch.</summary>
 internal static class TwToggleDrawing
 {
     public static readonly Color DefaultAccent = ColorTranslator.FromHtml("#2563eb"); // blue-600
@@ -34,7 +34,7 @@ internal static class TwToggleDrawing
         return new Size(width + control.Padding.Horizontal, height + control.Padding.Vertical);
     }
 
-    /// <summary>Arka planı boyar, göstergenin konumunu döner ve metni çizer.</summary>
+    /// <summary>Paints the background, returns the indicator's position and draws the text.</summary>
     public static Rectangle Layout(Control control, Graphics graphics, int indicatorWidth, int indicatorHeight, int gap)
     {
         TwPainter.PaintParentBackground(control, graphics);
@@ -92,8 +92,8 @@ internal static class TwToggleDrawing
 }
 
 /// <summary>
-/// Owner-draw onay kutusu. Seçili renk <c>accent-*</c>, seçili değilken dolgu <c>fill-*</c>, kutu kenarlığı
-/// <c>border-*</c>, köşe <c>rounded-*</c>, metin <c>text-*</c> ile verilir.
+/// Owner-drawn checkbox. The checked color is set with <c>accent-*</c>, the unchecked fill with <c>fill-*</c>, the box border
+/// with <c>border-*</c>, corners with <c>rounded-*</c>, text with <c>text-*</c>.
 /// </summary>
 [ToolboxItem(true)]
 [Description("Stillenebilir onay kutusu.")]
@@ -154,7 +154,7 @@ public class TwCheckBox : CheckBox, ITwChrome, ITwToggle
     }
 }
 
-/// <summary>Owner-draw seçenek düğmesi. Renkler <see cref="TwCheckBox"/> ile aynı class'larla verilir.</summary>
+/// <summary>Owner-drawn radio button. Colors are set with the same classes as <see cref="TwCheckBox"/>.</summary>
 [ToolboxItem(true)]
 [Description("Stylable radio button.")]
 public class TwRadioButton : RadioButton, ITwChrome, ITwToggle
@@ -209,8 +209,8 @@ public class TwRadioButton : RadioButton, ITwChrome, ITwToggle
 }
 
 /// <summary>
-/// Açma/kapama anahtarı (Tailwind'deki switch deseni: 44×24 px ray, 20 px düğme). Açıkken ray <c>accent-*</c>,
-/// kapalıyken <c>fill-*</c> rengindedir. Düğme konumu 150 ms içinde kayarak değişir.
+/// On/off switch (Tailwind's switch pattern: 44×24 px track, 20 px knob). The track is <c>accent-*</c> when on and
+/// <c>fill-*</c> when off. The knob slides to its new position in 150 ms.
 /// </summary>
 [ToolboxItem(true)]
 [Description("Stylable on/off switch.")]
@@ -230,7 +230,7 @@ public class TwSwitch : CheckBox, ITwChrome, ITwToggle
         _timer.Tick += (_, _) => Animate();
     }
 
-    /// <summary>Düğmenin konumu: 0 = kapalı, 1 = açık (animasyon sırasında aradaki değerler).</summary>
+    /// <summary>Knob position: 0 = off, 1 = on (values in between during animation).</summary>
     [Browsable(false)]
     public float ThumbPosition => _position;
 

@@ -7,10 +7,10 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// <c>DropDownList</c> modundaki standart <see cref="ComboBox"/>'ın kapalı kutusunu class'larla çizer: zemin, kenarlık,
-/// köşe, seçili metin ve ok. Kutunun düzenleme alanı olmadığından tamamı tek bir WM_PAINT'te çizilebilir.
-/// Açılır liste native kalır (renkleri <c>BackColor</c>/<c>ForeColor</c>'dan gelir). Düzenlenebilir modlarda
-/// (<c>DropDown</c>, <c>Simple</c>) devreye girmez; o kutular için <c>TwSelect</c> kullanılmalı.
+/// Paints the closed box of a standard <see cref="ComboBox"/> in <c>DropDownList</c> mode with classes: background, border,
+/// corners, selected text and arrow. The box has no edit area, so it can be painted entirely in one WM_PAINT.
+/// The drop-down list stays native (its colors come from <c>BackColor</c>/<c>ForeColor</c>). Not used in the editable modes
+/// (<c>DropDown</c>, <c>Simple</c>); use <c>TwSelect</c> for those boxes.
 /// </summary>
 internal sealed class TwComboPainter : NativeWindow
 {

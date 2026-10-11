@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Bir <see cref="TwTabControl"/> sayfası. Sekme başlığı <see cref="Text"/>'tir; içerik normal bir <see cref="TwPanel"/> gibi stillenir.</summary>
+/// <summary>A <see cref="TwTabControl"/> page. The tab title is <see cref="Text"/>; the content is styled like a normal <see cref="TwPanel"/>.</summary>
 [ToolboxItem(false)]
 [DesignTimeVisible(false)]
 public class TwTabPage : TwPanel
@@ -40,9 +40,9 @@ public class TwTabPage : TwPanel
 }
 
 /// <summary>
-/// Sayfalı sekme kontrolü (TabControl yerine): üstte bir <see cref="TwTabStrip"/>, altta seçili <see cref="TwTabPage"/>.
-/// Şerit <see cref="Strip"/> üzerinden stillenir (<c>provider.SetClasses(tabs.Strip, "...")</c>), sayfalar kendi class'larıyla.
-/// Ctrl+Tab / Ctrl+Shift+Tab ve Ctrl+PageDown / Ctrl+PageUp sayfalar arasında gezer.
+/// Tab control with pages (instead of TabControl): a <see cref="TwTabStrip"/> on top and the selected <see cref="TwTabPage"/> below.
+/// The strip is styled through <see cref="Strip"/> (<c>provider.SetClasses(tabs.Strip, "...")</c>), pages with their own classes.
+/// Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+PageDown / Ctrl+PageUp move between pages.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
@@ -64,7 +64,7 @@ public class TwTabControl : Control
 
     public event EventHandler? SelectedIndexChanged;
 
-    /// <summary>Sekme şeridi; görünüm (<see cref="TwTabStrip.Variant"/>) ve class'lar buradan verilir.</summary>
+    /// <summary>The tab strip; its style (<see cref="TwTabStrip.Variant"/>) and classes are set here.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TwTabStrip Strip => _strip;
 
@@ -75,7 +75,7 @@ public class TwTabControl : Control
         set => _strip.Variant = value;
     }
 
-    /// <summary>Şerit ile sayfa arasındaki boşluk (96 DPI pikseli).</summary>
+    /// <summary>Space between the strip and the page (96 DPI pixels).</summary>
     [Category("Layout"), DefaultValue(12)]
     public int StripGap
     {
@@ -112,7 +112,7 @@ public class TwTabControl : Control
         }
     }
 
-    /// <summary>Başlığı verilen yeni bir sayfa ekler.</summary>
+    /// <summary>Adds a new page with the given title.</summary>
     public TwTabPage AddPage(string text)
     {
         var page = new TwTabPage(text);
@@ -120,7 +120,7 @@ public class TwTabControl : Control
         return page;
     }
 
-    /// <summary>Sayfanın istemci koordinatlarındaki yeri.</summary>
+    /// <summary>The page's position in client coordinates.</summary>
     [Browsable(false)]
     public Rectangle PageBounds
     {

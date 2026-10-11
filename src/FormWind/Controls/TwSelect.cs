@@ -9,10 +9,10 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Stillenebilir açılır liste: seçili metin, ince bir ayraç ve aşağı ok. Tıklanınca tema renderer'lı bir menü açar.
-/// Kutu temel class'larla (<c>rounded-full border px-3 text-xs</c>), menü <c>menu:</c> ve <c>item:</c> ile stillenir.
-/// Native ComboBox'ın kutusu stillenemediği için yerine kullanılır; klavye ile ↑/↓ seçimi değiştirir, Enter/Boşluk menüyü açar,
-/// harf yazmak o harflerle başlayan öğeyi seçer. <see cref="Searchable"/> açıksa menünün üstünde bir arama kutusu çıkar.
+/// Stylable drop-down list: the selected text, a thin divider and a down arrow. Clicking opens a menu with the theme renderer.
+/// The box is styled with base classes (<c>rounded-full border px-3 text-xs</c>), the menu with <c>menu:</c> and <c>item:</c>.
+/// Used instead of the native ComboBox, whose box cannot be styled; ↑/↓ change the selection, Enter/Space open the menu,
+/// typing selects the item starting with those letters. With <see cref="Searchable"/> a search box appears above the menu.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
@@ -62,13 +62,13 @@ public class TwSelect : Control, ITwChrome
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? SelectedItem => _selectedIndex >= 0 ? _items[_selectedIndex] : null;
 
-    /// <summary>Menünün üstünde, öğeleri yazdıkça süzen bir arama kutusu gösterir (uzun listeler için).</summary>
+    /// <summary>Shows a search box above the menu that filters items as you type (for long lists).</summary>
     [Category("Behavior"), DefaultValue(false)]
     public bool Searchable { get; set; }
 
     private string? _searchPlaceholder;
 
-    /// <summary>Arama kutusunun ipucu; atanmamışsa <see cref="TwTexts.Search"/>.</summary>
+    /// <summary>Hint of the search box; <see cref="TwTexts.Search"/> when not set.</summary>
     [Category("Appearance"), Localizable(true)]
     public string SearchPlaceholder
     {
@@ -80,15 +80,15 @@ public class TwSelect : Control, ITwChrome
 
     private void ResetSearchPlaceholder() => _searchPlaceholder = null;
 
-    /// <summary>Açık menüdeki arama kutusu (kapalıyken ya da <see cref="Searchable"/> kapalıyken <c>null</c>).</summary>
+    /// <summary>The search box of the open menu (<c>null</c> when closed or when <see cref="Searchable"/> is off).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ToolStripTextBox? SearchBox => _menu?.Visible == true ? _search : null;
 
-    /// <summary>Son açılan menü (açılmadıysa <c>null</c>).</summary>
+    /// <summary>The last opened menu (<c>null</c> if it was never opened).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ContextMenuStrip? DropDownMenu => _menu;
 
-    /// <summary>Menü renkleri; FormWind <c>menu:</c> / <c>item:</c> class'larından doldurur.</summary>
+    /// <summary>Menu colors; FormWind fills them from the <c>menu:</c> / <c>item:</c> classes.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     internal TwMenuColors MenuColors { get; set; } = new TwMenuColors();
 
@@ -111,7 +111,7 @@ public class TwSelect : Control, ITwChrome
         Invalidate();
     }
 
-    /// <summary>AutoSize genişliği: seçili öğeye göre (true) ya da en uzun öğeye göre (false, native ComboBox gibi).</summary>
+    /// <summary>AutoSize width: based on the selected item (true) or the longest item (false, like the native ComboBox).</summary>
     [Category("Layout"), DefaultValue(true)]
     public bool SizeToSelection { get; set; } = true;
 
@@ -187,7 +187,7 @@ public class TwSelect : Control, ITwChrome
         _menu.Show(this, new Point(0, Height + 2));
     }
 
-    /// <summary>Menüde yalnızca <paramref name="filter"/>'ı (büyük/küçük harf ve aksan farkı gözetmeden) içeren öğeleri gösterir.</summary>
+    /// <summary>Shows only the menu items that contain <paramref name="filter"/> (ignoring case and accents).</summary>
     public void ApplyFilter(string? filter)
     {
         if (_menu is null) return;
@@ -196,7 +196,7 @@ public class TwSelect : Control, ITwChrome
             _menu.Items[i + offset].Visible = Matches(_items[i], filter);
     }
 
-    /// <summary>Açık menüde görünen öğelerin dizinleri.</summary>
+    /// <summary>Indices of the items visible in the open menu.</summary>
     public IEnumerable<int> VisibleItemIndices()
     {
         if (_menu is null) yield break;

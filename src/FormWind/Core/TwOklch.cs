@@ -6,9 +6,9 @@ using System.Text.RegularExpressions;
 namespace FormWind;
 
 /// <summary>
-/// OKLCH renklerini (Tailwind v4 paleti, <c>oklch(62.3% 0.214 259.8)</c>) sRGB'ye çevirir. sRGB'ye sığmayan renkler, tarayıcıların
-/// sRGB ekranlarda yaptığı gibi CSS Color 4 gamut eşlemesiyle yaklaştırılır: ton ve açıklık korunur, kroma algısal fark
-/// (ΔEOK) 0,02'nin altına inene kadar azaltılır.
+/// Converts OKLCH colors (the Tailwind v4 palette, <c>oklch(62.3% 0.214 259.8)</c>) to sRGB. Colors outside sRGB are
+/// approximated with CSS Color 4 gamut mapping, as browsers do on sRGB displays: hue and lightness are kept and chroma is
+/// reduced until the perceptual difference (ΔEOK) is below 0.02.
 /// </summary>
 public static class TwOklch
 {
@@ -19,18 +19,18 @@ public static class TwOklch
         @"^\s*oklch\(\s*(?<l>[-+0-9.]+%?)\s+(?<c>[-+0-9.]+%?|none)\s+(?<h>[-+0-9.]+(?:deg)?|none)\s*(?:/\s*(?<a>[-+0-9.]+%?)\s*)?\)\s*$",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    /// <summary>OKLCH rengini sRGB'ye çevirir.</summary>
-    /// <param name="lightness">Açıklık, 0–1 (CSS'teki %0–100).</param>
-    /// <param name="chroma">Kroma (0 gri; Tailwind paletinde en fazla ~0,32).</param>
-    /// <param name="hue">Ton, derece.</param>
-    /// <param name="alpha">Saydamlık, 0–1.</param>
+    /// <summary>Converts an OKLCH color to sRGB.</summary>
+    /// <param name="lightness">Lightness, 0–1 (0–100% in CSS).</param>
+    /// <param name="chroma">Chroma (0 is gray; at most ~0.32 in the Tailwind palette).</param>
+    /// <param name="hue">Hue in degrees.</param>
+    /// <param name="alpha">Opacity, 0–1.</param>
     public static Color ToColor(double lightness, double chroma, double hue, double alpha = 1)
     {
         var (r, g, b) = GamutMap(lightness, Math.Max(0, chroma), hue);
         return Color.FromArgb(ToByte(alpha), ToByte(r), ToByte(g), ToByte(b));
     }
 
-    /// <summary><c>oklch(L C H)</c> ya da <c>oklch(L C H / A)</c> metnini çözer (L ve A yüzde ya da sayı olabilir).</summary>
+    /// <summary>Parses <c>oklch(L C H)</c> or <c>oklch(L C H / A)</c> text (L and A can be percentages or numbers).</summary>
     public static bool TryParse(string? text, out Color color)
     {
         color = Color.Empty;

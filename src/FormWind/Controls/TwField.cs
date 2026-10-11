@@ -8,10 +8,10 @@ using System.Windows.Forms.Layout;
 namespace FormWind;
 
 /// <summary>
-/// Form alanı: üstte etiket, altında tek bir düzenleyici (TwTextBox, TwSelect, TwDatePicker …), en altta ipucu ya da
-/// hata metni. Kurallar (<see cref="Required"/>, <see cref="Pattern"/>, <see cref="Validator"/>, maske tamlığı)
-/// <see cref="TailwindProvider.Validate"/> ile denetlenir; hata varken düzenleyiciye <c>invalid:</c> varyantı uygulanır.
-/// Stiller: <c>label:text-* label:font-*</c>, <c>hint:text-*</c>, <c>error:text-*</c>.
+/// Form field: a label on top, a single editor below (TwTextBox, TwSelect, TwDatePicker …) and a hint or error text at the
+/// bottom. The rules (<see cref="Required"/>, <see cref="Pattern"/>, <see cref="Validator"/>, mask completeness) are checked
+/// with <see cref="TailwindProvider.Validate"/>; while there is an error the <c>invalid:</c> variant is applied to the editor.
+/// Styles: <c>label:text-* label:font-*</c>, <c>hint:text-*</c>, <c>error:text-*</c>.
 /// </summary>
 [ToolboxItem(true)]
 [Description("Labeled form field with validation.")]
@@ -39,7 +39,7 @@ public class TwField : TwPanel
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
     }
 
-    /// <summary>Hata metni değiştiğinde.</summary>
+    /// <summary>When the error text changes.</summary>
     public event EventHandler? ErrorChanged;
 
     [Category("Appearance"), DefaultValue(""), Localizable(true)]
@@ -64,7 +64,7 @@ public class TwField : TwPanel
         }
     }
 
-    /// <summary>Gösterilen hata (yoksa <c>null</c>). Genellikle <see cref="TailwindProvider.SetError"/> ile verilir.</summary>
+    /// <summary>The displayed error (<c>null</c> when none). Usually set with <see cref="TailwindProvider.SetError"/>.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? ErrorText
     {
@@ -92,7 +92,7 @@ public class TwField : TwPanel
 
     private string? _requiredMessage, _patternMessage, _incompleteMessage;
 
-    /// <summary>Zorunlu alan boşken gösterilir; atanmamışsa <see cref="TwTexts.Required"/>.</summary>
+    /// <summary>Shown when a required field is empty; <see cref="TwTexts.Required"/> when not set.</summary>
     [Category("Validation"), Localizable(true)]
     public string RequiredMessage
     {
@@ -104,11 +104,11 @@ public class TwField : TwPanel
 
     private void ResetRequiredMessage() => _requiredMessage = null;
 
-    /// <summary>Değerin uyması gereken düzenli ifade (boş değer <see cref="Required"/>'a bırakılır).</summary>
+    /// <summary>Regular expression the value must match (an empty value is left to <see cref="Required"/>).</summary>
     [Category("Validation"), DefaultValue("")]
     public string Pattern { get; set; } = "";
 
-    /// <summary><see cref="Pattern"/>'e uymayan değerde gösterilir; atanmamışsa <see cref="TwTexts.InvalidFormat"/>.</summary>
+    /// <summary>Shown when the value does not match <see cref="Pattern"/>; <see cref="TwTexts.InvalidFormat"/> when not set.</summary>
     [Category("Validation"), Localizable(true)]
     public string PatternMessage
     {
@@ -120,7 +120,7 @@ public class TwField : TwPanel
 
     private void ResetPatternMessage() => _patternMessage = null;
 
-    /// <summary>Maskesi tamamlanmamış alanda gösterilir; atanmamışsa <see cref="TwTexts.Incomplete"/>.</summary>
+    /// <summary>Shown when a mask is incomplete; <see cref="TwTexts.Incomplete"/> when not set.</summary>
     [Category("Validation"), Localizable(true)]
     public string IncompleteMessage
     {
@@ -132,11 +132,11 @@ public class TwField : TwPanel
 
     private void ResetIncompleteMessage() => _incompleteMessage = null;
 
-    /// <summary>Özel kural: değeri alır, hata metni ya da <c>null</c> döner (örn. <see cref="TwValidators.TcKimlikNo"/>).</summary>
+    /// <summary>Custom rule: takes the value and returns an error text or <c>null</c> (e.g. <see cref="TwValidators.TcKimlikNo"/>).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<string, string?>? Validator { get; set; }
 
-    /// <summary>Alanın düzenleyicisi: etiket ve mesaj dışındaki ilk alt kontrol.</summary>
+    /// <summary>The field's editor: the first child other than the label and the message.</summary>
     [Browsable(false)]
     public Control? Editor
     {
@@ -165,7 +165,7 @@ public class TwField : TwPanel
         UpdateMessage();
     }
 
-    /// <summary>Düzenleyicinin değeri (metin kutusu metni, seçili öğe, tarih …).</summary>
+    /// <summary>The editor's value (text box text, selected item, date …).</summary>
     public string EditorValue => Editor switch
     {
         TwDatePicker picker => picker.Value?.ToString("d", picker.Culture) ?? "",
@@ -176,7 +176,7 @@ public class TwField : TwPanel
         var other => other.Text,
     };
 
-    /// <summary>Kuralları denetler; hata metni ya da geçerliyse <c>null</c>. <see cref="ErrorText"/>'i değiştirmez.</summary>
+    /// <summary>Checks the rules; returns the error text, or <c>null</c> when valid. Does not change <see cref="ErrorText"/>.</summary>
     public string? Validate()
     {
         var value = EditorValue.Trim();

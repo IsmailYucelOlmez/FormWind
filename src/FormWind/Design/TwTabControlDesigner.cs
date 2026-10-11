@@ -10,9 +10,9 @@ using System.Windows.Forms.Design;
 namespace FormWind.Design;
 
 /// <summary>
-/// <see cref="TwTabControl"/> için Visual Studio Designer desteği: "Sayfa ekle" / "Sayfayı kaldır" komutları ve akıllı etiket,
-/// tasarım zamanında sekmelere tıklayarak sayfa değiştirme; kontrolün içine yalnızca <see cref="TwTabPage"/> bırakılabilir.
-/// .NET 8+'ın süreç dışı Designer'ında tasarımcı sunucu sürecinde çalışır; komutlar ve akıllı etiket orada da gösterilir.
+/// Visual Studio Designer support for <see cref="TwTabControl"/>: "Add page" / "Remove selected page" commands and a smart tag,
+/// switching pages by clicking tabs at design time; only <see cref="TwTabPage"/>s can be dropped onto the control.
+/// In the .NET 8+ out-of-process Designer the designer runs in the server process; the commands and smart tag show there too.
 /// </summary>
 public class TwTabControlDesigner : ParentControlDesigner
 {
@@ -104,7 +104,7 @@ public class TwTabControlDesigner : ParentControlDesigner
         transaction.Commit();
     }
 
-    /// <summary>Akıllı etiket: görünüm, sayfa ekle/kaldır.</summary>
+    /// <summary>Smart tag: style, add/remove page.</summary>
     private sealed class ActionList : DesignerActionList
     {
         private readonly TwTabControlDesigner _designer;

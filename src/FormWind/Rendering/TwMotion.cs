@@ -6,8 +6,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Kontrol içi animasyonlar (sekme göstergesinin kayması, satır hover'ının belirmesi, iskelet satırların nabzı) için ortak
-/// ayar. Varsayılan olarak Windows'un "Windows'da animasyonları göster" ayarını izler; kapalıysa değişiklikler anında olur.
+/// Shared setting for in-control animations (tab indicator sliding, row hover fading in, skeleton row pulse). By default
+/// it follows Windows' "Show animations in Windows" setting; when off, changes are immediate.
 /// </summary>
 public static class TwMotion
 {
@@ -15,7 +15,7 @@ public static class TwMotion
 
     private static bool? _enabled;
 
-    /// <summary>Animasyonlar açık mı. Atanabilir (örn. testlerde ya da uygulama ayarıyla kapatmak için).</summary>
+    /// <summary>Whether animations are on. Can be set (e.g. to turn them off in tests or from an application setting).</summary>
     public static bool Enabled
     {
         get => _enabled ??= SystemAnimationsEnabled();
@@ -34,7 +34,7 @@ public static class TwMotion
         }
     }
 
-    /// <summary>Kontrol görünürken ve animasyonlar açıkken animasyon yapılır (tasarım zamanında ve görünmezken yapılmaz).</summary>
+    /// <summary>Animates while the control is visible and animations are on (not at design time and not while invisible).</summary>
     internal static bool CanAnimate(Control control) =>
         Enabled && control.IsHandleCreated && control.Visible && control.Site?.DesignMode != true;
 
@@ -57,7 +57,7 @@ public static class TwMotion
     private static extern bool SystemParametersInfo(int action, int param, out bool value, int winIni);
 }
 
-/// <summary>Tek bir değerin zamanla ilerlemesi; sahibi her karede <see cref="Progress"/>'i okuyup yeniden çizer.</summary>
+/// <summary>Progress of a single value over time; the owner reads <see cref="Progress"/> every frame and repaints.</summary>
 internal sealed class TwTween : IDisposable
 {
     private readonly Control _owner;
@@ -77,12 +77,12 @@ internal sealed class TwTween : IDisposable
 
     public bool Running => _timer.Enabled;
 
-    /// <summary>0–1 arası, ease-out uygulanmış ilerleme (animasyon yoksa 1).</summary>
+    /// <summary>Progress between 0 and 1 with ease-out applied (1 without animation).</summary>
     public float Progress => _timer.Enabled || _duration > 0 && (DateTime.UtcNow - _start).TotalMilliseconds < _duration
         ? TwMotion.EaseOut((float)((DateTime.UtcNow - _start).TotalMilliseconds / _duration))
         : 1f;
 
-    /// <summary>Yeni bir animasyon başlatır; animasyon yapılamıyorsa hemen biter.</summary>
+    /// <summary>Starts a new animation; finishes immediately if it cannot animate.</summary>
     public void Start(int durationMs)
     {
         if (!TwMotion.CanAnimate(_owner) || durationMs <= 0)

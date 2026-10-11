@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary><see cref="TwTreeView"/> düğümü.</summary>
+/// <summary>A <see cref="TwTreeView"/> node.</summary>
 public class TwTreeNode
 {
     private bool _expanded;
@@ -23,7 +23,7 @@ public class TwTreeNode
 
     public string Text { get; set; } = "";
 
-    /// <summary>İkon adı (<see cref="TwIconRenderer.DrawIcon"/>); <c>null</c> = ikonsuz.</summary>
+    /// <summary>Icon name (<see cref="TwIconRenderer.DrawIcon"/>); <c>null</c> = no icon.</summary>
     public string? IconName { get; set; }
 
     public object? Tag { get; set; }
@@ -35,8 +35,8 @@ public class TwTreeNode
     internal TwTreeView? Tree { get; set; }
 
     /// <summary>
-    /// Alt düğümleri henüz yüklenmemiş ama açılabilir (ok gösterilir). İlk açılışta <see cref="TwTreeView.BeforeExpand"/>'de
-    /// düğümleri ekleyip bunu <c>false</c> yapın.
+    /// The node's children are not loaded yet but it can be expanded (an arrow is shown). On first expansion, add the
+    /// nodes in <see cref="TwTreeView.BeforeExpand"/> and set this to <c>false</c>.
     /// </summary>
     public bool HasLazyChildren { get; set; }
 
@@ -69,14 +69,14 @@ public class TwTreeNode
         else _expanded = false;
     }
 
-    /// <summary>Kendisi ve tüm alt düğümleri açar.</summary>
+    /// <summary>Expands this node and all its descendants.</summary>
     public void ExpandAll()
     {
         Expand();
         foreach (var child in Nodes) child.ExpandAll();
     }
 
-    /// <summary>Kökten bu düğüme yol ("Belgeler/2026/Ekim").</summary>
+    /// <summary>Path from the root to this node ("Documents/2026/October").</summary>
     public string FullPath => Parent is null ? Text : Parent.FullPath + "/" + Text;
 
     private TwTreeNode? Root
@@ -92,7 +92,7 @@ public class TwTreeNode
     public override string ToString() => Text;
 }
 
-/// <summary>Düğüm listesi; değişiklikler ağaca hemen yansır.</summary>
+/// <summary>Node list; changes are reflected in the tree immediately.</summary>
 public sealed class TwTreeNodeCollection : Collection<TwTreeNode>
 {
     private readonly TwTreeNode? _owner;
@@ -169,10 +169,10 @@ public sealed class TwTreeViewCancelEventArgs : CancelEventArgs
 }
 
 /// <summary>
-/// TreeView yerine sanal ağaç: yalnızca açık dalların görünen düğümleri çizilir (binlerce düğüm sorun değil).
-/// Klavye: ↑/↓, → açar / ilk çocuğa iner, ← kapatır / üst düğüme çıkar, Enter ya da çift tık açar-kapatır.
-/// Alt düğümler <see cref="TwTreeNode.HasLazyChildren"/> ve <see cref="BeforeExpand"/> ile istendiğinde yüklenebilir.
-/// Stiller TwDataList ile aynıdır (<c>item:hover:bg-*</c>, <c>selected:bg-*</c> …).
+/// Virtual tree instead of TreeView: only the visible nodes of expanded branches are drawn (thousands of nodes are fine).
+/// Keyboard: ↑/↓, → expands / moves to the first child, ← collapses / moves to the parent, Enter or double-click toggles.
+/// Children can be loaded on demand with <see cref="TwTreeNode.HasLazyChildren"/> and <see cref="BeforeExpand"/>.
+/// Styles are the same as TwDataList (<c>item:hover:bg-*</c>, <c>selected:bg-*</c> …).
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(AfterSelect))]
@@ -195,7 +195,7 @@ public class TwTreeView : TwDataList
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TwTreeNodeCollection Nodes { get; }
 
-    /// <summary>Açılmadan önce (iptal edilebilir); tembel yüklenen düğümlerin çocukları burada eklenir.</summary>
+    /// <summary>Before expanding (cancelable); add the children of lazily loaded nodes here.</summary>
     public event EventHandler<TwTreeViewCancelEventArgs>? BeforeExpand;
 
     public event EventHandler<TwTreeViewCancelEventArgs>? AfterExpand;
@@ -204,7 +204,7 @@ public class TwTreeView : TwDataList
 
     public event EventHandler? AfterSelect;
 
-    /// <summary>Düzey başına girinti (96 DPI).</summary>
+    /// <summary>Indent per level (96 DPI).</summary>
     [Category("Appearance"), DefaultValue(18)]
     public int Indent
     {
@@ -216,7 +216,7 @@ public class TwTreeView : TwDataList
         }
     }
 
-    /// <summary>Görünen (açık dallardaki) düğümler, ekrandaki sırayla.</summary>
+    /// <summary>Visible nodes (in expanded branches) in screen order.</summary>
     [Browsable(false)]
     public IReadOnlyList<TwTreeNode> VisibleNodes => _visible;
 
@@ -316,7 +316,7 @@ public class TwTreeView : TwDataList
 
     private int ArrowSize => ScalePixels(16);
 
-    /// <summary>Düğümün aç/kapa okunun yeri.</summary>
+    /// <summary>Position of the node's expand/collapse arrow.</summary>
     public Rectangle GetExpanderBounds(int index)
     {
         if (index < 0 || index >= _visible.Count) return Rectangle.Empty;

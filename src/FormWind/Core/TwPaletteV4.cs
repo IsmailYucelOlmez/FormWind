@@ -2,24 +2,24 @@ using System.Collections.Generic;
 
 namespace FormWind;
 
-/// <summary>Varsayılan renk paletinin Tailwind sürümü.</summary>
+/// <summary>Tailwind version of the default color palette.</summary>
 public enum TwPaletteVersion
 {
-    /// <summary>Tailwind CSS v3 (hex; varsayılan).</summary>
+    /// <summary>Tailwind CSS v3 (hex; the default).</summary>
     V3,
 
-    /// <summary>Tailwind CSS v4 (OKLCH, daha canlı tonlar).</summary>
+    /// <summary>Tailwind CSS v4 (OKLCH, more vivid shades).</summary>
     V4,
 }
 
 /// <summary>
-/// Tailwind CSS v4 varsayılan renk paleti (OKLCH; kaynak: tailwindcss 4.1.13 <c>theme.css</c>). Değerler
-/// <see cref="TwOklch"/> ile sRGB'ye çevrilir; sRGB'ye sığmayan renkler tarayıcılardaki gibi CSS Color 4 gamut eşlemesiyle
-/// yaklaştırılır. Kullanmak için <c>new TwTheme(TwPaletteVersion.V4)</c> ya da tema dosyasında <c>"palette": "v4"</c>.
+/// The default Tailwind CSS v4 color palette (OKLCH; source: tailwindcss 4.1.13 <c>theme.css</c>). Values are converted
+/// to sRGB with <see cref="TwOklch"/>; colors outside sRGB are approximated with CSS Color 4 gamut mapping as in
+/// browsers. Use it with <c>new TwTheme(TwPaletteVersion.V4)</c> or <c>"palette": "v4"</c> in the theme file.
 /// </summary>
 public static class TwPaletteV4
 {
-    /// <summary>Renk adı → <see cref="TwPalette.Shades"/> sırasıyla OKLCH değerleri.</summary>
+    /// <summary>Color name → OKLCH values in <see cref="TwPalette.Shades"/> order.</summary>
     public static readonly IReadOnlyDictionary<string, string[]> Colors = new Dictionary<string, string[]>
     {
         ["red"] = new[] { "oklch(97.1% 0.013 17.38)", "oklch(93.6% 0.032 17.717)", "oklch(88.5% 0.062 18.334)", "oklch(80.8% 0.114 19.571)", "oklch(70.4% 0.191 22.216)", "oklch(63.7% 0.237 25.331)", "oklch(57.7% 0.245 27.325)", "oklch(50.5% 0.213 27.518)", "oklch(44.4% 0.177 26.899)", "oklch(39.6% 0.141 25.723)", "oklch(25.8% 0.092 26.042)" },

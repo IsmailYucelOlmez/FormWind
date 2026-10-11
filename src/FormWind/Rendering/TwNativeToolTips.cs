@@ -6,11 +6,11 @@ using System.Text;
 namespace FormWind;
 
 /// <summary>
-/// Koyu temada iş parçacığının native ipucu pencerelerini de koyulaştırır: ToolTip bileşenleri, ToolStrip öğe ipuçları,
-/// ListView/TreeView ipuçları. <c>tooltips_class32</c> pencerelerine oluşturulurken ve ilk gösterilirken
-/// <c>DarkMode_Explorer</c> teması verilir (Windows 10 1809+, belgelenmemiş; desteklenmeyen sistemlerde etkisiz).
-/// İpucu pencereleri uygulamanın kendi bileşenlerine ait olduğundan izleme iş parçacığı genelindedir: koyu temada
-/// en az bir provider varsa ipuçları koyudur. Kanca yalnızca koyu temadayken kuruludur.
+/// Also darkens the thread's native tooltip windows in dark mode: ToolTip components, ToolStrip item tooltips,
+/// ListView/TreeView tooltips. <c>tooltips_class32</c> windows get the <c>DarkMode_Explorer</c> theme when created and first
+/// shown (Windows 10 1809+, undocumented; no effect on unsupported systems). Tooltip windows belong to the application's
+/// own components, so tracking is thread-wide: tooltips are dark while at least one provider is in dark mode. The hook is
+/// installed only while in dark mode.
 /// </summary>
 internal static class TwNativeToolTips
 {
@@ -37,10 +37,10 @@ internal static class TwNativeToolTips
 
     public static bool IsDark => _darkOwners is { Count: > 0 };
 
-    /// <summary>Bu iş parçacığında kanca kurulu mu (testler için).</summary>
+    /// <summary>Whether the hook is installed on this thread (for tests).</summary>
     internal static bool HookInstalled => _hook != IntPtr.Zero;
 
-    /// <summary>Koyu tema verilmiş ipucu pencereleri (testler için).</summary>
+    /// <summary>Tooltip windows given the dark theme (for tests).</summary>
     internal static IReadOnlyCollection<IntPtr> Themed => (IReadOnlyCollection<IntPtr>?)_themed ?? Array.Empty<IntPtr>();
 
     public static void SetDark(object owner, bool dark)

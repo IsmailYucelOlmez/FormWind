@@ -27,7 +27,7 @@ public enum TwGradientDirection
     ToBottomLeft,
 }
 
-/// <summary>Tailwind gradient'i: <c>from</c>, isteğe bağlı <c>via</c> ve <c>to</c>. Eksik uç, diğer ucun saydam halidir.</summary>
+/// <summary>A Tailwind gradient: <c>from</c>, an optional <c>via</c> and <c>to</c>. A missing end is the transparent version of the other end.</summary>
 public readonly struct TwGradient : IEquatable<TwGradient>
 {
     public TwGradient(TwGradientDirection direction, Color? from, Color? via, Color? to)
@@ -85,7 +85,7 @@ public readonly struct TwGradient : IEquatable<TwGradient>
     public override int GetHashCode() => ((int)Direction * 397) ^ From.ToArgb() ^ (To.ToArgb() * 31);
 }
 
-/// <summary>Owner-draw kontrollere iletilen yüzey bilgisi: köşe, kenar bazlı kenarlık ve isteğe bağlı gradient. Değerler DPI ile ölçeklenmiştir.</summary>
+/// <summary>Surface information passed to owner-drawn controls: corners, per-side borders and an optional gradient. Values are DPI-scaled.</summary>
 public readonly struct TwChrome : IEquatable<TwChrome>
 {
     public TwChrome(float radius, float left, float top, float right, float bottom, Color borderColor, TwGradient? gradient = null)

@@ -6,12 +6,12 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Standart WinForms kontrollerine stil uygular: renk, yazı, boşluk, boyut, hizalama, imleç;
-/// yuvarlak köşe ve kenarlık için <see cref="ITwChrome"/> ya da Region + Paint kullanır.
+/// Applies styles to standard WinForms controls: color, text, spacing, size, alignment, cursor;
+/// uses <see cref="ITwChrome"/> or Region + Paint for rounded corners and borders.
 /// </summary>
 /// <remarks>
-/// Bir property yalnızca stil onu tanımlıyorsa ya da daha önce bu uygulayıcı tarafından değiştirildiyse
-/// ellenir. Böylece uygulama kodunun class'larla ilgisi olmayan atamaları korunur.
+/// A property is touched only if the style defines it or this applier changed it before,
+/// so application code assignments unrelated to the classes are preserved.
 /// </remarks>
 public class WinFormsApplier : IStyleApplier
 {
@@ -207,10 +207,10 @@ public class WinFormsApplier : IStyleApplier
     }
 
     /// <summary>
-    /// Devre dışı native metin kutusu (TextBox, RichTextBox, MaskedTextBox) zemin rengine güvenilir biçimde uymaz: Windows,
-    /// rengin handle'dan ve devre dışı bırakılmadan önce mi sonra mı atandığına göre bazen sistem zeminini (#F0F0F0) çizer.
-    /// Yazı rengi ise her zaman uygulanır; koyu temada açık zeminde açık yazı çıkardı. Bu yüzden devre dışıyken yalnızca
-    /// <c>disabled:</c> varyantlarının renkleri uygulanır, yoksa özgün renkler (Windows'un devre dışı görünümü) kalır.
+    /// A disabled native text box (TextBox, RichTextBox, MaskedTextBox) does not reliably follow its background color: depending
+    /// on the handle and on whether the color was set before or after disabling, Windows sometimes paints the system background
+    /// (#F0F0F0). The text color is always applied, which produced light text on a light background in dark mode. So while
+    /// disabled only the colors of the <c>disabled:</c> variants are applied; otherwise the original colors (Windows' disabled look) stay.
     /// </summary>
     internal static (Color? Back, Color? Fore) ColorTargets(Control control, TwStyle style, TwApplyContext context)
     {
@@ -219,11 +219,11 @@ public class WinFormsApplier : IStyleApplier
         return (disabled.BackColor, disabled.ForeColor);
     }
 
-    /// <summary>Kanalın rengini uygulama kodu değiştirdiyse (örn. durum rengi) class'lar o kanala bir daha dokunmaz.</summary>
+    /// <summary>If application code changed a channel's color (e.g. a status color), the classes no longer touch that channel.</summary>
     internal static bool IsColorOverridden(Control control, bool back) =>
         AppliedTable.TryGetValue(control, out var applied) && (back ? applied.Back : applied.Fore).Overridden;
 
-    /// <summary>Class'lar yeniden atanınca renk kanalları yeniden FormWind'e geçer.</summary>
+    /// <summary>When classes are assigned again, the color channels go back to FormWind.</summary>
     internal static void ResetColorOverrides(Control control)
     {
         if (!AppliedTable.TryGetValue(control, out var applied)) return;
@@ -589,7 +589,7 @@ public class WinFormsApplier : IStyleApplier
             TwOutset.For(control).Update(outset, TransitionDuration(control, style, context));
     }
 
-    /// <summary>Native TextBox çerçevesi ile metin arasındaki boşluk (96 DPI pikseli).</summary>
+    /// <summary>Space between a native TextBox frame and its text (96 DPI pixels).</summary>
     internal const float FrameGap = 3f;
 
     // Native çizilen kontrollerde Paint olayı çalışmaz; Form'da Region başlık çubuğunu keser.
@@ -624,7 +624,7 @@ public class WinFormsApplier : IStyleApplier
         public bool Margin;
         public bool Cursor;
         public bool FlatButton;
-        /// <summary>Çerçeve çizilen TextBox'ın özgün kenarlığı; <c>null</c> = çerçeve yok.</summary>
+        /// <summary>Original border of a TextBox with a painted frame; <c>null</c> = no frame.</summary>
         public BorderStyle? NativeBorder;
         public bool Hidden;
         public Padding? DesiredPadding;
@@ -637,11 +637,11 @@ public class WinFormsApplier : IStyleApplier
     {
         /// <summary>Renk class'lardan geliyor.</summary>
         public bool Applied;
-        /// <summary>FormWind bu kanala en az bir kez dokundu; <see cref="Left"/> geçerli.</summary>
+        /// <summary>FormWind has touched this channel at least once; <see cref="Left"/> is valid.</summary>
         public bool Tracked;
-        /// <summary>FormWind'in bıraktığı açık değer; <c>null</c> = kalıtıma bırakıldı.</summary>
+        /// <summary>The explicit value FormWind left behind; <c>null</c> = left to inheritance.</summary>
         public Color? Left;
-        /// <summary>Uygulama kodu rengi değiştirdi; class'lar bu kanala dokunmaz.</summary>
+        /// <summary>Application code changed the color; the classes do not touch this channel.</summary>
         public bool Overridden;
 
         // Kanal yeniden FormWind'e geçer; kontrolün o anki değeri (uygulamanın ya da FormWind'in atadığı) yeni başlangıçtır,

@@ -7,9 +7,9 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Sayı kutusu: <see cref="TwTextBox"/> ve sağda yukarı/aşağı butonları. Basılı tutunca tekrarlar; ↑/↓ ve fare tekerleği
-/// de değeri değiştirir. Metin odak kaybında ya da Enter'da doğrulanır ve <see cref="Minimum"/>–<see cref="Maximum"/>
-/// aralığına sıkıştırılır. Stil <c>input</c> gibi TwTextBox class'larıyla verilir.
+/// Number box: a <see cref="TwTextBox"/> with up/down buttons on the right. Holding a button repeats; ↑/↓ and the mouse wheel
+/// change the value too. The text is validated on focus loss or Enter and clamped to <see cref="Minimum"/>–<see cref="Maximum"/>.
+/// Styled with TwTextBox classes such as <c>input</c>.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ValueChanged))]
@@ -103,7 +103,7 @@ public class TwNumberBox : TwTextBox
 
     private int StepperWidth => (int)Math.Round(22 * TwDpi.DeviceDpi(this) / 96f);
 
-    /// <summary>Metin kutusu sağdaki butonların soluna yerleşir.</summary>
+    /// <summary>The text box is placed to the left of the buttons.</summary>
     public override Rectangle DisplayRectangle
     {
         get
@@ -113,14 +113,14 @@ public class TwNumberBox : TwTextBox
         }
     }
 
-    /// <summary>Metni değere çevirir (geçerli kültür); geçersizse önceki değer geri yazılır.</summary>
+    /// <summary>Converts the text to a value (current culture); if invalid the previous value is written back.</summary>
     public void Commit()
     {
         if (decimal.TryParse(InnerTextBox.Text, NumberStyles.Number, CultureInfo.CurrentCulture, out var parsed)) Value = parsed;
         else UpdateText();
     }
 
-    /// <summary>Değeri <paramref name="direction"/> × <see cref="Increment"/> kadar değiştirir.</summary>
+    /// <summary>Changes the value by <paramref name="direction"/> × <see cref="Increment"/>.</summary>
     public void Step(int direction)
     {
         if (direction == 0) return;

@@ -8,14 +8,14 @@ using System.Windows.Forms.Layout;
 namespace FormWind;
 
 /// <summary>
-/// Yerleşim motorunun kendisi (<see cref="LayoutEngine"/>) yerine geçebilen kontroller. <see cref="TwPanel"/> bunu uygular;
-/// kendi konteynerinizde <c>LayoutEngine</c> getter'ından <see cref="TwLayout.Engine"/> döndürün.
+/// Controls that can replace the layout engine itself (<see cref="LayoutEngine"/>). <see cref="TwPanel"/> implements this;
+/// in your own container return <see cref="TwLayout.Engine"/> from the <c>LayoutEngine</c> getter.
 /// </summary>
 public interface ITwLayoutHost
 {
 }
 
-/// <summary>Kontrollerin flex/grid yerleşim değerlerini tutar ve uygulayıcılardan güncellenir.</summary>
+/// <summary>Holds the controls' flex/grid layout values; updated by the appliers.</summary>
 public static class TwLayout
 {
     private static readonly ConditionalWeakTable<Control, TwLayoutData> Table = new ConditionalWeakTable<Control, TwLayoutData>();
@@ -23,14 +23,14 @@ public static class TwLayout
     [ThreadStatic]
     private static int _engineDepth;
 
-    /// <summary>Flex/grid konteynerlerinin kullandığı yerleşim motoru.</summary>
+    /// <summary>The layout engine used by flex/grid containers.</summary>
     public static LayoutEngine Engine => TwLayoutEngine.Instance;
 
     internal static bool InEngine => _engineDepth > 0;
 
     /// <summary>
-    /// Stilin yerleşim kısmını kontrole işler. Değer değiştiyse ilgili konteyneri yeniden yerleştirir.
-    /// Özel uygulayıcılar (<see cref="IStyleApplier"/>) bunu çağırmalıdır.
+    /// Writes the layout part of a style to the control. If a value changed, the related container is laid out again.
+    /// Custom appliers (<see cref="IStyleApplier"/>) must call this.
     /// </summary>
     public static void Apply(Control control, TwStyle style, float scale)
     {
@@ -61,7 +61,7 @@ public static class TwLayout
     public static bool IsLayoutContainer(Control control) =>
         Table.TryGetValue(control, out var data) && data.Container != null;
 
-    /// <summary>Flex konteynerinin içerikten hesaplanan boyutu (AutoSize için). Grid için hesaplanmaz.</summary>
+    /// <summary>Size of a flex container computed from its content (for AutoSize). Not computed for grid.</summary>
     public static bool TryMeasure(Control host, out Size size)
     {
         size = Size.Empty;
@@ -103,9 +103,9 @@ public static class TwLayout
     internal static TwLayoutData Get(Control control) => Table.GetValue(control, c => new TwLayoutData(c));
 
     /// <summary>
-    /// Yerleşim konteyneri ölçeklenirken (AutoScale, ekran DPI'ı değişimi) çağrılır; WinForms çocukları kaptan sonra ölçekler.
-    /// Çocukların doğal boyutu da ölçeklenir ve ölçeklemenin getireceği boyut değişimi doğal boyut sayılmaz: motor bir öğeyi
-    /// geçici olarak daraltmışsa (konteyner henüz küçükken), daraltılmış boyutun ölçeklenmiş hâli kalıcı olmasın.
+    /// Called while a layout container is scaled (AutoScale, screen DPI change); WinForms scales the children after the container.
+    /// The children's natural sizes are scaled too, and the size change caused by the scaling does not count as a natural size: if
+    /// the engine temporarily squeezed an item (while the container was still small), the scaled squeezed size must not stick.
     /// </summary>
     internal static void OnHostScaling(Control host, SizeF factor)
     {
@@ -140,7 +140,7 @@ internal sealed class TwLayoutData
 
     private Size? _scaledSize;
 
-    /// <summary>Konteyner ölçeklenirken: doğal boyutu ölçekler, kontrolün gelecek ölçekli boyutunu not eder.</summary>
+    /// <summary>While the container is scaled: scales the natural size and notes the control's upcoming scaled size.</summary>
     public void ExpectScale(Control control, SizeF factor)
     {
         NaturalSize = new Size((int)Math.Round(NaturalSize.Width * factor.Width), (int)Math.Round(NaturalSize.Height * factor.Height));
@@ -151,12 +151,12 @@ internal sealed class TwLayoutData
 
     public TwItemProps Item { get; set; } = TwItemProps.Default;
 
-    /// <summary>Kontrolün yerleşimden bağımsız boyutu; <c>auto</c> uzunlukların karşılığı.</summary>
+    /// <summary>The control's size independent of the layout; the value of <c>auto</c> lengths.</summary>
     public Size NaturalSize { get; private set; }
 
     /// <summary>
-    /// AutoSize kontrollerde tercih edilen boyut, diğerlerinde doğal boyut. Özel bir yerleşim motoru içindeki
-    /// AutoSize kontroller kendini boyutlandırmaz (WinForms bunu ebeveynin motoruna bırakır).
+    /// The preferred size for AutoSize controls, the natural size for others. AutoSize controls inside a custom layout
+    /// engine do not size themselves (WinForms leaves that to the parent's engine).
     /// </summary>
     public Size Measure(Control control) => control.AutoSize ? control.GetPreferredSize(Size.Empty) : NaturalSize;
 }

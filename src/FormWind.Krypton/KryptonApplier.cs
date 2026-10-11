@@ -5,20 +5,20 @@ using Krypton.Toolkit;
 namespace FormWind.Krypton;
 
 /// <summary>
-/// Varyantları Krypton'un durum paletlerine eşler: temel → StateCommon, hover → StateTracking,
-/// active → StatePressed, focus → OverrideFocus, disabled → StateDisabled. Hover ve basılı durumların
-/// çizimini Krypton kendisi yönetir; köşeler antialias çizilir.
+/// Maps variants to Krypton's state palettes: base → StateCommon, hover → StateTracking,
+/// active → StatePressed, focus → OverrideFocus, disabled → StateDisabled. Krypton handles the drawing of
+/// hover and pressed states itself; corners are anti-aliased.
 /// <para>
-/// <see cref="KryptonDataGridView"/> yapısal olarak (satır yüksekliği, ızgara çizgileri, satır başlıkları, sıralama oku)
-/// FormWind'in DataGridView uygulayıcısıyla stillenir; Krypton hücreleri ve başlıkları kendi paletiyle çizdiğinden renkler
-/// ayrıca paletin <c>StateCommon</c> ve <c>StateSelected</c> durumlarına yazılır: temel class'lar ve <c>cell:</c> → veri
-/// hücreleri, <c>header:</c> → kolon başlıkları, <c>row-header:</c> → satır başlıkları, <c>selected:</c> → seçili hücreler,
-/// <c>bg-*</c> → boş alan, <c>divide-*</c> → hücre kenarlıkları.
+/// <see cref="KryptonDataGridView"/> is styled structurally (row height, grid lines, row headers, sort arrow) by FormWind's
+/// DataGridView applier; because Krypton paints cells and headers with its own palette, the colors are also written to the
+/// palette's <c>StateCommon</c> and <c>StateSelected</c> states: base classes and <c>cell:</c> → data cells, <c>header:</c> →
+/// column headers, <c>row-header:</c> → row headers, <c>selected:</c> → selected cells, <c>bg-*</c> → empty area,
+/// <c>divide-*</c> → cell borders.
 /// </para>
 /// </summary>
 public sealed class KryptonApplier : IStyleApplier
 {
-    /// <summary>Uygulayıcıyı kaydeder. <c>Program.Main</c> içinde, formlar açılmadan önce çağrılmalı.</summary>
+    /// <summary>Registers the applier. Call it in <c>Program.Main</c> before any form is opened.</summary>
     public static void Register() => TwAppliers.Register(new KryptonApplier());
 
     public bool CanApply(Control control) =>

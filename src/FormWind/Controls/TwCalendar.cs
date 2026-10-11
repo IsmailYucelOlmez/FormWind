@@ -19,9 +19,9 @@ internal sealed class TwCalendarColors
 }
 
 /// <summary>
-/// Owner-draw ay görünümü: ay/yıl başlığı, önceki/sonraki okları, hafta günleri ve 6×7 gün ızgarası. Bugün halka ile,
-/// seçili gün accent dolguyla çizilir. Gün ve ay adları <see cref="Culture"/>'dan gelir (haftanın ilk günü dahil).
-/// Klavye: oklar gün/hafta, PageUp/PageDown ay, Home/End ayın ilk/son günü, Enter seçer, Esc vazgeçer.
+/// Owner-drawn month view: month/year title, previous/next arrows, weekdays and a 6×7 day grid. Today is drawn with a ring,
+/// the selected day with an accent fill. Day and month names come from <see cref="Culture"/> (including the first day of the week).
+/// Keyboard: arrows move by day/week, PageUp/PageDown by month, Home/End to the first/last day, Enter selects, Esc cancels.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(DateSelected))]
@@ -54,10 +54,10 @@ public class TwCalendar : Control
         Size = GetPreferredSize(Size.Empty);
     }
 
-    /// <summary>Bir gün tıklandığında ya da Enter'a basıldığında.</summary>
+    /// <summary>When a day is clicked or Enter is pressed.</summary>
     public event EventHandler? DateSelected;
 
-    /// <summary>Esc'e basıldığında.</summary>
+    /// <summary>When Esc is pressed.</summary>
     public event EventHandler? Cancelled;
 
     [Category("Data"), DefaultValue(null)]
@@ -76,7 +76,7 @@ public class TwCalendar : Control
         }
     }
 
-    /// <summary>Gösterilen ay (gün kısmı yok sayılır).</summary>
+    /// <summary>The displayed month (the day part is ignored).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public DateTime DisplayMonth
     {
@@ -126,7 +126,7 @@ public class TwCalendar : Control
 
     private int WeekdayHeight => Scale(26);
 
-    /// <summary>Ayın ilk haftasının, kültürün ilk gününe göre başladığı tarih.</summary>
+    /// <summary>The date the month's first week starts on, based on the culture's first day of the week.</summary>
     public DateTime FirstVisibleDate
     {
         get
@@ -140,7 +140,7 @@ public class TwCalendar : Control
     public override Size GetPreferredSize(Size proposedSize) =>
         new Size(Inset * 2 + CellSize * 7, Inset * 2 + HeaderHeight + WeekdayHeight + CellSize * 6);
 
-    /// <summary>Bir günün takvim içindeki hücresi.</summary>
+    /// <summary>A day's cell in the calendar.</summary>
     public Rectangle GetDayBounds(DateTime date)
     {
         int index = (int)(date.Date - FirstVisibleDate).TotalDays;
@@ -152,11 +152,11 @@ public class TwCalendar : Control
 
     public Rectangle NextButtonBounds => new Rectangle(Width - Inset - Scale(28), Inset + (HeaderHeight - Scale(28)) / 2, Scale(28), Scale(28));
 
-    /// <summary>Başlıkta gösterilen ay ve yıl ("Ekim 2026").</summary>
+    /// <summary>Month and year shown in the title ("October 2026").</summary>
     [Browsable(false)]
     public string Title => _culture.TextInfo.ToTitleCase(_displayMonth.ToString("MMMM yyyy", _culture));
 
-    /// <summary>Klavye odağındaki günün görünen ızgaradaki sırası (0–41); görünmüyorsa -1.</summary>
+    /// <summary>Position of the keyboard-focused day in the visible grid (0–41); -1 when not visible.</summary>
     internal int FocusIndex
     {
         get

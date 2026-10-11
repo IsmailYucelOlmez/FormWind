@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace FormWind;
 
 /// <summary>
-/// Hazır alan kuralları (<see cref="TwField.Validator"/> için): değeri alır, hata metni ya da geçerliyse <c>null</c> döner.
+/// Ready-made field rules (for <see cref="TwField.Validator"/>): take the value and return an error text, or <c>null</c> when valid.
 /// <code>field.Validator = TwValidators.TcKimlikNo;</code>
 /// </summary>
 public static class TwValidators
@@ -16,7 +16,7 @@ public static class TwValidators
     public static string? Email(string value) =>
         EmailRx.IsMatch(value.Trim()) ? null : TwTexts.Current.InvalidEmail;
 
-    /// <summary>T.C. kimlik numarası: 11 hane, ilk hane 0 değil, 10. ve 11. hane kontrol basamakları.</summary>
+    /// <summary>Turkish national ID number: 11 digits, the first digit not 0, the 10th and 11th digits are check digits.</summary>
     public static string? TcKimlikNo(string value)
     {
         var digits = new string(value.Where(char.IsDigit).ToArray());
@@ -29,7 +29,7 @@ public static class TwValidators
         return d[9] == tenth && d[10] == eleventh ? null : TwTexts.Current.InvalidTcKimlik;
     }
 
-    /// <summary>IBAN: ülke kodu, uzunluk (TR için 26) ve mod 97 kontrolü; boşluklar yok sayılır.</summary>
+    /// <summary>IBAN: country code, length (26 for TR) and mod 97 check; spaces are ignored.</summary>
     public static string? Iban(string value)
     {
         var iban = new string(value.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
@@ -46,7 +46,7 @@ public static class TwValidators
         return remainder == 1 ? null : TwTexts.Current.InvalidIban;
     }
 
-    /// <summary>Türkiye cep telefonu: 10 hane (5xx…), başta 0 ya da +90 olabilir.</summary>
+    /// <summary>Turkish mobile number: 10 digits (5xx…), optionally prefixed with 0 or +90.</summary>
     public static string? TurkishMobile(string value)
     {
         var digits = new string(value.Where(char.IsDigit).ToArray());
@@ -60,7 +60,7 @@ public static class TwValidators
         value => value.Trim().Length >= length ? null : string.Format(System.Globalization.CultureInfo.CurrentCulture, TwTexts.Current.MinLength, length);
 }
 
-/// <summary>Sık kullanılan maskeler (<see cref="TwTextBox.Mask"/>): <c>0</c> zorunlu rakam, <c>9</c> isteğe bağlı rakam, <c>L</c> harf.</summary>
+/// <summary>Common masks (<see cref="TwTextBox.Mask"/>): <c>0</c> required digit, <c>9</c> optional digit, <c>L</c> letter.</summary>
 public static class TwMasks
 {
     public const string Phone = "(000) 000 00 00";

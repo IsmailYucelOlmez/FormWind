@@ -9,7 +9,7 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Class dizisini varyant/stil sözlüğüne çevirir. Saf fonksiyondur; önbellek <see cref="TwTheme.Parse"/>'tadır.
+/// Converts a class string to a variant/style dictionary. A pure function; the cache is in <see cref="TwTheme.Parse"/>.
 /// </summary>
 internal static class TwParser
 {
@@ -58,7 +58,7 @@ internal static class TwParser
         ["3xl"] = 768, ["4xl"] = 896, ["5xl"] = 1024, ["6xl"] = 1152, ["7xl"] = 1280,
     };
 
-    /// <summary>Fazla boşlukları temizler; önbellek anahtarı olarak kullanılır.</summary>
+    /// <summary>Removes extra whitespace; used as the cache key.</summary>
     public static string Normalize(string? classes) =>
         string.IsNullOrWhiteSpace(classes)
             ? ""

@@ -9,16 +9,16 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// DataGridView için boş tablo ve yükleniyor durumları:
+/// Empty and loading states for a DataGridView:
 /// <code>
-/// TwGrid.SetEmptyText(grid, "Kayıt bulunamadı");
-/// TwGrid.SetLoading(grid, true);   // veri gelene kadar iskelet satırlar
+/// TwGrid.SetEmptyText(grid, "No records");
+/// TwGrid.SetLoading(grid, true);   // skeleton rows until the data arrives
 /// </code>
-/// FormWind class'ı verilmiş grid'lerde başlıktaki sıralama oku ikonla çizilir ve düzenleme kontrolleri hücre stiline uyar.
+/// On grids with FormWind classes, the header's sort arrow is drawn with an icon and editing controls follow the cell style.
 /// </summary>
 public static class TwGrid
 {
-    /// <summary>Satır yokken ortada gösterilen metin (<c>null</c> = gösterme). İkon adı <see cref="SetEmptyIcon"/> ile değişir.</summary>
+    /// <summary>Text shown in the middle while there are no rows (<c>null</c> = none). The icon is changed with <see cref="SetEmptyIcon"/>.</summary>
     public static void SetEmptyText(DataGridView grid, string? text)
     {
         TwGridDecorator.For(grid).EmptyText = text;
@@ -27,7 +27,7 @@ public static class TwGrid
 
     public static string? GetEmptyText(DataGridView grid) => TwGridDecorator.TryGet(grid)?.EmptyText;
 
-    /// <summary>Boş durum ikonu (varsayılan <c>search</c>; <c>null</c> = ikonsuz).</summary>
+    /// <summary>Empty state icon (default <c>search</c>; <c>null</c> = no icon).</summary>
     public static void SetEmptyIcon(DataGridView grid, string? icon)
     {
         TwGridDecorator.For(grid).EmptyIcon = icon;
@@ -35,7 +35,7 @@ public static class TwGrid
     }
 
     /// <summary>
-    /// Yükleniyor durumu: satır yoksa iskelet satırlar çizilir; satır varsa üzerleri soluklaştırılıp "Yükleniyor…" yazılır.
+    /// Loading state: skeleton rows are drawn when there are no rows; otherwise the rows are faded and the loading text is shown.
     /// </summary>
     public static void SetLoading(DataGridView grid, bool loading)
     {
@@ -45,13 +45,13 @@ public static class TwGrid
 
     public static bool IsLoading(DataGridView grid) => TwGridDecorator.TryGet(grid)?.Loading == true;
 
-    /// <summary>Yükleniyor metni (varsayılan "Yükleniyor…").</summary>
+    /// <summary>Loading text (default <see cref="TwTexts.Loading"/>).</summary>
     public static void SetLoadingText(DataGridView grid, string text) => TwGridDecorator.For(grid).LoadingText = text;
 
     /// <summary>
-    /// Başlıklarda süzme düğmesi: tıklanınca kolonun farklı değerleri onay kutularıyla listelenir. Grid'in veri kaynağı
-    /// <see cref="ITwFilterableList"/> olmalı (örn. <see cref="TwSortableBindingList{T}"/>); yalnızca <c>DataPropertyName</c>'i olan
-    /// kolonlarda görünür. Süzülen kolonun düğmesi <c>accent-*</c> rengindedir.
+    /// Filter button in the headers: clicking it lists the column's distinct values with checkboxes. The grid's data source
+    /// must be an <see cref="ITwFilterableList"/> (e.g. <see cref="TwSortableBindingList{T}"/>); it shows only on columns with a
+    /// <c>DataPropertyName</c>. The button of a filtered column is drawn in the <c>accent-*</c> color.
     /// </summary>
     public static void EnableFilterMenu(DataGridView grid, bool enable = true)
     {
@@ -59,19 +59,19 @@ public static class TwGrid
         grid.Invalidate();
     }
 
-    /// <summary>Başlığa sağ tıklayınca kolonları gösterip gizleme menüsü (en az bir kolon görünür kalır).</summary>
+    /// <summary>Right-clicking a header opens a menu to show and hide columns (at least one column stays visible).</summary>
     public static void EnableColumnChooser(DataGridView grid, bool enable = true) => TwGridDecorator.For(grid).ColumnChooser = enable;
 
-    /// <summary>Açık süzme ya da kolon menüsü (yoksa <c>null</c>).</summary>
+    /// <summary>The open filter or column menu (<c>null</c> when none).</summary>
     public static ContextMenuStrip? OpenMenu(DataGridView grid) => TwGridDecorator.TryGet(grid)?.Menu;
 
-    /// <summary>Kolonun süzme menüsünü kodla açar (klavye kısayolu ya da testler için).</summary>
+    /// <summary>Opens a column's filter menu in code (for keyboard shortcuts or tests).</summary>
     public static void ShowFilterMenu(DataGridView grid, DataGridViewColumn column) => TwGridDecorator.For(grid).ShowFilterMenu(column);
 
-    /// <summary>Kolon seçme menüsünü kodla açar.</summary>
+    /// <summary>Opens the column chooser menu in code.</summary>
     public static void ShowColumnChooser(DataGridView grid) => TwGridDecorator.For(grid).ShowColumnChooser(grid.PointToClient(Control.MousePosition));
 
-    /// <summary>Kullanıcıya görünen (yeni satır hariç) satır sayısı.</summary>
+    /// <summary>Number of rows visible to the user (excluding the new row).</summary>
     public static int DataRowCount(DataGridView grid) => grid.Rows.Count - (grid.AllowUserToAddRows && grid.Rows.Count > 0 ? 1 : 0);
 }
 
@@ -119,7 +119,7 @@ internal sealed class TwGridDecorator
     private bool CanFilter(DataGridViewColumn column) =>
         FilterMenu && FilterSource != null && !string.IsNullOrEmpty(column.DataPropertyName);
 
-    /// <summary>Başlıktaki süzme düğmesinin yeri.</summary>
+    /// <summary>Position of the filter button in the header.</summary>
     internal Rectangle FilterIconBounds(int columnIndex)
     {
         var cell = _grid.GetCellDisplayRectangle(columnIndex, -1, false);
@@ -263,17 +263,17 @@ internal sealed class TwGridDecorator
 
     private string? _loadingText;
 
-    /// <summary>Atanmamışsa <see cref="TwTexts.Loading"/>.</summary>
+    /// <summary><see cref="TwTexts.Loading"/> when not set.</summary>
     public string LoadingText
     {
         get => _loadingText ?? TwTexts.Current.Loading;
         set => _loadingText = value;
     }
 
-    /// <summary>Sıralama okunun ve düzenleme kontrollerinin rengi; FormWind class'ları verildiğinde açılır.</summary>
+    /// <summary>Color of the sort arrow and editing controls; turned on when FormWind classes are given.</summary>
     public Color Accent { get; set; } = ColorTranslator.FromHtml("#2563eb");
 
-    /// <summary>Başlık sıralama oku ikonla çizilsin mi (class'ı olan grid'lerde açık).</summary>
+    /// <summary>Whether the header sort arrow is drawn with an icon (on for grids with classes).</summary>
     public bool Styled
     {
         get => _styled;
@@ -297,7 +297,7 @@ internal sealed class TwGridDecorator
         }
     }
 
-    /// <summary>Satırların altındaki boş alan (başlık hariç).</summary>
+    /// <summary>Empty area below the rows (excluding the header).</summary>
     internal Rectangle BodyBounds
     {
         get

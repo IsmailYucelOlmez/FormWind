@@ -7,8 +7,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Kenarlıksız bir <see cref="TextBox"/>'ı yuvarlak köşeli bir panelin içine yerleştirir. Native TextBox
-/// kenarlığı stillenemediği için <c>input</c> tarzı alanlar bu sarmalayıcıyla yapılır.
+/// Places a borderless <see cref="TextBox"/> inside a panel with rounded corners. Because the native TextBox border
+/// cannot be styled, <c>input</c>-style fields are built with this wrapper.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(TextChanged))]
@@ -38,7 +38,7 @@ public class TwTextBox : TwPanel
         UpdateHeight();
     }
 
-    /// <summary>İçteki TextBox. Burada sunulmayan property ve olaylar için.</summary>
+    /// <summary>The inner TextBox, for properties and events not exposed here.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TextBox InnerTextBox => _inner;
 
@@ -60,7 +60,7 @@ public class TwTextBox : TwPanel
     }
 #pragma warning restore CS8765
 
-    /// <summary>Kutu boşken gösterilen ipucu metni. Rengi <c>placeholder:text-*</c> ile verilir (varsayılan gray-400).</summary>
+    /// <summary>Hint text shown while the box is empty. Its color is set with <c>placeholder:text-*</c> (gray-400 by default).</summary>
     [Category("Appearance"), DefaultValue(""), Localizable(true)]
     public string PlaceholderText
     {
@@ -112,9 +112,9 @@ public class TwTextBox : TwPanel
     }
 
     /// <summary>
-    /// Giriş maskesi (<see cref="MaskedTextProvider"/> sözdizimi): <c>0</c> zorunlu rakam, <c>9</c> isteğe bağlı rakam,
-    /// <c>L</c> harf, <c>A</c> harf/rakam; diğer karakterler sabittir. Hazır maskeler: <see cref="TwMasks"/>.
-    /// Odaktayken boş yerler <c>_</c> ile gösterilir; boş ve odak dışındayken ipucu metni görünür.
+    /// Input mask (<see cref="MaskedTextProvider"/> syntax): <c>0</c> required digit, <c>9</c> optional digit,
+    /// <c>L</c> letter, <c>A</c> letter/digit; other characters are literals. Ready-made masks: <see cref="TwMasks"/>.
+    /// While focused, empty positions are shown as <c>_</c>; when empty and unfocused the hint text shows.
     /// </summary>
     [Category("Behavior"), DefaultValue("")]
     public string Mask
@@ -132,11 +132,11 @@ public class TwTextBox : TwPanel
     [Browsable(false)]
     public bool HasMask => _mask != null;
 
-    /// <summary>Maskenin tüm zorunlu yerleri dolu mu (maske yoksa <c>true</c>).</summary>
+    /// <summary>Whether all required mask positions are filled (<c>true</c> without a mask).</summary>
     [Browsable(false)]
     public bool MaskCompleted => _mask?.MaskCompleted ?? true;
 
-    /// <summary>Maskenin sabit karakterleri ve boşluklar olmadan girilen değer (maske yoksa <see cref="Text"/>).</summary>
+    /// <summary>The entered value without the mask's literals and blanks (<see cref="Text"/> without a mask).</summary>
     [Browsable(false)]
     public string UnmaskedText => _mask != null ? _mask.ToString(false, false) : _inner.Text;
 
@@ -356,8 +356,8 @@ public class TwTextBox : TwPanel
     }
 
     /// <summary>
-    /// Boşken ipucu metnini kendi boyamasının üzerine çizen TextBox. Native ipucu (EM_SETCUEBANNER) rengi
-    /// değiştirilemediğinden çizim WM_PAINT sonrasında yapılır.
+    /// A TextBox that draws the hint text over its own painting while empty. The native hint (EM_SETCUEBANNER)
+    /// color cannot be changed, so it is drawn after WM_PAINT.
     /// </summary>
     private sealed class PlaceholderTextBox : TextBox
     {
@@ -370,7 +370,7 @@ public class TwTextBox : TwPanel
 
         public Color? PlaceholderColor { get; set; }
 
-        /// <summary>Yapıştırmayı devralır (maske); <c>true</c> dönerse varsayılan yapıştırma yapılmaz.</summary>
+        /// <summary>Takes over pasting (mask); returning <c>true</c> skips the default paste.</summary>
         public Func<string, bool>? PasteHandler { get; set; }
 
         // Odak içteki TextBox'ta olduğundan ekran okuyucu onu okur: ad ve açıklama sarmalayıcıdan gelir

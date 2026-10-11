@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Grid'e ait çalışma zamanı bilgisi: koyu tema durumu (hücre tipleri dark: varyantlarını buna göre seçer).</summary>
+/// <summary>Runtime information of a grid: the dark mode state (cell types choose dark: variants accordingly).</summary>
 internal static class TwGridState
 {
     private static readonly ConditionalWeakTable<DataGridView, Box> Dark = new ConditionalWeakTable<DataGridView, Box>();
@@ -35,7 +35,7 @@ internal static class TwCellPainting
 {
     public static float Scale(DataGridView? grid) => (grid is null ? 96 : TwDpi.DeviceDpi(grid)) / 96f;
 
-    /// <summary>Arka plan ve kenarlıkları DataGridView'a çizdirir; içerik bize kalır.</summary>
+    /// <summary>Lets the DataGridView paint the background and borders; the content is ours.</summary>
     public static DataGridViewPaintParts WithoutContent(DataGridViewPaintParts parts) =>
         parts & ~(DataGridViewPaintParts.ContentForeground | DataGridViewPaintParts.ContentBackground);
 
@@ -45,7 +45,7 @@ internal static class TwCellPainting
         Math.Max(0, cellBounds.Width - style.Padding.Horizontal - 4),
         Math.Max(0, cellBounds.Height - style.Padding.Vertical));
 
-    /// <summary>Bir kutuyu hücre hizalamasına göre içerik alanına yerleştirir.</summary>
+    /// <summary>Places a box in the content area according to the cell alignment.</summary>
     public static Rectangle Align(Rectangle content, Size size, DataGridViewContentAlignment alignment)
     {
         int value = (int)alignment;
@@ -62,10 +62,10 @@ internal static class TwCellPainting
 }
 
 /// <summary>
-/// Değere göre renklenen rozet ("Alive", "Dead" …). <see cref="Variants"/>: <c>değer: class'lar</c> çiftleri, <c>;</c> ile ayrılır;
-/// <c>*</c> diğer tüm değerler içindir:
+/// A badge colored by value ("Alive", "Dead" …). <see cref="Variants"/>: <c>value: classes</c> pairs separated by <c>;</c>;
+/// <c>*</c> is for all other values:
 /// <c>Alive: bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100; Dead: bg-red-100 text-red-800; *: bg-gray-100 text-gray-700</c>.
-/// Varsayılan görünüm: <c>rounded-full px-2 py-0.5 text-xs font-medium</c>.
+/// Default look: <c>rounded-full px-2 py-0.5 text-xs font-medium</c>.
 /// </summary>
 [ToolboxItem(false)]
 public class TwBadgeColumn : DataGridViewColumn
@@ -147,7 +147,7 @@ public class TwBadgeCell : DataGridViewTextBoxCell
     }
 }
 
-/// <summary>Yuvarlak avatar kolonu. Değer bir <see cref="Image"/>'dır; yoksa <see cref="Placeholder"/> rengi çizilir.</summary>
+/// <summary>Round avatar column. The value is an <see cref="Image"/>; otherwise the <see cref="Placeholder"/> color is drawn.</summary>
 [ToolboxItem(false)]
 public class TwAvatarColumn : DataGridViewImageColumn
 {
@@ -223,7 +223,7 @@ public class TwAvatarCell : DataGridViewImageCell
     }
 }
 
-/// <summary>Değeri ikon adı (örn. <c>check</c>, <c>#E710</c>) olan kolon; renk hücrenin metin rengidir.</summary>
+/// <summary>Column whose value is an icon name (e.g. <c>check</c>, <c>#E710</c>); the color is the cell's text color.</summary>
 [ToolboxItem(false)]
 public class TwIconColumn : DataGridViewColumn
 {
@@ -253,8 +253,8 @@ public class TwIconCell : DataGridViewTextBoxCell
 }
 
 /// <summary>
-/// İlerleme çubuğu kolonu. Değer 0–<see cref="Maximum"/> arası sayıdır. Ray <see cref="TrackColor"/>, dolgu <see cref="BarColor"/>;
-/// koyu temada <see cref="DarkTrackColor"/> kullanılır.
+/// Progress bar column. The value is a number from 0 to <see cref="Maximum"/>. Track <see cref="TrackColor"/>, fill <see cref="BarColor"/>;
+/// <see cref="DarkTrackColor"/> is used in dark mode.
 /// </summary>
 [ToolboxItem(false)]
 public class TwProgressColumn : DataGridViewColumn
@@ -333,8 +333,8 @@ public class TwProgressCell : DataGridViewTextBoxCell
 }
 
 /// <summary>
-/// Yuvarlak köşeli onay kutusu kolonu (TwCheckBox görünümü). İşaretli kutu <see cref="AccentColor"/> ile dolar, içinde beyaz tik;
-/// <see cref="DataGridViewCheckBoxColumn.ThreeState"/> açıksa belirsiz durum çizgiyle gösterilir.
+/// Checkbox column with rounded corners (TwCheckBox look). A checked box is filled with <see cref="AccentColor"/> with a white tick;
+/// with <see cref="DataGridViewCheckBoxColumn.ThreeState"/> the indeterminate state is shown as a dash.
 /// </summary>
 [ToolboxItem(false)]
 public class TwCheckColumn : DataGridViewCheckBoxColumn
@@ -363,7 +363,7 @@ public class TwCheckColumn : DataGridViewCheckBoxColumn
 
 public class TwCheckCell : DataGridViewCheckBoxCell
 {
-    /// <summary>Hücre değerinin işaret durumu (bool, CheckState ya da TrueValue/IndeterminateValue).</summary>
+    /// <summary>Check state of the cell value (bool, CheckState or TrueValue/IndeterminateValue).</summary>
     internal CheckState StateOf(object? value)
     {
         if (value is CheckState state) return state;
@@ -407,8 +407,8 @@ public class TwCheckCell : DataGridViewCheckBoxCell
 }
 
 /// <summary>
-/// Yuvarlak köşeli buton kolonu. Görünüm <see cref="Classes"/> ile verilir (<c>bg-* text-* rounded-* hover:bg-* dark:…</c>);
-/// tıklama, DataGridViewButtonColumn gibi <c>CellContentClick</c> olayıyla yakalanır.
+/// Button column with rounded corners. The look is set with <see cref="Classes"/> (<c>bg-* text-* rounded-* hover:bg-* dark:…</c>);
+/// clicks are handled with the <c>CellContentClick</c> event, as with DataGridViewButtonColumn.
 /// </summary>
 [ToolboxItem(false)]
 public class TwButtonColumn : DataGridViewButtonColumn
@@ -434,7 +434,7 @@ public class TwButtonColumn : DataGridViewButtonColumn
         }
     }
 
-    /// <summary>Fare üzerindeki satır (-1 = yok).</summary>
+    /// <summary>The row under the mouse (-1 = none).</summary>
     internal int HoverRow { get; set; } = -1;
 
     internal TwStyle StyleFor(DataGridView? grid, bool hover)

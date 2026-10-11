@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Form başlık çubuğunu DWM öznitelikleriyle renklendirir; değerleri handle yeniden oluşturulunca tekrar uygular.</summary>
+/// <summary>Colors a form's title bar with DWM attributes; reapplies the values when the handle is recreated.</summary>
 internal sealed class TwTitleBar
 {
     private const int DwmwaUseImmersiveDarkModeBefore20H1 = 19;
@@ -35,7 +35,7 @@ internal sealed class TwTitleBar
 
     private bool BackdropPushed { get; set; }
 
-    /// <summary>Son DWM çağrılarının hepsi başarılı oldu mu (eski Windows'ta false).</summary>
+    /// <summary>Whether all of the last DWM calls succeeded (false on older Windows).</summary>
     public bool Applied { get; private set; }
 
     public static TwTitleBar For(Form form) => Table.GetValue(form, f => new TwTitleBar(f));

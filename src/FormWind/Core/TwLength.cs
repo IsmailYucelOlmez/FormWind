@@ -11,7 +11,7 @@ public enum TwLengthUnit
 }
 
 /// <summary>
-/// Bir uzunluk: <c>auto</c>, piksel (96 DPI) ya da ebeveyn alanının oranı (<c>w-1/2</c> = 0,5, <c>w-full</c> = 1).
+/// A length: <c>auto</c>, pixels (96 DPI) or a fraction of the parent's area (<c>w-1/2</c> = 0.5, <c>w-full</c> = 1).
 /// </summary>
 public readonly struct TwLength : IEquatable<TwLength>
 {
@@ -37,10 +37,10 @@ public readonly struct TwLength : IEquatable<TwLength>
 
     public static TwLength Fraction(float fraction) => new TwLength(fraction, TwLengthUnit.Fraction);
 
-    /// <summary>Piksel değerini DPI ile ölçekler; oran ve auto değişmez.</summary>
+    /// <summary>Scales a pixel value with DPI; fractions and auto do not change.</summary>
     public TwLength Scale(float scale) => IsPixels ? Pixels(Value * scale) : this;
 
-    /// <summary>Kullanılabilir alana göre piksel karşılığı. Auto için <see cref="float.NaN"/>.</summary>
+    /// <summary>Pixel value for the available space. <see cref="float.NaN"/> for auto.</summary>
     public float Resolve(float available) => Unit switch
     {
         TwLengthUnit.Pixels => Value,

@@ -8,10 +8,10 @@ namespace FormWind;
 
 public enum TwImageFit
 {
-    /// <summary>Kutuyu doldurur, taşan kısım kırpılır (oran korunur).</summary>
+    /// <summary>Fills the box and clips the overflow (keeps the aspect ratio).</summary>
     Cover,
 
-    /// <summary>Resmin tamamı görünür, boşluk kalabilir (oran korunur).</summary>
+    /// <summary>The whole image is visible and space may remain (keeps the aspect ratio).</summary>
     Contain,
 
     /// <summary>Kutuya gerilir (oran korunmaz).</summary>
@@ -19,8 +19,8 @@ public enum TwImageFit
 }
 
 /// <summary>
-/// Pürüzsüz yuvarlak köşeli resim kutusu (<c>rounded-lg</c>, <c>rounded-full</c> avatar). Yerleşim
-/// <c>object-cover</c> / <c>object-contain</c> / <c>object-fill</c> ile verilir; resim yokken <c>bg-*</c> rengi görünür.
+/// Picture box with smooth rounded corners (<c>rounded-lg</c>, <c>rounded-full</c> avatar). Placement is set with
+/// <c>object-cover</c> / <c>object-contain</c> / <c>object-fill</c>; without an image the <c>bg-*</c> color shows.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultProperty(nameof(Image))]

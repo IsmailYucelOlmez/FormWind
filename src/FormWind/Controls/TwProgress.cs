@@ -6,9 +6,9 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Stillenebilir ilerleme çubuğu (ProgressBar yerine): yuvarlak ray ve dolgu. Ray <c>fill-*</c>, dolgu <c>accent-*</c>,
-/// köşe <c>rounded-*</c> (varsayılan tam yuvarlak). <see cref="Indeterminate"/> açıkken süresi bilinmeyen iş için
-/// ray boyunca kayan bir parça çizilir.
+/// Stylable progress bar (instead of ProgressBar): rounded track and fill. Track <c>fill-*</c>, fill <c>accent-*</c>,
+/// corners <c>rounded-*</c> (fully rounded by default). With <see cref="Indeterminate"/> a segment slides along the track
+/// for work of unknown length.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultProperty(nameof(Value))]
@@ -62,7 +62,7 @@ public class TwProgress : Control, ITwChrome
         }
     }
 
-    /// <summary>Süresi bilinmeyen iş: değer yerine kayan bir parça gösterilir.</summary>
+    /// <summary>Work of unknown length: a sliding segment is shown instead of the value.</summary>
     [Category("Behavior"), DefaultValue(false)]
     public bool Indeterminate
     {
@@ -75,7 +75,7 @@ public class TwProgress : Control, ITwChrome
         }
     }
 
-    /// <summary>Animasyon konumu (0–1); testler ve anlık görüntüler için ayarlanabilir.</summary>
+    /// <summary>Animation position (0–1); can be set for tests and snapshots.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public float Phase
     {
@@ -102,7 +102,7 @@ public class TwProgress : Control, ITwChrome
         Invalidate();
     }
 
-    /// <summary>Dolgunun (ya da kayan parçanın) istemci koordinatlarındaki yeri.</summary>
+    /// <summary>Position of the fill (or the sliding segment) in client coordinates.</summary>
     public Rectangle BarBounds
     {
         get

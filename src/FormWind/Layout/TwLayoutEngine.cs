@@ -7,8 +7,8 @@ using System.Windows.Forms.Layout;
 namespace FormWind;
 
 /// <summary>
-/// CSS flexbox ve grid'in bir alt kümesi. Konteynerin <see cref="Control.DisplayRectangle"/>'ı (padding düşülmüş)
-/// içinde çocukları <see cref="Control.Controls"/> sırasıyla yerleştirir. Dock ve Anchor yok sayılır.
+/// A subset of CSS flexbox and grid. Lays out children in <see cref="Control.Controls"/> order inside the container's
+/// <see cref="Control.DisplayRectangle"/> (padding excluded). Dock and Anchor are ignored.
 /// </summary>
 internal sealed class TwLayoutEngine : LayoutEngine
 {

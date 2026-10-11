@@ -5,9 +5,9 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Bir DataGridView kolonunun class'ları. Temel class'lar kolonun hücrelerine (<c>text-right font-semibold px-3</c>),
-/// <c>header:</c> başlık hücresine uygulanır; <c>w-32</c>, <c>min-w-20</c>, <c>flex-1</c>/<c>grow</c> (Fill ağırlığı) ve
-/// <c>hidden</c> kolonun kendisini etkiler.
+/// Classes of a DataGridView column. Base classes apply to the column's cells (<c>text-right font-semibold px-3</c>),
+/// <c>header:</c> to the header cell; <c>w-32</c>, <c>min-w-20</c>, <c>flex-1</c>/<c>grow</c> (Fill weight) and
+/// <c>hidden</c> affect the column itself.
 /// </summary>
 internal sealed class TwColumnBinding
 {
@@ -106,8 +106,8 @@ internal sealed class TwColumnBinding
 }
 
 /// <summary>
-/// Satır bazlı koşullu stil: kural her satır için class'lar döndürür (örn. ölen karakterler soluk, iptal edilen siparişler kırmızı).
-/// Arka plan, metin rengi ve font, satırın tüm hücrelerine biçimlendirme sırasında uygulanır.
+/// Conditional style per row: the rule returns classes for each row (e.g. dead characters faded, cancelled orders red).
+/// Background, text color and font are applied to all cells of the row during formatting.
 /// </summary>
 internal sealed class TwRowRule
 {

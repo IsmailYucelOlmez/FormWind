@@ -22,7 +22,7 @@ public enum TwDialogButtons
     YesNoCancel,
 }
 
-/// <summary><see cref="TwDialog"/> seçenekleri.</summary>
+/// <summary><see cref="TwDialog"/> options.</summary>
 public sealed class TwDialogOptions
 {
     public string Title { get; set; } = "";
@@ -30,28 +30,28 @@ public sealed class TwDialogOptions
     public TwDialogKind Kind { get; set; } = TwDialogKind.Info;
     public TwDialogButtons Buttons { get; set; } = TwDialogButtons.Ok;
 
-    /// <summary>Enter'ın bastığı düğme (varsayılan: ilk olumlu düğme).</summary>
+    /// <summary>The button Enter presses (default: the first positive button).</summary>
     public DialogResult? DefaultResult { get; set; }
 
-    /// <summary>Olumlu düğme kırmızı çizilir (silme onayı gibi).</summary>
+    /// <summary>The positive button is drawn red (as in a delete confirmation).</summary>
     public bool Danger { get; set; }
 
-    /// <summary>Koyu tema; verilmezse sahip formun başlık çubuğundan (FormWind class'ı varsa) alınır.</summary>
+    /// <summary>Dark mode; when not set, taken from the owner form's title bar (if it has FormWind classes).</summary>
     public bool? Dark { get; set; }
 }
 
 /// <summary>
-/// MessageBox yerine stillenebilir diyalog: ikon, başlık, mesaj ve sağa dayalı düğmeler.
+/// A stylable dialog instead of MessageBox: icon, title, message and right-aligned buttons.
 /// <code>
-/// if (TwDialog.Show(this, "Sipariş silinsin mi?", "Silme onayı", TwDialogKind.Warning, TwDialogButtons.YesNo, danger: true) == DialogResult.Yes) …
+/// if (TwDialog.Show(this, "Delete this order?", "Confirm delete", TwDialogKind.Warning, TwDialogButtons.YesNo, danger: true) == DialogResult.Yes) …
 /// </code>
-/// Düğme metinleri <see cref="Texts"/> ile değiştirilebilir. Esc iptal/hayır, Enter varsayılan düğmedir.
+/// Button texts come from <see cref="TwTexts"/> and can be overridden with <see cref="Texts"/>. Esc cancels/answers no, Enter is the default button.
 /// </summary>
 public static class TwDialog
 {
     /// <summary>
-    /// Düğme metinlerini ezmek için (örn. <c>Texts[DialogResult.Yes] = "Sil"</c>). Burada olmayan düğmeler
-    /// <see cref="TwTexts.Current"/>'tan alınır.
+    /// Overrides button texts (e.g. <c>Texts[DialogResult.Yes] = "Delete"</c>). Buttons not listed here
+    /// take their text from <see cref="TwTexts.Current"/>.
     /// </summary>
     public static Dictionary<DialogResult, string> Texts { get; } = new Dictionary<DialogResult, string>();
 
@@ -79,7 +79,7 @@ public static class TwDialog
         return owner is null ? dialog.ShowDialog() : dialog.ShowDialog(owner);
     }
 
-    /// <summary>Diyaloğu göstermeden oluşturur (özelleştirme ve testler için).</summary>
+    /// <summary>Creates the dialog without showing it (for customization and tests).</summary>
     public static TwDialogForm Create(TwDialogOptions options, Control? owner = null)
     {
         bool dark = options.Dark ?? (owner?.FindForm() is Form form && TwTitleBar.For(form).Dark);
@@ -182,7 +182,7 @@ public sealed class TwDialogForm : Form
 
     public TwIcon IconBadge { get; }
 
-    /// <summary>Diyaloğun class sağlayıcısı (görünümü değiştirmek için).</summary>
+    /// <summary>The dialog's class provider (to change its look).</summary>
     public TailwindProvider Provider => _tw;
 
     protected override void OnShown(EventArgs e)

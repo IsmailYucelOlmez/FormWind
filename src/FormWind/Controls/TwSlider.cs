@@ -6,9 +6,9 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Stillenebilir kaydırıcı (TrackBar yerine): ince yuvarlak ray, dolu kısım ve yuvarlak tutamaç.
-/// Ray <c>fill-*</c>, dolu kısım ve tutamaç kenarı <c>accent-*</c> ile renklenir. Klavye: ←/→/↑/↓ <see cref="SmallChange"/>,
-/// PageUp/PageDown <see cref="LargeChange"/>, Home/End uçlar; fare tekeri ve sürükleme.
+/// Stylable slider (instead of TrackBar): a thin rounded track, a filled part and a round thumb.
+/// The track is colored with <c>fill-*</c>, the filled part and thumb border with <c>accent-*</c>. Keyboard: ←/→/↑/↓ <see cref="SmallChange"/>,
+/// PageUp/PageDown <see cref="LargeChange"/>, Home/End the ends; mouse wheel and dragging.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ValueChanged))]
@@ -97,7 +97,7 @@ public class TwSlider : Control
 
     private int ThumbSize => Scale(16);
 
-    /// <summary>Rayın tutamaç merkezinin gezebildiği kısmı.</summary>
+    /// <summary>The part of the track the thumb center can travel.</summary>
     private (int Left, int Right) TrackRange => (ThumbSize / 2 + 1, Math.Max(ThumbSize / 2 + 2, Width - ThumbSize / 2 - 1));
 
     public Rectangle ThumbBounds
@@ -111,7 +111,7 @@ public class TwSlider : Control
         }
     }
 
-    /// <summary>Yatay konumdaki değer.</summary>
+    /// <summary>The value at a horizontal position.</summary>
     public int ValueFromX(int x)
     {
         var (left, right) = TrackRange;

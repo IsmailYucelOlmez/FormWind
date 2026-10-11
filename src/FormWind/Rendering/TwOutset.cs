@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Bir gölge katmanı (CSS box-shadow): dikey kayma, bulanıklık, yayılma ve renk. Değerler pikseldir.</summary>
+/// <summary>A shadow layer (CSS box-shadow): vertical offset, blur, spread and color. Values are in pixels.</summary>
 internal readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
 {
     public TwShadowLayer(float offsetY, float blur, float spread, Color color)
@@ -26,7 +26,7 @@ internal readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
 
     public TwShadowLayer Scale(float scale) => new TwShadowLayer(OffsetY * scale, Blur * scale, Spread * scale, Color);
 
-    /// <summary>Tailwind v3 gölge ön ayarları; <paramref name="color"/> verilirse katman renklerinin yerine geçer.</summary>
+    /// <summary>Tailwind v3 shadow presets; <paramref name="color"/> replaces the layer colors when given.</summary>
     public static TwShadowLayer[] Preset(TwShadowSize size, Color? color)
     {
         Color C(double alpha) => color ?? Color.FromArgb((int)Math.Round(alpha * 255), 0, 0, 0);
@@ -51,8 +51,8 @@ internal readonly struct TwShadowLayer : IEquatable<TwShadowLayer>
 }
 
 /// <summary>
-/// Kontrolün dışına taşan süslemeler: gölge katmanları, focus halkası (ring) ve native kontrollerin çerçevesi
-/// (<see cref="Frame"/>: kendi kenarlığını çizemeyen TextBox'ların kenarlığı ve köşesi).
+/// Decorations that extend outside the control: shadow layers, focus ring and the frame of native controls
+/// (<see cref="Frame"/>: border and corners of TextBoxes that cannot draw their own border).
 /// </summary>
 internal sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
 {
@@ -75,26 +75,26 @@ internal sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
     public float RingOffset { get; }
     public Color RingOffsetColor { get; }
 
-    /// <summary>Kontrolün etrafına, zemin rengiyle doldurulup çizilen kenarlık; <c>null</c> = çerçeve yok.</summary>
+    /// <summary>A border drawn around the control and filled with its background color; <c>null</c> = no frame.</summary>
     public TwChrome? Frame { get; private set; }
 
-    /// <summary>Çerçeve ile kontrol arasındaki boşluk (piksel).</summary>
+    /// <summary>Space between the frame and the control (pixels).</summary>
     public float FrameGap { get; private set; }
 
     public bool IsEmpty => Shadows.Count == 0 && RingWidth <= 0 && Frame is null;
 
-    /// <summary>Çerçevenin kontrol sınırlarından taştığı mesafe (kenar başına).</summary>
+    /// <summary>How far the frame extends outside the control's bounds (per side).</summary>
     public Padding FrameInset => Frame is TwChrome frame
         ? new Padding(
             (int)Math.Ceiling(FrameGap + frame.BorderLeft), (int)Math.Ceiling(FrameGap + frame.BorderTop),
             (int)Math.Ceiling(FrameGap + frame.BorderRight), (int)Math.Ceiling(FrameGap + frame.BorderBottom))
         : Padding.Empty;
 
-    /// <summary>Aynı gölge ve halkayla, verilen çerçeveyi de çizen bir kopya.</summary>
+    /// <summary>A copy with the same shadow and ring that also draws the given frame.</summary>
     public TwOutsetSpec WithFrame(TwChrome frame, float gap) =>
         new TwOutsetSpec(Radius, Shadows, RingWidth, RingColor, RingOffset, RingOffsetColor) { Frame = frame, FrameGap = gap };
 
-    /// <summary>Gölge ya da halkanın kontrol sınırlarının dışına taştığı en büyük mesafe.</summary>
+    /// <summary>The largest distance a shadow or ring extends outside the control's bounds.</summary>
     public int Extent
     {
         get
@@ -140,11 +140,11 @@ internal sealed class TwOutsetSpec : IEquatable<TwOutsetSpec>
 }
 
 /// <summary>
-/// Gölge ve halkayı kontrolün <b>ebeveyninde</b> çizer: kontroller kendi sınırlarının dışına çizim yapamaz.
-/// Ebeveynin Paint olayı çocuk pencerelerden önce çizildiği için gölge doğal olarak kontrolün altında kalır.
-/// Form, Panel ve TwPanel gibi Paint olayı tetikleyen her ebeveynde çalışır. <c>transition</c> varken gölge değişimi
-/// (örn. <c>shadow-sm hover:shadow-lg</c>) eski ve yeni gölgenin saydamlıkla geçişiyle canlandırılır; bulanık gölge
-/// bitmap'leri önbellekten gelir, karede yeniden hesaplanmaz.
+/// Draws shadows and rings on the control's <b>parent</b>: controls cannot paint outside their own bounds.
+/// The parent's Paint event runs before the child windows paint, so the shadow naturally stays below the control.
+/// Works on every parent that raises Paint, such as Form, Panel and TwPanel. With <c>transition</c>, a shadow change
+/// (e.g. <c>shadow-sm hover:shadow-lg</c>) is animated by cross-fading the old and new shadows; the blurred shadow
+/// bitmaps come from the cache and are not recomputed per frame.
 /// </summary>
 internal sealed class TwOutset
 {
@@ -193,8 +193,8 @@ internal sealed class TwOutset
 
     public void Update(TwOutsetSpec spec) => Update(spec, 0);
 
-    /// <param name="spec">Yeni gölge, halka ve çerçeve.</param>
-    /// <param name="durationMs">Gölge değişiminin geçiş süresi (<c>transition</c>); 0 ise anında.</param>
+    /// <param name="spec">New shadow, ring and frame.</param>
+    /// <param name="durationMs">Transition time of the shadow change (<c>transition</c>); 0 = immediate.</param>
     public void Update(TwOutsetSpec spec, int durationMs)
     {
         if (Spec != null && Spec.Equals(spec)) return;
@@ -330,7 +330,7 @@ internal sealed class TwOutset
     }
 }
 
-/// <summary>Bulanık gölge bitmap'lerini üretir ve önbelleğe alır (3 geçişli kutu bulanıklığı ≈ Gauss).</summary>
+/// <summary>Produces and caches blurred shadow bitmaps (3-pass box blur ≈ Gaussian).</summary>
 internal static class TwShadowRenderer
 {
     private const int CacheLimit = 128;

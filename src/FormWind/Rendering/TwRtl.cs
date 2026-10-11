@@ -3,15 +3,15 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Sağdan sola (RTL) yardımcıları. Kontrolün kalıtılan <see cref="Control.RightToLeft"/> değeri <c>Yes</c> ise FormWind
-/// yerleşimi ve kendi çizdiği parçaları aynalar; formda <c>RightToLeftLayout</c> açıksa Windows pencereleri zaten aynaladığı
-/// için FormWind ayrıca aynalamaz.
+/// Right-to-left (RTL) helpers. When a control's inherited <see cref="Control.RightToLeft"/> is <c>Yes</c>, FormWind mirrors
+/// the layout and the parts it paints itself; when the form has <c>RightToLeftLayout</c>, Windows already mirrors the windows
+/// and FormWind does not mirror again.
 /// </summary>
 internal static class TwRtl
 {
     public static bool IsRtl(Control control) => control.RightToLeft == RightToLeft.Yes;
 
-    /// <summary>Pencere, Windows'un ayna yerleşimiyle (WS_EX_LAYOUTRTL) çiziliyor mu.</summary>
+    /// <summary>Whether the window is drawn with Windows' mirrored layout (WS_EX_LAYOUTRTL).</summary>
     public static bool IsMirroredByWindows(Control control)
     {
         for (var current = control; current != null; current = current.Parent)
@@ -22,10 +22,10 @@ internal static class TwRtl
         return false;
     }
 
-    /// <summary>FormWind'in yerleşimi ve çizimi kendisinin aynalaması gerekiyor mu.</summary>
+    /// <summary>Whether FormWind has to mirror its layout and painting itself.</summary>
     public static bool NeedsMirroring(Control control) => IsRtl(control) && !IsMirroredByWindows(control);
 
-    /// <summary>Metin bayraklarını sağdan sola okumaya çevirir: sol ve sağ hizalama yer değiştirir.</summary>
+    /// <summary>Converts text flags to right-to-left reading: left and right alignment swap.</summary>
     public static TextFormatFlags Mirror(TextFormatFlags flags)
     {
         flags |= TextFormatFlags.RightToLeft;

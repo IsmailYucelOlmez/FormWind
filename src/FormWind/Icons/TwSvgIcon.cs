@@ -8,11 +8,11 @@ using System.Xml.Linq;
 namespace FormWind;
 
 /// <summary>
-/// Basit SVG ikon çizici: Lucide, Heroicons, Tabler gibi tek renkli ikon setleri için. Desteklenenler:
-/// <c>viewBox</c>, <c>path</c> (M L H V C S Q T A Z, göreli/mutlak), <c>circle</c>, <c>ellipse</c>, <c>rect</c> (rx/ry),
+/// Simple SVG icon renderer for single-color icon sets such as Lucide, Heroicons and Tabler. Supported:
+/// <c>viewBox</c>, <c>path</c> (M L H V C S Q T A Z, relative/absolute), <c>circle</c>, <c>ellipse</c>, <c>rect</c> (rx/ry),
 /// <c>line</c>, <c>polyline</c>, <c>polygon</c>, <c>g</c>; <c>fill</c>, <c>stroke</c>, <c>stroke-width</c>,
-/// <c>stroke-linecap</c>, <c>stroke-linejoin</c> (öğe ya da üst öğeden miras). Renkler yok sayılır: ikon tek renkle,
-/// çizildiği yerin metin rengiyle (<c>currentColor</c> gibi) boyanır. Gradient, maske, metin ve CSS desteklenmez.
+/// <c>stroke-linecap</c>, <c>stroke-linejoin</c> (on the element or inherited). Colors are ignored: the icon is painted in a single
+/// color, the text color where it is drawn (like <c>currentColor</c>). Gradients, masks, text and CSS are not supported.
 /// </summary>
 internal sealed class TwSvgIcon
 {
@@ -25,7 +25,7 @@ internal sealed class TwSvgIcon
 
     public RectangleF ViewBox { get; }
 
-    /// <summary>Şekil sayısı (test ve tanılama için).</summary>
+    /// <summary>Number of shapes (for tests and diagnostics).</summary>
     public int ShapeCount => _shapes.Count;
 
     public static TwSvgIcon Parse(string svg)
@@ -48,7 +48,7 @@ internal sealed class TwSvgIcon
         return icon;
     }
 
-    /// <summary>İkonu <paramref name="emPixels"/> kenarlı kare kutuya, <paramref name="bounds"/>'un ortasına çizer.</summary>
+    /// <summary>Draws the icon in a square box of <paramref name="emPixels"/>, centered in <paramref name="bounds"/>.</summary>
     public void Draw(Graphics graphics, int emPixels, Rectangle bounds, Color color)
     {
         if (color.A == 0 || emPixels <= 0 || ViewBox.Width <= 0 || ViewBox.Height <= 0) return;
@@ -217,7 +217,7 @@ internal sealed class TwSvgIcon
         public Paint Paint { get; }
     }
 
-    /// <summary>Miras alınan boyama özellikleri. SVG varsayılanı: dolgu siyah, çizgi yok.</summary>
+    /// <summary>Inherited paint properties. SVG default: black fill, no stroke.</summary>
     private sealed class Paint
     {
         public static readonly Paint Root = new Paint();
@@ -263,7 +263,7 @@ internal sealed class TwSvgIcon
         }
     }
 
-    /// <summary>SVG path "d" sözdizimi.</summary>
+    /// <summary>SVG path "d" syntax.</summary>
     internal static class PathData
     {
         public static void Append(GraphicsPath path, string data)
@@ -440,7 +440,7 @@ internal sealed class TwSvgIcon
             }
         }
 
-        /// <summary>Sayı ve komut okuyucu: "M10-5.5.5" gibi ayırıcısız yazımları da çözer.</summary>
+        /// <summary>Number and command reader: also parses forms without separators such as "M10-5.5.5".</summary>
         internal sealed class Reader
         {
             private readonly string _text;
@@ -478,7 +478,7 @@ internal sealed class TwSvgIcon
 
             public float Number() => TryNumber(out var value) ? value : 0;
 
-            /// <summary>Yay bayrağı: "0"/"1"; "a1 1 0 011 1" gibi ayırıcısız da olabilir.</summary>
+            /// <summary>Arc flag: "0"/"1"; may be written without separators, as in "a1 1 0 011 1".</summary>
             public bool Flag()
             {
                 SkipSeparators();

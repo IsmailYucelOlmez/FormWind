@@ -5,9 +5,9 @@ using System.Linq;
 namespace FormWind.Design;
 
 /// <summary>
-/// <c>Classes</c> alanında bileşen adlarını (btn-primary, card, input …) öneren açılır liste; serbest metin de yazılabilir.
-/// TypeConverter'lar .NET 8+'ın süreç dışı Designer'ında da çalışır, orada <see cref="ClassesEditor"/> açılmaz.
-/// Seçilen ad alanın tüm değerinin yerine geçer.
+/// Drop-down for the <c>Classes</c> field that suggests component names (btn-primary, card, input …); free text can be typed too.
+/// TypeConverters also work in the .NET 8+ out-of-process Designer, where <see cref="ClassesEditor"/> does not open.
+/// A selected name replaces the field's whole value.
 /// </summary>
 public sealed class ClassesConverter : StringConverter
 {

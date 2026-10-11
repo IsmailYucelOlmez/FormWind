@@ -5,12 +5,12 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Devre dışı butonun yazı rengi. Class'larda <c>disabled:text-*</c> varsa o renk (kontrolün <c>ForeColor</c>'ı) kullanılır;
-/// yoksa yazı rengi zemine doğru yarı yarıya karıştırılır, böylece devre dışı buton etkin olandan ayırt edilir.
+/// Text color of a disabled button. If the classes have <c>disabled:text-*</c>, that color (the control's <c>ForeColor</c>) is used;
+/// otherwise the text color is mixed halfway toward the background, so a disabled button is distinguishable from an enabled one.
 /// <para>
-/// Native düz (<see cref="FlatStyle.Flat"/>) buton devre dışıyken <c>ForeColor</c>'ı yok sayar ve yazıyı zeminin
-/// koyulaştırılmış tonuyla (<see cref="ControlPaint.Dark(Color)"/>) çizer: koyu zeminde görünmez olur. FormWind'in
-/// düzleştirdiği butonlarda yazı, devre dışıyken bu renkle yeniden çizilir. Resimli butonlara dokunulmaz.
+/// A native flat (<see cref="FlatStyle.Flat"/>) button ignores <c>ForeColor</c> while disabled and draws the text with a
+/// darkened shade of the background (<see cref="ControlPaint.Dark(Color)"/>), which is invisible on a dark background. On buttons
+/// flattened by FormWind, the text is redrawn with this color while disabled. Buttons with images are left alone.
 /// </para>
 /// </summary>
 internal sealed class TwDisabledText
@@ -30,9 +30,9 @@ internal sealed class TwDisabledText
         }
     }
 
-    /// <param name="control">Buton.</param>
-    /// <param name="explicitColor">Class'larda <c>disabled:text-*</c> var; kontrolün yazı rengi olduğu gibi kullanılır.</param>
-    /// <param name="repaint">Native buton FormWind tarafından düzleştirildi; devre dışı yazı yeniden çizilir.</param>
+    /// <param name="control">The button.</param>
+    /// <param name="explicitColor">The classes have <c>disabled:text-*</c>; the control's text color is used as is.</param>
+    /// <param name="repaint">The native button was flattened by FormWind; the disabled text is redrawn.</param>
     public static void Update(Control control, bool explicitColor, bool repaint)
     {
         if (!Table.TryGetValue(control, out var state))

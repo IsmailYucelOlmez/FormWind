@@ -7,15 +7,15 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Köşede beliren, odak çalmayan ve kendiliğinden kapanan bildirim.
-/// <code>TwToast.Show(this, "Sipariş kaydedildi", TwDialogKind.Success);</code>
-/// Bildirimler sahip formun sağ alt köşesinde üst üste dizilir; fare üzerindeyken süre durur, tıklayınca kapanır.
+/// A notification that appears in the corner, does not steal focus and closes by itself.
+/// <code>TwToast.Show(this, "Order saved", TwDialogKind.Success);</code>
+/// Notifications stack in the owner form's bottom-right corner; the timer pauses while hovered, a click closes it.
 /// </summary>
 public static class TwToast
 {
     private static readonly Dictionary<Form, List<TwToastForm>> Open = new Dictionary<Form, List<TwToastForm>>();
 
-    /// <summary>Varsayılan görünme süresi (ms).</summary>
+    /// <summary>Default display time (ms).</summary>
     public static int DefaultDuration { get; set; } = 4000;
 
     public static TwToastForm Show(Form owner, string message, TwDialogKind kind = TwDialogKind.Info, string? title = null, int? durationMs = null)
@@ -42,11 +42,11 @@ public static class TwToast
         return toast;
     }
 
-    /// <summary>Sahip formun açık bildirimleri (en yenisi sonda).</summary>
+    /// <summary>The owner form's open notifications (newest last).</summary>
     public static IReadOnlyList<TwToastForm> OpenToasts(Form owner) =>
         Open.TryGetValue(owner, out var list) ? list.AsReadOnly() : (IReadOnlyList<TwToastForm>)Array.Empty<TwToastForm>();
 
-    /// <summary>Bildirimi açık sahip formların sayısı (testler için).</summary>
+    /// <summary>Number of owner forms with open notifications (for tests).</summary>
     internal static int TrackedOwners => Open.Count;
 
     private static void OnOwnerMoved(object? sender, EventArgs e) => Arrange((Form)sender!);
@@ -157,7 +157,7 @@ public sealed class TwToastForm : Form
 
     public TailwindProvider Provider => _tw;
 
-    /// <summary>Odak çalmaz.</summary>
+    /// <summary>Does not steal focus.</summary>
     protected override bool ShowWithoutActivation => true;
 
     protected override CreateParams CreateParams
@@ -189,7 +189,7 @@ public sealed class TwToastForm : Form
         AccessibilityNotifyClients(AccessibleEvents.SystemAlert, -1);
     }
 
-    /// <summary>Bildirimi solarak kapatır.</summary>
+    /// <summary>Fades the notification out and closes it.</summary>
     public void Dismiss()
     {
         if (_closing) return;

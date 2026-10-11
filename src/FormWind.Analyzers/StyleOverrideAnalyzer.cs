@@ -11,10 +11,10 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace FormWind.Analyzers;
 
 /// <summary>
-/// FW001: <c>TailwindProvider.SetClasses</c> ile verilen class'lar bir özelliği yönetiyorken (örn. <c>bg-*</c> → BackColor)
-/// aynı özelliğe kodda değer atanıyor. Class'lar her durum değişiminde (hover, koyu tema) yeniden uygulandığından elle atanan
-/// değer ya ezilir ya da class'ı ezer. Yalnızca class metni sabit (literal) olan çağrılar denetlenir; class'ların dokunmadığı
-/// özelliklere atama (örn. <c>font-sans</c> varken temel <c>Font</c>) uyarı vermez.
+/// FW001: code assigns a property that classes given with <c>TailwindProvider.SetClasses</c> manage (e.g. <c>bg-*</c> → BackColor).
+/// Classes are reapplied on every state change (hover, dark mode), so the assigned value either gets overwritten or overrides
+/// the class. Only calls with a constant (literal) class string are checked; assignments to properties the classes do not touch
+/// (e.g. a plain <c>Font</c> while <c>font-sans</c> is set) do not warn.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class StyleOverrideAnalyzer : DiagnosticAnalyzer
@@ -111,7 +111,7 @@ public sealed class StyleOverrideAnalyzer : DiagnosticAnalyzer
         ["table"] = new[] { "BackColor", "ForeColor", "Font" },
     };
 
-    /// <summary>Class metninin yönettiği kontrol özellikleri (varyantlar dahil: <c>hover:bg-*</c> de BackColor'dır).</summary>
+    /// <summary>Control properties managed by a class string (variants included: <c>hover:bg-*</c> is BackColor too).</summary>
     internal static IEnumerable<string> ManagedProperties(string classes)
     {
         foreach (var token in classes.Split(new[] { ' ', '\t', '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries))

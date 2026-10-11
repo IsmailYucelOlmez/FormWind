@@ -6,8 +6,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Kontrolün stil uygulanmadan önceki değerleri. Bir class kaldırıldığında ya da durum değiştiğinde
-/// (örn. hover bitince) bu değerlere dönülür.
+/// A control's values before styles were applied. They are restored when a class is removed or the state changes
+/// (e.g. when hover ends).
 /// </summary>
 public sealed class TwOriginal
 {
@@ -22,13 +22,13 @@ public sealed class TwOriginal
 
     private TwOriginal() { }
 
-    /// <summary><c>null</c>: değer açıkça atanmamış, ebeveynden miras alınıyor (Reset ile geri dönülür).</summary>
+    /// <summary><c>null</c>: the value is not set explicitly and is inherited from the parent (restored with Reset).</summary>
     public Color? BackColor { get; private set; }
 
     public Color? ForeColor { get; private set; }
     public Font? Font { get; private set; }
 
-    /// <summary><see cref="Font"/> yakalandığında kontrolün DPI'ı; ekran değişince font bu orana göre ölçeklenir.</summary>
+    /// <summary>The control's DPI when <see cref="Font"/> was captured; the font is scaled by this ratio when the screen changes.</summary>
     public int FontDpi { get; private set; } = 96;
     public Cursor? Cursor { get; private set; }
     public Padding Padding { get; private set; }
@@ -36,15 +36,15 @@ public sealed class TwOriginal
     public FlatStyle? FlatStyle { get; private set; }
     public int? FlatBorderSize { get; private set; }
 
-    /// <summary>Doğrudan ShouldSerializeX metotları bulundu mu (bulunamazsa kilitli TypeDescriptor kullanılır).</summary>
+    /// <summary>Whether the ShouldSerializeX methods were found directly (otherwise a locked TypeDescriptor is used).</summary>
     internal static bool UsesDirectChecks =>
         ShouldSerializeBackColor != null && ShouldSerializeForeColor != null
         && ShouldSerializeFont != null && ShouldSerializeCursor != null;
 
-    /// <param name="control">Değerleri okunacak kontrol.</param>
+    /// <param name="control">The control to read the values from.</param>
     /// <param name="designMode">
-    /// Tasarım zamanında açıkça atanmış görünen renk ve fontlar büyük olasılıkla önceki bir önizlemeden
-    /// serileştirilmiştir; bu yüzden hepsi "miras" kabul edilir.
+    /// At design time, colors and fonts that look explicitly set were most likely serialized from an earlier preview,
+    /// so they are all treated as "inherited".
     /// </param>
     public static TwOriginal Capture(Control control, bool designMode)
     {
@@ -70,7 +70,7 @@ public sealed class TwOriginal
         return original;
     }
 
-    /// <summary>Property'nin kontrolde açıkça atanmış olup olmadığı (ebeveynden miras değil).</summary>
+    /// <summary>Whether the property is set explicitly on the control (not inherited from the parent).</summary>
     internal static bool IsExplicit(Control control, string property) => property switch
     {
         nameof(Control.BackColor) => IsExplicit(control, ShouldSerializeBackColor, property),

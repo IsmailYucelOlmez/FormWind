@@ -7,9 +7,9 @@ using System.Linq;
 namespace FormWind;
 
 /// <summary>
-/// Windows'la gelen ikon fontu (Segoe Fluent Icons / Segoe MDL2 Assets) için ad → kod noktası tablosu.
-/// İki font bu ikonlar için aynı kod noktalarını kullanır. Ek ikonlar <see cref="Register"/> ya da
-/// tema dosyasındaki <c>icons</c> ile eklenebilir; doğrudan kod noktası için <c>#E710</c> yazılabilir.
+/// Name → code point table for the icon font shipped with Windows (Segoe Fluent Icons / Segoe MDL2 Assets).
+/// Both fonts use the same code points for these icons. More icons can be added with <see cref="Register"/> or
+/// <c>icons</c> in the theme file; <c>#E710</c> can be written for a code point directly.
 /// </summary>
 public static class TwIcons
 {
@@ -45,7 +45,7 @@ public static class TwIcons
         ["info"] = '', ["warning"] = '', ["error"] = '', ["help"] = '',
     };
 
-    /// <summary>Kurulu ilk ikon fontu; hiçbiri yoksa (Windows 7/8) "Segoe MDL2 Assets" adı döner ve ikonlar çizilmez.</summary>
+    /// <summary>The first installed icon font; when none is installed (Windows 7/8) "Segoe MDL2 Assets" is returned and icons are not drawn.</summary>
     public static string DefaultFontFamily { get; } =
         TwFonts.IsInstalled("Segoe Fluent Icons") ? "Segoe Fluent Icons" : "Segoe MDL2 Assets";
 
@@ -63,7 +63,7 @@ public static class TwIcons
         lock (Map) return Map.TryGetValue(name, out glyph);
     }
 
-    /// <summary>"E710", "#E710" ya da "U+E710" biçimindeki kod noktasını çözer (yalnızca BMP).</summary>
+    /// <summary>Parses a code point in the form "E710", "#E710" or "U+E710" (BMP only).</summary>
     public static bool TryParseCodePoint(string? value, out char glyph)
     {
         glyph = '\0';
@@ -79,7 +79,7 @@ public static class TwIcons
     }
 }
 
-/// <summary>Property penceresinde ikon adları için açılır liste (serbest metin de yazılabilir).</summary>
+/// <summary>Drop-down of icon names in the Properties window (free text can be typed too).</summary>
 public sealed class TwIconNameConverter : StringConverter
 {
     public override bool GetStandardValuesSupported(ITypeDescriptorContext? context) => true;

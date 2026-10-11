@@ -9,14 +9,14 @@ using System.Windows.Forms;
 namespace FormWind.Design;
 
 /// <summary>
-/// <see cref="TailwindProvider"/> için Designer desteği: formdaki her kontrolün akıllı etiketine (standart kontroller dahil)
-/// bir FormWind bölümü ekler. Bölümde class'lar düzenlenir ve kontrol tipine uygun bileşenler (buton → <c>btn-primary</c>,
-/// metin kutusu → <c>input</c>, panel → <c>card</c>, grid → <c>table</c>) tek tıkla verilir. Değişiklikler extender
-/// özelliği üzerinden yapıldığından Designer.cs'e yazılır ve geri alınabilir.
+/// Designer support for <see cref="TailwindProvider"/>: adds a FormWind section to the smart tag of every control on the form
+/// (standard controls included). The section edits the classes and applies components suited to the control type (button →
+/// <c>btn-primary</c>, text box → <c>input</c>, panel → <c>card</c>, grid → <c>table</c>) with one click. Changes go through the
+/// extender property, so they are written to Designer.cs and can be undone.
 /// <para>
-/// Önizleme (<see cref="TailwindProvider.DesignTimePreview"/>) class'ların rengini, fontunu ve boşluklarını kontrole
-/// uygular; bu değerler Designer.cs'e yazılmasın diye her kontrole örnek başına bir tür tanımlayıcısı eklenir: class'ların
-/// yönettiği özellikler (BackColor, ForeColor, Font, Padding, Margin, Cursor) serileştirilmez.
+/// The preview (<see cref="TailwindProvider.DesignTimePreview"/>) applies the classes' colors, fonts and spacing to the control;
+/// so that these values are not written to Designer.cs, a type descriptor is added per instance to every control: properties
+/// managed by the classes (BackColor, ForeColor, Font, Padding, Margin, Cursor) are not serialized.
 /// </para>
 /// </summary>
 public class TailwindProviderDesigner : ComponentDesigner
@@ -92,7 +92,7 @@ public class TailwindProviderDesigner : ComponentDesigner
         base.Dispose(disposing);
     }
 
-    /// <summary>Önizlemenin uyguladığı, class'ların yönettiği özellikleri serileştirmeyen tür tanımlayıcısı.</summary>
+    /// <summary>Type descriptor that does not serialize the class-managed properties applied by the preview.</summary>
     private sealed class PreviewTypeProvider : TypeDescriptionProvider
     {
         private readonly TailwindProvider _provider;
@@ -134,7 +134,7 @@ public class TailwindProviderDesigner : ComponentDesigner
                 or nameof(Control.Padding) or nameof(Control.Margin) or nameof(Control.Cursor);
     }
 
-    /// <summary>Class'lar bu özelliği yönetiyorsa (ve önizleme açıksa) değeri Designer.cs'e yazılmaz.</summary>
+    /// <summary>If the classes manage this property (and the preview is on), its value is not written to Designer.cs.</summary>
     private sealed class ManagedProperty : PropertyDescriptor
     {
         private readonly PropertyDescriptor _inner;
@@ -177,7 +177,7 @@ public class TailwindProviderDesigner : ComponentDesigner
         public override TypeConverter Converter => _inner.Converter;
     }
 
-    /// <summary>Bir kontrolün akıllı etiketindeki FormWind bölümü.</summary>
+    /// <summary>The FormWind section in a control's smart tag.</summary>
     internal sealed class ClassesActionList : DesignerActionList
     {
         private readonly TailwindProvider _provider;
@@ -196,7 +196,7 @@ public class TailwindProviderDesigner : ComponentDesigner
             set => ClassesProperty().SetValue(_control, value ?? "");
         }
 
-        /// <summary>Kontrol tipine uygun bileşenler (tema dosyasındakiler dahil, temada varsa).</summary>
+        /// <summary>Components suited to the control type (including those in the theme file, when the theme has them).</summary>
         internal IEnumerable<string> SuggestedComponents()
         {
             string[] candidates = _control switch

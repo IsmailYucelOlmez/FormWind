@@ -8,9 +8,9 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Sayfalama: ‹ 1 … 4 5 6 … 20 ›. <see cref="TotalItems"/> ve <see cref="PageSize"/>'dan sayfa sayısı hesaplanır;
-/// <see cref="PageChanged"/>'de veriyi o sayfaya göre bağlayın. Stiller: <c>text-*</c> (sayfalar), <c>selected:bg-* selected:text-*</c>
-/// (geçerli sayfa), <c>item:hover:bg-*</c>. Klavye: ←/→ önceki/sonraki, Home/End ilk/son sayfa.
+/// Pager: ‹ 1 … 4 5 6 … 20 ›. The page count is computed from <see cref="TotalItems"/> and <see cref="PageSize"/>;
+/// bind the data for the page in <see cref="PageChanged"/>. Styles: <c>text-*</c> (pages), <c>selected:bg-* selected:text-*</c>
+/// (current page), <c>item:hover:bg-*</c>. Keyboard: ←/→ previous/next, Home/End first/last page.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(PageChanged))]
@@ -24,7 +24,7 @@ public class TwPager : Control
     private bool _focusVisible;
     private readonly List<(int Page, Rectangle Bounds)> _buttons = new List<(int, Rectangle)>();
 
-    /// <summary>Önceki/sonraki düğmeleri ve "…" için ayrılmış sayfa değerleri.</summary>
+    /// <summary>Page values reserved for the previous/next buttons and "…".</summary>
     public const int Previous = -1, Next = -2, Gap = 0;
 
     public TwPager()
@@ -65,7 +65,7 @@ public class TwPager : Control
     [Browsable(false)]
     public int PageCount => Math.Max(1, (_totalItems + _pageSize - 1) / _pageSize);
 
-    /// <summary>Geçerli sayfa (1'den başlar).</summary>
+    /// <summary>The current page (starts at 1).</summary>
     [Category("Data"), DefaultValue(1)]
     public int Page
     {
@@ -85,15 +85,15 @@ public class TwPager : Control
         }
     }
 
-    /// <summary>Geçerli sayfanın ilk kaydının dizini (0'dan).</summary>
+    /// <summary>Index of the current page's first item (from 0).</summary>
     [Browsable(false)]
     public int FirstItemIndex => (_page - 1) * _pageSize;
 
-    /// <summary>Geçerli sayfadaki kayıt sayısı.</summary>
+    /// <summary>Number of items on the current page.</summary>
     [Browsable(false)]
     public int ItemsOnPage => Math.Max(0, Math.Min(_pageSize, _totalItems - FirstItemIndex));
 
-    /// <summary>Geçerli sayfanın iki yanında gösterilen sayfa sayısı.</summary>
+    /// <summary>Number of pages shown on each side of the current page.</summary>
     [Category("Behavior"), DefaultValue(1)]
     public int Siblings { get; set; } = 1;
 
@@ -106,7 +106,7 @@ public class TwPager : Control
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color HoverBackColor { get; set; } = ColorTranslator.FromHtml("#f3f4f6");
 
-    /// <summary>Gösterilen düğmeler: sayfa numaraları, <see cref="Gap"/> ("…"), <see cref="Previous"/>, <see cref="Next"/>.</summary>
+    /// <summary>The buttons shown: page numbers, <see cref="Gap"/> ("…"), <see cref="Previous"/>, <see cref="Next"/>.</summary>
     public IReadOnlyList<int> VisiblePages()
     {
         var pages = new List<int> { Previous };
@@ -215,7 +215,7 @@ public class TwPager : Control
         if (e.Button == MouseButtons.Left) Go(HitTest(e.Location));
     }
 
-    /// <summary>Düğmeye basılmış gibi: sayfa numarası, <see cref="Previous"/> ya da <see cref="Next"/>.</summary>
+    /// <summary>As if a button was pressed: a page number, <see cref="Previous"/> or <see cref="Next"/>.</summary>
     public void Go(int button)
     {
         if (button == int.MinValue || !IsEnabled(button)) return;

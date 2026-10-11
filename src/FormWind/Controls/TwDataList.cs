@@ -25,14 +25,14 @@ internal sealed class TwDataListColors
 
 public enum TwListSelectionMode
 {
-    /// <summary>Tek satır.</summary>
+    /// <summary>Single row.</summary>
     One,
 
-    /// <summary>Ctrl+tık ekler/çıkarır, Shift+tık ve Shift+ok aralık seçer, Ctrl+A tümünü seçer.</summary>
+    /// <summary>Ctrl+click adds/removes, Shift+click and Shift+arrow select a range, Ctrl+A selects all.</summary>
     MultiExtended,
 }
 
-/// <summary>Yüklenmemiş satırlar görünür olduğunda istenen aralık.</summary>
+/// <summary>The range requested when unloaded rows become visible.</summary>
 public sealed class TwItemsNeededEventArgs : EventArgs
 {
     public TwItemsNeededEventArgs(int first, int last)
@@ -46,7 +46,7 @@ public sealed class TwItemsNeededEventArgs : EventArgs
     public int Last { get; }
 }
 
-/// <summary>Seçim kümesi; "tümü seçili" durumunu milyonlarca dizin tutmadan saklar.</summary>
+/// <summary>Selection set; stores the "all selected" state without keeping millions of indices.</summary>
 internal sealed class TwListSelection
 {
     private readonly HashSet<int> _set = new HashSet<int>();
@@ -91,7 +91,7 @@ internal sealed class TwListSelection
     }
 }
 
-/// <summary>Bir satırın çizimi; satırın renkleri ve sık kullanılan çizim yardımcıları hazır gelir.</summary>
+/// <summary>Drawing of a row; the row's colors and common drawing helpers are provided.</summary>
 public sealed class TwDataListDrawEventArgs : EventArgs
 {
     private readonly TwDataList _owner;
@@ -110,10 +110,10 @@ public sealed class TwDataListDrawEventArgs : EventArgs
 
     public int Index { get; }
 
-    /// <summary>Satırın tamamı (yatay iç boşluk dahil).</summary>
+    /// <summary>The whole row (including horizontal padding).</summary>
     public Rectangle Bounds { get; }
 
-    /// <summary>Satırın <see cref="Control.Padding"/> uygulanmış içerik alanı.</summary>
+    /// <summary>The row's content area with <see cref="Control.Padding"/> applied.</summary>
     public Rectangle ContentBounds
     {
         get
@@ -127,21 +127,21 @@ public sealed class TwDataListDrawEventArgs : EventArgs
 
     public bool Hovered { get; }
 
-    /// <summary>Satırın birincil metin rengi (seçiliyse seçili metin rengi).</summary>
+    /// <summary>The row's primary text color (the selected text color when selected).</summary>
     public Color ForeColor => Selected ? _owner.Colors.SelectedFore : _owner.Colors.Fore;
 
-    /// <summary>İkincil metin rengi.</summary>
+    /// <summary>Secondary text color.</summary>
     public Color MutedColor => Selected ? Blend(_owner.Colors.SelectedFore, 170) : _owner.Colors.Muted;
 
-    /// <summary>Satırın zemin rengi (metin yumuşatma için).</summary>
+    /// <summary>The row's background color (for text anti-aliasing).</summary>
     public Color BackColor => Selected ? _owner.Colors.Selected : Hovered ? _owner.Colors.Hover : _owner.Colors.Back;
 
     public Font Font => _owner.Font;
 
-    /// <summary>Kalın (ya da başka ağırlıkta) satır fontu; önbellekten gelir, dispose edilmez.</summary>
+    /// <summary>Row font in bold (or another weight); comes from the cache and is not disposed.</summary>
     public Font FontWithWeight(int weight) => TwFonts.Create(new TwStyle { FontWeight = weight }, _owner.Font, TwTheme.Current);
 
-    /// <summary>Tek satır, sonu "…" ile kesilen metin.</summary>
+    /// <summary>Single-line text truncated with "…".</summary>
     public void DrawText(string? text, Rectangle bounds, Color? color = null, Font? font = null,
                          ContentAlignment alignment = ContentAlignment.MiddleLeft)
     {
@@ -150,13 +150,13 @@ public sealed class TwDataListDrawEventArgs : EventArgs
         TextRenderer.DrawText(Graphics, text, font ?? Font, bounds, color ?? ForeColor, BackColor, flags);
     }
 
-    /// <summary>Adı verilen ikon (SVG ya da ikon fontu glifi; bkz. <see cref="TwIconRenderer.DrawIcon"/>).</summary>
+    /// <summary>A named icon (SVG or icon font glyph; see <see cref="TwIconRenderer.DrawIcon"/>).</summary>
     public void DrawIcon(string name, Rectangle bounds, Color? color = null)
     {
         TwIconRenderer.DrawIcon(Graphics, name, TwIconRenderer.EmPixels(Font.SizeInPoints * 1.15f, TwDpi.DeviceDpi(_owner)), bounds, color ?? MutedColor);
     }
 
-    /// <summary>Yuvarlak köşeli rozet; genişliği metne göre, sağ kenarı <paramref name="right"/>'a dayalı. Rozetin sol kenarını döner.</summary>
+    /// <summary>Rounded badge sized to its text, with its right edge at <paramref name="right"/>. Returns the badge's left edge.</summary>
     public int DrawBadge(string text, int right, Color back, Color fore)
     {
         var font = FontWithWeight(500);
@@ -178,12 +178,12 @@ public sealed class TwDataListDrawEventArgs : EventArgs
 }
 
 /// <summary>
-/// Sanal (virtual) veri listesi: yalnızca görünen satırlar çizilir, bu yüzden milyonlarca satır sorun değildir.
-/// Satırlar <see cref="DrawItem"/> ile çizilir (yoksa <see cref="ItemText"/> tek satır metin olarak). Fare tekeri yumuşak
-/// kaydırır; ince kaydırma çubuğu da owner-draw'dur (sürüklenebilir), koyu temada ayrıca ayar gerekmez.
-/// Klavye: ↑/↓, PageUp/PageDown, Home/End; Enter ve çift tık <see cref="ItemActivate"/>.
-/// Stiller: <c>bg-* text-*</c> (liste), <c>item:hover:bg-*</c>, <c>selected:bg-* selected:text-*</c>, <c>item:rounded-*</c>,
-/// <c>row:border-*</c> (satır ayırıcı), <c>fill-*</c> (kaydırma çubuğu).
+/// Virtual data list: only visible rows are drawn, so millions of rows are fine.
+/// Rows are drawn with <see cref="DrawItem"/> (otherwise <see cref="ItemText"/> as a single line of text). The mouse wheel
+/// scrolls smoothly; the thin scrollbar is owner-drawn too (draggable) and needs no extra setup in dark mode.
+/// Keyboard: ↑/↓, PageUp/PageDown, Home/End; Enter and double-click raise <see cref="ItemActivate"/>.
+/// Styles: <c>bg-* text-*</c> (list), <c>item:hover:bg-*</c>, <c>selected:bg-* selected:text-*</c>, <c>item:rounded-*</c>,
+/// <c>row:border-*</c> (row separator), <c>fill-*</c> (scrollbar).
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(DrawItem))]
@@ -232,24 +232,24 @@ public class TwDataList : Control
         _scrollTimer.Tick += (_, _) => StepScroll();
     }
 
-    /// <summary>Görünen bir satırın çizimi.</summary>
+    /// <summary>Drawing of a visible row.</summary>
     public event EventHandler<TwDataListDrawEventArgs>? DrawItem;
 
     public event EventHandler? SelectedIndexChanged;
 
-    /// <summary>Seçili satırlar değiştiğinde (çoklu seçimde de).</summary>
+    /// <summary>When the selected rows change (also with multi-selection).</summary>
     public event EventHandler? SelectionChanged;
 
-    /// <summary>Görünür ama yüklenmemiş satırlar için (bkz. <see cref="IsItemLoaded"/>); veri gelince <see cref="Control.Invalidate()"/> çağırın.</summary>
+    /// <summary>For visible but unloaded rows (see <see cref="IsItemLoaded"/>); call <see cref="Control.Invalidate()"/> when the data arrives.</summary>
     public event EventHandler<TwItemsNeededEventArgs>? ItemsNeeded;
 
-    /// <summary>Grup başlığı çizimi; verilmezse başlık metni çizilir.</summary>
+    /// <summary>Drawing of a group header; the header text is drawn when not handled.</summary>
     public event EventHandler<TwDataListDrawEventArgs>? DrawGroupHeader;
 
-    /// <summary>Enter ya da çift tık.</summary>
+    /// <summary>Enter or double-click.</summary>
     public event EventHandler? ItemActivate;
 
-    /// <summary>Satır sayısı; veri listede tutulmaz, satırlar çizilirken dizinle istenir.</summary>
+    /// <summary>Number of rows; the data is not stored in the list, rows are requested by index while drawing.</summary>
     [Category("Data"), DefaultValue(0)]
     public int ItemCount
     {
@@ -265,7 +265,7 @@ public class TwDataList : Control
         }
     }
 
-    /// <summary>Satır yüksekliği, 96 DPI pikseli.</summary>
+    /// <summary>Row height in 96 DPI pixels.</summary>
     [Category("Appearance"), DefaultValue(40)]
     public int ItemHeight
     {
@@ -279,10 +279,9 @@ public class TwDataList : Control
     }
 
     /// <summary>
-    /// Satır başına yükseklik (96 DPI pikseli); verilmezse bütün satırlar <see cref="ItemHeight"/> yüksekliğindedir. Satır
-    /// başlangıçları bir kez hesaplanıp saklanır; veriler değişip yükseklikler farklılaşınca <see cref="InvalidateItemHeights"/>
-    /// çağrılmalı. Yükseklikler her satır için hesaplandığından çok büyük sanal listelerde (<see cref="ItemsNeeded"/>) ucuz
-    /// tutulmalı.
+    /// Height per row (96 DPI pixels); when not set, all rows are <see cref="ItemHeight"/> tall. Row offsets are computed
+    /// once and cached; call <see cref="InvalidateItemHeights"/> when the data changes and the heights differ. Because a
+    /// height is computed for every row, keep it cheap for very large virtual lists (<see cref="ItemsNeeded"/>).
     /// </summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<int, int>? ItemHeights
@@ -295,7 +294,7 @@ public class TwDataList : Control
         }
     }
 
-    /// <summary><see cref="ItemHeights"/>'in döndürdüğü yükseklikler değişti; satırlar yeniden yerleştirilir.</summary>
+    /// <summary>The heights returned by <see cref="ItemHeights"/> changed; rows are laid out again.</summary>
     public void InvalidateItemHeights()
     {
         _offsets = null;
@@ -342,7 +341,7 @@ public class TwDataList : Control
         return found;
     }
 
-    /// <summary>Satır köşe yarıçapı (96 DPI); <c>item:rounded-*</c> ile de ayarlanır.</summary>
+    /// <summary>Row corner radius (96 DPI); also set with <c>item:rounded-*</c>.</summary>
     [Category("Appearance"), DefaultValue(6)]
     public int ItemRadius
     {
@@ -354,7 +353,7 @@ public class TwDataList : Control
         }
     }
 
-    /// <summary>Satır içi boşluk (96 DPI); <see cref="TwDataListDrawEventArgs.ContentBounds"/>'u belirler.</summary>
+    /// <summary>Row padding (96 DPI); determines <see cref="TwDataListDrawEventArgs.ContentBounds"/>.</summary>
     [Category("Layout")]
     public Padding ItemPadding
     {
@@ -370,13 +369,13 @@ public class TwDataList : Control
 
     private void ResetItemPadding() => ItemPadding = new Padding(12, 0, 12, 0);
 
-    /// <summary><see cref="DrawItem"/> yokken satır metni.</summary>
+    /// <summary>Row text when there is no <see cref="DrawItem"/>.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<int, string>? ItemText { get; set; }
 
     /// <summary>
-    /// Ekran okuyucuya okunacak satır adı. Verilmezse <see cref="ItemText"/>, o da yoksa "Öğe N" kullanılır;
-    /// <see cref="DrawItem"/> ile çizilen listelerde verilmesi önerilir.
+    /// Row name read by screen readers. When not set, <see cref="ItemText"/> is used, otherwise "Item N";
+    /// recommended for lists drawn with <see cref="DrawItem"/>.
     /// </summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<int, string>? AccessibleItemText { get; set; }
@@ -401,13 +400,13 @@ public class TwDataList : Control
     }
 
     /// <summary>
-    /// Satır yüklü mü (sanal veri sayfa sayfa geliyorsa). Yüklenmemiş satırlar iskelet olarak çizilir ve
-    /// <see cref="ItemsNeeded"/> görünür aralıkla tetiklenir.
+    /// Whether a row is loaded (when virtual data arrives page by page). Unloaded rows are drawn as skeletons and
+    /// <see cref="ItemsNeeded"/> is raised with the visible range.
     /// </summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<int, bool>? IsItemLoaded { get; set; }
 
-    /// <summary>Grup başlığı yüksekliği (96 DPI); <c>header:bg-* header:text-*</c> ile stillenir.</summary>
+    /// <summary>Group header height (96 DPI); styled with <c>header:bg-* header:text-*</c>.</summary>
     [Category("Appearance"), DefaultValue(28)]
     public int GroupHeaderHeight
     {
@@ -423,8 +422,8 @@ public class TwDataList : Control
     public int GroupCount => _groupStarts.Length;
 
     /// <summary>
-    /// Satırları gruplar: her grup başladığı satır dizini ve başlığıyla (artan sırada). Kaydırırken üstteki grubun başlığı
-    /// yapışık kalır.
+    /// Groups the rows: each group with the row index it starts at and its title (in ascending order). The header of the
+    /// group at the top sticks while scrolling.
     /// </summary>
     public void SetGroups(IEnumerable<(int Start, string Title)> groups)
     {
@@ -438,7 +437,7 @@ public class TwDataList : Control
 
     public string GetGroupTitle(int group) => _groupTitles[group];
 
-    /// <summary>Satırın grubu (gruplar yoksa ya da ilk gruptan önceyse -1).</summary>
+    /// <summary>The row's group (-1 when there are no groups or the row is before the first group).</summary>
     public int GroupOf(int index)
     {
         int lo = 0, hi = _groupStarts.Length - 1, found = -1;
@@ -455,14 +454,14 @@ public class TwDataList : Control
         return found;
     }
 
-    /// <summary>Grup başlığının istemci koordinatlarındaki yeri (yapışık konumu değil, akıştaki yeri).</summary>
+    /// <summary>The group header's position in client coordinates (its place in the flow, not the sticky position).</summary>
     public Rectangle GetGroupHeaderBounds(int group) =>
         new Rectangle(Padding.Left, HeaderTop(group) - ScrollOffset, RowWidth, ScaledGroupHeaderHeight);
 
     public bool IsSelected(int index) =>
         _selectionMode == TwListSelectionMode.One ? index == _selectedIndex : index >= 0 && index < _itemCount && _selection.Contains(index);
 
-    /// <summary>Seçili satırlar (artan sırada).</summary>
+    /// <summary>Selected rows (in ascending order).</summary>
     [Browsable(false)]
     public IReadOnlyList<int> SelectedIndices =>
         _selectionMode == TwListSelectionMode.One
@@ -554,14 +553,14 @@ public class TwDataList : Control
         SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Kaydırma konumu (piksel); animasyon sürerken anlık değer.</summary>
+    /// <summary>Scroll position (pixels); the momentary value during animation.</summary>
     [Browsable(false)]
     public int ScrollOffset => (int)Math.Round(_offset);
 
     [Browsable(false)]
     public int MaxScrollOffset => Math.Max(0, Offset(_itemCount) + VisibleGroupCount * ScaledGroupHeaderHeight + Padding.Vertical - ClientSize.Height);
 
-    /// <summary>En üstte (kısmen de olsa) görünen satır.</summary>
+    /// <summary>The row visible at the top (even partially).</summary>
     [Browsable(false)]
     public int TopIndex
     {
@@ -641,13 +640,13 @@ public class TwDataList : Control
 
     private int ScrollbarWidth => ScalePixels(_draggingThumb || _thumbHover ? 8 : 6);
 
-    /// <summary>Satırın istemci koordinatlarındaki yeri (görünmüyorsa da hesaplanır).</summary>
+    /// <summary>The row's position in client coordinates (computed even when not visible).</summary>
     public Rectangle GetItemBounds(int index)
     {
         return new Rectangle(Padding.Left, RowTop(index) - ScrollOffset, RowWidth, HeightOf(index));
     }
 
-    /// <summary>Noktadaki satır; yoksa -1.</summary>
+    /// <summary>The row at a point; -1 when none.</summary>
     public int IndexFromPoint(Point point)
     {
         if (_itemCount == 0 || point.X < Padding.Left || point.X >= ClientSize.Width - Padding.Right) return -1;
@@ -656,7 +655,7 @@ public class TwDataList : Control
         return index >= 0 ? index : -1;
     }
 
-    /// <summary>Satır tamamen görünecek kadar kaydırır.</summary>
+    /// <summary>Scrolls until the row is fully visible.</summary>
     public void EnsureVisible(int index, bool animate = true)
     {
         if (index < 0 || index >= _itemCount) return;
@@ -669,7 +668,7 @@ public class TwDataList : Control
         ScrollTo(target, animate);
     }
 
-    /// <summary>Verilen konuma kaydırır (sınırlanır); <see cref="SmoothScrolling"/> açıksa yumuşak.</summary>
+    /// <summary>Scrolls to the given position (clamped); smoothly if <see cref="SmoothScrolling"/> is on.</summary>
     public void ScrollTo(float offset, bool animate = true)
     {
         _target = Math.Max(0, Math.Min(offset, MaxScrollOffset));
@@ -970,7 +969,7 @@ public class TwDataList : Control
         base.Dispose(disposing);
     }
 
-    /// <summary>Satırı çizer: <see cref="DrawItem"/> varsa onu tetikler, yoksa <see cref="ItemText"/>'i yazar.</summary>
+    /// <summary>Draws a row: raises <see cref="DrawItem"/> if handled, otherwise writes <see cref="ItemText"/>.</summary>
     protected virtual void OnDrawItem(TwDataListDrawEventArgs e)
     {
         if (DrawItem != null) DrawItem(this, e);
@@ -1017,7 +1016,7 @@ public class TwDataList : Control
             TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
     }
 
-    /// <summary>İskelet satırların nabız oranı (0,55–1); animasyon kapalıysa 1.</summary>
+    /// <summary>Pulse factor of skeleton rows (0.55–1); 1 when animations are off.</summary>
     internal static float PulseFactor(Control control) =>
         TwMotion.CanAnimate(control) ? 0.55f + 0.45f * (0.5f + 0.5f * (float)Math.Sin(Environment.TickCount / 1200.0 * 2 * Math.PI)) : 1f;
 

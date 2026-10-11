@@ -6,9 +6,9 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Native kaydırma çubuklarını koyu temaya geçirir (<c>SetWindowTheme(hwnd, "DarkMode_Explorer")</c>, Windows 10 1809+).
-/// Windows Gezgini'nin kullandığı ama belgelenmemiş bir tema adıdır; desteklenmeyen sistemlerde etkisizdir.
-/// Değer handle yeniden oluşturulunca tekrar uygulanır.
+/// Switches native scrollbars to the dark theme (<c>SetWindowTheme(hwnd, "DarkMode_Explorer")</c>, Windows 10 1809+).
+/// This undocumented theme name is used by Windows Explorer; it has no effect on unsupported systems.
+/// The value is reapplied when the handle is recreated.
 /// </summary>
 internal static class TwNativeTheme
 {
@@ -16,7 +16,7 @@ internal static class TwNativeTheme
 
     private static readonly ConditionalWeakTable<Control, State> States = new ConditionalWeakTable<Control, State>();
 
-    /// <summary>Native kaydırma çubuğu olabilen kontroller. Form hariç: başlık çubuğunu FormApplier yönetir.</summary>
+    /// <summary>Controls that can have native scrollbars. Form excluded: FormApplier manages the title bar.</summary>
     public static bool Supports(Control control) =>
         !(control is Form)
         && (control is ScrollableControl || control is TextBoxBase || control is ListBox || control is TreeView

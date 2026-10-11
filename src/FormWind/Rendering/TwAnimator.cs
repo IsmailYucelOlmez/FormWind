@@ -12,9 +12,9 @@ internal enum TwColorChannel
 }
 
 /// <summary>
-/// <c>transition</c> class'ı için renk geçişleri. Tüm animasyonları iş parçacığı başına tek bir zamanlayıcı
-/// (yaklaşık 60 kare/sn) yürütür; ease-out eğrisi kullanılır. Aynı kanala yeni hedef gelirse geçiş o anki
-/// renkten devam eder.
+/// Color transitions for the <c>transition</c> class. A single timer per thread (about 60 frames/s) runs all
+/// animations with an ease-out curve. When a channel gets a new target, the transition continues from the
+/// current color.
 /// </summary>
 internal static class TwAnimator
 {
@@ -53,7 +53,7 @@ internal static class TwAnimator
 
     public static void Cancel(Control control, TwColorChannel channel) => _active?.Remove((control, channel));
 
-    /// <summary>Kanalın şu an geçişte olduğu hedef renk.</summary>
+    /// <summary>The target color the channel is currently transitioning to.</summary>
     public static bool TryGetTarget(Control control, TwColorChannel channel, out Color target)
     {
         if (_active != null && _active.TryGetValue((control, channel), out var animation))
@@ -65,7 +65,7 @@ internal static class TwAnimator
         return false;
     }
 
-    /// <summary>Animasyonları <paramref name="now"/> anına ilerletir (zamanlayıcı ve testler kullanır).</summary>
+    /// <summary>Advances the animations to <paramref name="now"/> (used by the timer and tests).</summary>
     internal static void Step(DateTime now)
     {
         if (_active is null || _active.Count == 0)

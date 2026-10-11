@@ -5,8 +5,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Standart kontrollere yuvarlak köşe (Region), kenarlık ve (yalnızca Panel'de) gradient ekler.
-/// Region antialias yapmadığından köşeler hafif tırtıklı görünür; pürüzsüz sonuç için <c>Tw*</c> kontrolleri kullanın.
+/// Adds rounded corners (Region), borders and (on Panel only) gradients to standard controls.
+/// Region does not anti-alias, so corners look slightly jagged; use the <c>Tw*</c> controls for a smooth result.
 /// </summary>
 internal sealed class TwDecorator
 {

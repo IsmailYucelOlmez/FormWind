@@ -7,10 +7,10 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Tarih seçici: <see cref="TwTextBox"/> tarzı alan ve sağda takvim ikonu; tıklanınca (ya da Alt+↓ / F4) açılır pencerede
-/// <see cref="TwCalendar"/> gösterir. Tarih elle de yazılabilir; odak kaybında ya da Enter'da <see cref="Culture"/>'a göre çözülür.
-/// Alan <c>input</c> gibi class'larla; takvim <c>menu:bg-* menu:border-*</c> (pencere), <c>selected:bg-* selected:text-*</c>
-/// (seçili gün), <c>item:hover:bg-*</c> (hover), <c>accent-*</c> (bugün halkası) ile stillenir.
+/// Date picker: a <see cref="TwTextBox"/>-style field with a calendar icon on the right; clicking it (or Alt+↓ / F4) shows a
+/// <see cref="TwCalendar"/> in a drop-down. The date can be typed too; it is parsed with <see cref="Culture"/> on focus loss or Enter.
+/// The field is styled with classes such as <c>input</c>; the calendar with <c>menu:bg-* menu:border-*</c> (window),
+/// <c>selected:bg-* selected:text-*</c> (selected day), <c>item:hover:bg-*</c> (hover), <c>accent-*</c> (today's ring).
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ValueChanged))]
@@ -49,7 +49,7 @@ public class TwDatePicker : TwTextBox
         }
     }
 
-    /// <summary>Gösterim biçimi (<see cref="DateTime.ToString(string, IFormatProvider)"/>); varsayılan kısa tarih.</summary>
+    /// <summary>Display format (<see cref="DateTime.ToString(string, IFormatProvider)"/>); the short date by default.</summary>
     [Category("Appearance"), DefaultValue("d")]
     public string Format
     {
@@ -88,7 +88,7 @@ public class TwDatePicker : TwTextBox
     [Browsable(false)]
     public bool DroppedDown => _dropDown?.Visible == true;
 
-    /// <summary>Açık takvim (kapalıyken <c>null</c>).</summary>
+    /// <summary>The open calendar (<c>null</c> when closed).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TwCalendar? Calendar => DroppedDown ? _calendar : null;
 
@@ -137,7 +137,7 @@ public class TwDatePicker : TwTextBox
         _calendar.Focus();
     }
 
-    /// <summary>Metni tarihe çevirir; geçersiz ya da boşsa önceki değer geri yazılır (boş metin değeri temizler).</summary>
+    /// <summary>Converts the text to a date; if invalid or empty the previous value is written back (empty text clears the value).</summary>
     public void Commit()
     {
         var text = InnerTextBox.Text.Trim();

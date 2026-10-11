@@ -6,8 +6,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Bir ikonu çizen hafif kontrol. Renk <c>text-*</c> (ForeColor), boyut <c>text-*</c> font boyutuyla verilir:
-/// <c>text-base</c> = 16 px ikon. AutoSize varsayılan olarak açıktır.
+/// A lightweight control that draws an icon. The color is set with <c>text-*</c> (ForeColor), the size with the <c>text-*</c> font size:
+/// <c>text-base</c> = a 16 px icon. AutoSize is on by default.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultProperty(nameof(IconName))]
@@ -53,7 +53,7 @@ public class TwIcon : Control
 
     protected override Size DefaultSize => new Size(16, 16);
 
-    /// <summary>Kare ikon kutusunun kenarı (font boyutunun piksel karşılığı).</summary>
+    /// <summary>Size of the square icon box (the font size in pixels).</summary>
     internal int EmPixels => TwIconRenderer.EmPixels(Font.SizeInPoints, TwDpi.DeviceDpi(this));
 
     public override Size GetPreferredSize(Size proposedSize)

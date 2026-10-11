@@ -9,8 +9,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// ListBox yerine: öğeleri tutan <see cref="TwDataList"/>. <see cref="Items"/>'a eklenen nesneler <see cref="DisplayMember"/>
-/// (yoksa <c>ToString()</c>) ile yazılır; sanal çizim, çoklu seçim, gruplar ve stiller TwDataList'ten gelir.
+/// Replaces ListBox: a <see cref="TwDataList"/> that holds items. Objects added to <see cref="Items"/> are shown with
+/// <see cref="DisplayMember"/> (or <c>ToString()</c>); virtual drawing, multi-selection, groups and styles come from TwDataList.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
@@ -36,7 +36,7 @@ public class TwListBox : TwDataList
     [Editor("System.Windows.Forms.Design.StringCollectionEditor, System.Design", typeof(UITypeEditor))]
     public IList<object> Items => _items;
 
-    /// <summary>Öğenin yazılacak özelliği (boşsa <c>ToString()</c>).</summary>
+    /// <summary>The item property to display (<c>ToString()</c> when empty).</summary>
     [Category("Data"), DefaultValue("")]
     public string DisplayMember
     {
@@ -58,7 +58,7 @@ public class TwListBox : TwDataList
     [Browsable(false)]
     public IReadOnlyList<object> SelectedItems => SelectedIndices.Where(i => i < _items.Count).Select(i => _items[i]).ToList();
 
-    /// <summary>Öğenin görünen metni.</summary>
+    /// <summary>The item's display text.</summary>
     public string GetItemText(int index)
     {
         if (index < 0 || index >= _items.Count) return "";
@@ -69,7 +69,7 @@ public class TwListBox : TwDataList
         return item.ToString() ?? "";
     }
 
-    /// <summary>Metni <paramref name="text"/> ile başlayan ilk öğe (büyük/küçük harf duyarsız); yoksa -1.</summary>
+    /// <summary>The first item whose text starts with <paramref name="text"/> (case-insensitive); -1 when none.</summary>
     public int FindString(string text, int startIndex = 0)
     {
         for (int n = 0; n < _items.Count; n++)
@@ -82,8 +82,8 @@ public class TwListBox : TwDataList
 }
 
 /// <summary>
-/// CheckedListBox yerine: satır başında yuvarlak köşeli onay kutusu. Kutuya tıklamak ya da Boşluk işaretler;
-/// işaret rengi <c>accent-*</c>.
+/// Replaces CheckedListBox: a rounded checkbox at the start of each row. Clicking the box or pressing Space checks it;
+/// the check color is <c>accent-*</c>.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ItemCheck))]
@@ -114,7 +114,7 @@ public class TwCheckedListBox : TwListBox
         };
     }
 
-    /// <summary>Bir öğenin işareti değiştiğinde (değişiklikten sonra).</summary>
+    /// <summary>When an item's check state changes (after the change).</summary>
     public event EventHandler<ItemCheckEventArgs>? ItemCheck;
 
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -138,7 +138,7 @@ public class TwCheckedListBox : TwListBox
 
     private int BoxSize => ScalePixels(16);
 
-    /// <summary>Satırın onay kutusu.</summary>
+    /// <summary>The row's checkbox.</summary>
     public Rectangle GetCheckBoxBounds(int index)
     {
         var row = GetItemBounds(index);

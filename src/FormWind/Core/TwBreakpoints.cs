@@ -3,9 +3,9 @@
 namespace FormWind;
 
 /// <summary>
-/// Responsive varyantların eşikleri (Tailwind ile aynı, 96 DPI pikseli): <c>sm:</c> 640, <c>md:</c> 768, <c>lg:</c> 1024,
-/// <c>xl:</c> 1280, <c>2xl:</c> 1536. Tarayıcıdaki pencere genişliği yerine kontrolün bulunduğu formun istemci genişliği
-/// ölçülür; <c>md:flex-row</c> form 768 px ve üzerindeyken uygulanır.
+/// Breakpoints of the responsive variants (same as Tailwind, 96 DPI pixels): <c>sm:</c> 640, <c>md:</c> 768, <c>lg:</c> 1024,
+/// <c>xl:</c> 1280, <c>2xl:</c> 1536. Instead of the browser window width, the client width of the control's form is
+/// measured; <c>md:flex-row</c> applies while the form is 768 px or wider.
 /// </summary>
 public static class TwBreakpoints
 {
@@ -15,7 +15,7 @@ public static class TwBreakpoints
     public static int Xl { get; set; } = 1280;
     public static int Xxl { get; set; } = 1536;
 
-    /// <summary>Genişliğe (96 DPI pikseli) karşılık gelen eşik bayrakları.</summary>
+    /// <summary>Breakpoint flags for a width (96 DPI pixels).</summary>
     public static TwState ForWidth(int width)
     {
         var state = TwState.None;
@@ -27,7 +27,7 @@ public static class TwBreakpoints
         return state;
     }
 
-    /// <summary>Kontrolün formunun (yoksa en üst ebeveyninin) genişliğine göre eşikler.</summary>
+    /// <summary>Breakpoints for the width of the control's form (or its topmost parent).</summary>
     public static TwState For(Control control)
     {
         Control top = control.FindForm() ?? control;

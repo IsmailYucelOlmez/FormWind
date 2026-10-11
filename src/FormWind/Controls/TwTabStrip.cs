@@ -9,13 +9,13 @@ namespace FormWind;
 
 public enum TwTabVariant
 {
-    /// <summary>Etkin sekmenin altında accent çizgisi; şeridin altında ince kenarlık.</summary>
+    /// <summary>An accent line under the active tab; a thin border under the strip.</summary>
     Underline,
 
-    /// <summary>Etkin sekme yuvarlak, dolgulu bir hap.</summary>
+    /// <summary>The active tab is a rounded, filled pill.</summary>
     Pills,
 
-    /// <summary>Gri bir ray üzerinde beyaz, gölgeli etkin segment (iOS/macOS tarzı).</summary>
+    /// <summary>A white, shadowed active segment on a gray track (iOS/macOS style).</summary>
     Segmented,
 }
 
@@ -33,10 +33,10 @@ internal sealed class TwTabColors
 }
 
 /// <summary>
-/// Sekme şeridi (yalnızca başlıklar): içerik değişimi <see cref="SelectedIndexChanged"/> ile yapılır.
-/// Pasif metin <c>text-*</c>, etkin sekme <c>selected:text-* selected:bg-* selected:border-*</c> (accent),
-/// hover <c>item:hover:text-* item:hover:bg-*</c>, segment rayı <c>fill-*</c>, aralık <c>gap-*</c>.
-/// ←/→, Home/End ile gezilir.
+/// Tab strip (headers only): switch the content in <see cref="SelectedIndexChanged"/>.
+/// Inactive text <c>text-*</c>, active tab <c>selected:text-* selected:bg-* selected:border-*</c> (accent),
+/// hover <c>item:hover:text-* item:hover:bg-*</c>, segmented track <c>fill-*</c>, spacing <c>gap-*</c>.
+/// Navigate with ←/→, Home/End.
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
@@ -124,7 +124,7 @@ public class TwTabStrip : Control, ITwChrome
         }
     }
 
-    /// <summary>Sekmeler arası boşluk (piksel); -1 = görünüme göre varsayılan.</summary>
+    /// <summary>Space between tabs (pixels); -1 = the default for the style.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int Gap
     {
@@ -160,7 +160,7 @@ public class TwTabStrip : Control, ITwChrome
         Invalidate();
     }
 
-    /// <summary>Sekmenin kontrol içindeki alanı (testler ve özel çizim için).</summary>
+    /// <summary>A tab's area within the control (for tests and custom drawing).</summary>
     protected override AccessibleObject CreateAccessibilityInstance() => new TwTabStripAccessibleObject(this);
 
     public Rectangle GetTabBounds(int index)

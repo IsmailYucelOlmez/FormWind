@@ -7,8 +7,8 @@ using System.Windows.Forms.Layout;
 namespace FormWind;
 
 /// <summary>
-/// Yuvarlak köşelerini ve kenarlığını antialias çizen panel. <c>flex</c> ya da <c>grid</c> class'ı verildiğinde
-/// çocuklarını FormWind yerleşim motoruyla yerleştirir (Dock ve Anchor yok sayılır).
+/// A panel that paints anti-aliased rounded corners and borders. With the <c>flex</c> or <c>grid</c> class it lays out
+/// its children with the FormWind layout engine (Dock and Anchor are ignored).
 /// </summary>
 [ToolboxItem(true)]
 [Description("Panel with rounded corners and flex/grid layout.")]
@@ -61,7 +61,7 @@ public class TwPanel : Panel, ITwChrome, ITwLayoutHost
     public override LayoutEngine LayoutEngine =>
         TwLayout.IsLayoutContainer(this) ? TwLayout.Engine : base.LayoutEngine;
 
-    /// <summary>Flex konteynerinde içerikten hesaplanır; <c>AutoSize = true</c> ile panel içeriğine göre boyutlanır.</summary>
+    /// <summary>Computed from the content for a flex container; with <c>AutoSize = true</c> the panel sizes to its content.</summary>
     public override Size GetPreferredSize(Size proposedSize) =>
         TwLayout.TryMeasure(this, out var size) ? size : base.GetPreferredSize(proposedSize);
 
@@ -75,7 +75,7 @@ public class TwPanel : Panel, ITwChrome, ITwLayoutHost
     }
 
     /// <summary>
-    /// CSS kutu modelindeki gibi içerik kenarlığın içindedir: çocuklar (Dock ve flex/grid) kenarlığın üzerine yerleşmez.
+    /// As in the CSS box model the content is inside the border: children (Dock and flex/grid) are not placed over the border.
     /// </summary>
     public override Rectangle DisplayRectangle
     {
@@ -91,7 +91,7 @@ public class TwPanel : Panel, ITwChrome, ITwLayoutHost
         }
     }
 
-    /// <summary>Kenarlık kalınlıkları (piksele yuvarlanmış); içerik bu kadar içeriden başlar.</summary>
+    /// <summary>Border widths (rounded to pixels); the content starts this far inside.</summary>
     public Padding BorderInsets() => Insets(_chrome);
 
     private static Padding Insets(TwChrome chrome) => new Padding(

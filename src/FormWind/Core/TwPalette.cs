@@ -2,10 +2,10 @@ using System.Collections.Generic;
 
 namespace FormWind;
 
-/// <summary>Tailwind CSS v3 varsayılan renk paleti.</summary>
+/// <summary>The default Tailwind CSS v3 color palette.</summary>
 public static class TwPalette
 {
-    /// <summary>Ton adları, <see cref="Colors"/> dizilerindeki sırayla.</summary>
+    /// <summary>Shade names, in the order of the <see cref="Colors"/> arrays.</summary>
     public static readonly string[] Shades = { "50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950" };
 
     public static readonly IReadOnlyDictionary<string, string[]> Colors = new Dictionary<string, string[]>

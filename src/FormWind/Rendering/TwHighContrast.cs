@@ -5,20 +5,20 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Windows Yüksek Karşıtlık modunu izler. Mod açıkken <see cref="TailwindProvider"/> class renkleri yerine sistem renklerini
-/// kullanır (bkz. <see cref="TailwindProvider.RespectHighContrast"/>); mod çalışırken değişirse stiller yeniden uygulanır.
+/// Tracks Windows High Contrast mode. While it is on, <see cref="TailwindProvider"/> uses system colors instead of class colors
+/// (see <see cref="TailwindProvider.RespectHighContrast"/>); styles are reapplied when the mode changes at run time.
 /// </summary>
 internal static class TwHighContrast
 {
     private static bool _subscribed;
     private static bool _last;
 
-    /// <summary>Testlerde modu benzetmek için; <c>null</c> = sistem ayarı.</summary>
+    /// <summary>Simulates the mode in tests; <c>null</c> = the system setting.</summary>
     internal static bool? Override { get; set; }
 
     public static bool IsActive => Override ?? SystemInformation.HighContrast;
 
-    /// <summary>Mod açıldı ya da kapandı.</summary>
+    /// <summary>The mode was turned on or off.</summary>
     public static event EventHandler? Changed
     {
         add
@@ -31,7 +31,7 @@ internal static class TwHighContrast
 
     private static event EventHandler? ChangedCore;
 
-    /// <summary>Değişikliği dinleyicilere bildirir (sistem olayı ya da testler).</summary>
+    /// <summary>Notifies listeners of a change (system event or tests).</summary>
     internal static void NotifyChanged()
     {
         _last = IsActive;

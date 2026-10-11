@@ -11,8 +11,8 @@ public enum TwTextAlign
 }
 
 /// <summary>
-/// Bir varyantın ya da birleştirilmiş durumun stil değerleri. <c>null</c> değer "bu class'lar
-/// bu property'ye dokunmuyor" anlamına gelir. Piksel değerleri 96 DPI'a göredir.
+/// Style values of a variant or a merged state. A <c>null</c> value means "these classes
+/// do not touch this property". Pixel values are at 96 DPI.
 /// </summary>
 public sealed class TwStyle
 {
@@ -21,7 +21,7 @@ public sealed class TwStyle
     public Color? BorderColor { get; set; }
     public int? BorderWidth { get; set; }
 
-    /// <summary>Kenar bazlı kalınlıklar (<c>border-b</c>, <c>border-x-2</c>); tanımsız kenar <see cref="BorderWidth"/>'i kullanır.</summary>
+    /// <summary>Per-side widths (<c>border-b</c>, <c>border-x-2</c>); an undefined side uses <see cref="BorderWidth"/>.</summary>
     public TwSides BorderSides { get; } = new TwSides();
 
     public TwShadowSize? Shadow { get; set; }
@@ -36,27 +36,27 @@ public sealed class TwStyle
     public Color? GradientVia { get; set; }
     public Color? GradientTo { get; set; }
 
-    /// <summary><c>fill-*</c>: işaret kutusu, anahtar rayı gibi iç yüzeylerin dolgu rengi.</summary>
+    /// <summary><c>fill-*</c>: fill color of inner surfaces such as a checkbox or a switch track.</summary>
     public Color? FillColor { get; set; }
 
-    /// <summary><c>accent-*</c>: seçili CheckBox/Radio/Switch rengi.</summary>
+    /// <summary><c>accent-*</c>: color of a checked CheckBox/Radio/Switch.</summary>
     public Color? AccentColor { get; set; }
 
-    /// <summary><c>object-cover</c> / <c>object-contain</c> / <c>object-fill</c>: <see cref="TwPictureBox"/> resim yerleşimi.</summary>
+    /// <summary><c>object-cover</c> / <c>object-contain</c> / <c>object-fill</c>: image placement in <see cref="TwPictureBox"/>.</summary>
     public TwImageFit? ObjectFit { get; set; }
 
-    /// <summary><c>group</c>: alt kontroller <c>group-hover:</c> ile bu kontrolün hover durumuna tepki verir.</summary>
+    /// <summary><c>group</c>: descendants react to this control's hover with <c>group-hover:</c>.</summary>
     public bool? IsGroup { get; set; }
 
-    /// <summary><c>transition</c>: arka plan ve metin rengi değişimleri <see cref="DurationMs"/> boyunca geçişle uygulanır.</summary>
+    /// <summary><c>transition</c>: background and text color changes are animated over <see cref="DurationMs"/>.</summary>
     public bool? Transition { get; set; }
 
-    /// <summary><c>duration-*</c> (ms). Tailwind varsayılanı 150.</summary>
+    /// <summary><c>duration-*</c> (ms). The Tailwind default is 150.</summary>
     public int? DurationMs { get; set; }
     public int? Radius { get; set; }
     public float? FontSizePx { get; set; }
     public string? FontFamily { get; set; }
-    /// <summary>CSS font kalınlığı: 100 (thin) … 400 (normal) … 700 (bold) … 900 (black).</summary>
+    /// <summary>CSS font weight: 100 (thin) … 400 (normal) … 700 (bold) … 900 (black).</summary>
     public int? FontWeight { get; set; }
     public bool? Italic { get; set; }
     public bool? Underline { get; set; }
@@ -70,13 +70,13 @@ public sealed class TwStyle
     public int? MaxHeight { get; set; }
     public TwTextAlign? TextAlign { get; set; }
 
-    /// <summary><c>whitespace-nowrap</c> = true. Şimdilik DataGridView hücrelerinde (WrapMode) kullanılır.</summary>
+    /// <summary><c>whitespace-nowrap</c> = true. Currently used for DataGridView cells (WrapMode).</summary>
     public bool? NoWrap { get; set; }
 
-    /// <summary><c>truncate</c>: sığmayan metin "…" ile kısaltılır (Label.AutoEllipsis).</summary>
+    /// <summary><c>truncate</c>: text that does not fit is shortened with "…" (Label.AutoEllipsis).</summary>
     public bool? Truncate { get; set; }
 
-    /// <summary>Windows 11 pencere zemini (<c>backdrop-mica</c>, <c>backdrop-acrylic</c>, <c>backdrop-tabbed</c>, <c>backdrop-none</c>); yalnızca Form.</summary>
+    /// <summary>Windows 11 window backdrop (<c>backdrop-mica</c>, <c>backdrop-acrylic</c>, <c>backdrop-tabbed</c>, <c>backdrop-none</c>); Form only.</summary>
     public TwBackdrop? Backdrop { get; set; }
 
     public Cursor? Cursor { get; set; }
@@ -92,7 +92,7 @@ public sealed class TwStyle
     public TwAlign? AlignItems { get; set; }
     public int? GridColumns { get; set; }
 
-    /// <summary>Grid'in açık satır sayısı (<c>grid-rows-3</c>): kabın yüksekliği eşit satırlara bölünür.</summary>
+    /// <summary>Explicit grid row count (<c>grid-rows-3</c>): the container's height is divided into equal rows.</summary>
     public int? GridRows { get; set; }
 
     // Yerleşim öğesi: ebeveyn flex / grid konteyneriyse etkilidir.
@@ -101,10 +101,10 @@ public sealed class TwStyle
     public TwLength? FlexBasis { get; set; }
     public TwAlign? AlignSelf { get; set; }
 
-    /// <summary>Grid'de kaplanan kolon sayısı. <see cref="int.MaxValue"/> = <c>col-span-full</c>.</summary>
+    /// <summary>Number of columns spanned in the grid. <see cref="int.MaxValue"/> = <c>col-span-full</c>.</summary>
     public int? ColumnSpan { get; set; }
 
-    /// <summary>Grid'de kaplanan satır sayısı. <see cref="int.MaxValue"/> = <c>row-span-full</c> (açık satırların tümü).</summary>
+    /// <summary>Number of rows spanned in the grid. <see cref="int.MaxValue"/> = <c>row-span-full</c> (all explicit rows).</summary>
     public int? RowSpan { get; set; }
 
     // Ayraç çizgileri (divide-x, divide-y, divide-{renk}). Şimdilik DataGridView ızgara çizgilerinde kullanılır.
@@ -122,14 +122,15 @@ public sealed class TwStyle
         (BorderSides.Left ?? 0) > 0 || (BorderSides.Top ?? 0) > 0
         || (BorderSides.Right ?? 0) > 0 || (BorderSides.Bottom ?? 0) > 0;
 
-    /// <summary>Kontrolün dışına, ebeveyn tarafından çizilen gölge ya da halka var mı.</summary>
+    /// <summary>Whether there is a shadow or ring painted outside the control by its parent.</summary>
     public bool HasOutset => (Shadow ?? TwShadowSize.None) != TwShadowSize.None || (RingWidth ?? 0) > 0;
 
     public bool HasGradient => GradientDirection.HasValue && (GradientFrom.HasValue || GradientTo.HasValue);
 
     /// <summary>
-    /// Yüksek Karşıtlık modu: renkleri sistem renklerine çevirir. Kontrolün kendi zemini ve yazısı özgün (sistem) değerlerine
-    /// bırakılır; seçili ve hover parçaları vurgu renklerini, kenarlık ve ayırıcılar yazı rengini alır. Gölge ve gradient çizilmez.
+    /// High Contrast mode: converts colors to system colors. The control's own background and text are left to their
+    /// original (system) values; selected and hovered parts get the highlight colors, borders and separators the text color.
+    /// Shadows and gradients are not drawn.
     /// </summary>
     internal void ApplyForcedColors(string? part, TwState state)
     {
@@ -172,7 +173,7 @@ public sealed class TwStyle
         Transition = null;
     }
 
-    /// <summary><paramref name="other"/>'daki tanımlı değerleri bu stilin üzerine yazar.</summary>
+    /// <summary>Writes the defined values of <paramref name="other"/> over this style.</summary>
     public void MergeFrom(TwStyle other)
     {
         BackColor = other.BackColor ?? BackColor;
@@ -243,11 +244,11 @@ public sealed class TwStyle
 /// <summary>Windows 11 sistem zemini (DWMWA_SYSTEMBACKDROP_TYPE).</summary>
 public enum TwBackdrop
 {
-    /// <summary>Sistem varsayılanı.</summary>
+    /// <summary>System default.</summary>
     Auto = 0,
     None = 1,
     Mica = 2,
     Acrylic = 3,
-    /// <summary>Sekmeli pencereler için Mica Alt.</summary>
+    /// <summary>Mica Alt for tabbed windows.</summary>
     Tabbed = 4,
 }

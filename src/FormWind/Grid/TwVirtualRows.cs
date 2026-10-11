@@ -6,16 +6,16 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// DataGridView'u VirtualMode'da veri kaynağına bağlar: satırlar görüldükçe sayfa sayfa yüklenir, son kullanılan
-/// sayfalar önbellekte tutulur. Milyon satırlı bir tablo yalnızca görünen sayfaları belleğe alır.
+/// Binds a DataGridView to a data source in VirtualMode: rows are loaded page by page as they are seen, and the most
+/// recently used pages are cached. A table with a million rows keeps only the visible pages in memory.
 /// <code>
 /// var rows = new TwVirtualRows&lt;Order&gt;(grid, (start, count) =&gt; db.Orders.Skip(start).Take(count).ToList());
 /// rows.Reset(db.Orders.Count());
 /// </code>
-/// Hücre değeri kolonun <see cref="DataGridViewColumn.DataPropertyName"/>'inden (yoksa <see cref="DataGridViewColumn.Name"/>'inden)
-/// okunur; <see cref="CellValue"/> ile değiştirilebilir. <c>loadPage</c> UI iş parçacığında çağrılır, hızlı olmalıdır
-/// (örn. veritabanında OFFSET/FETCH). VirtualMode'da grid kendisi sıralayamaz; sıralama sorgu tarafında yapılıp
-/// <see cref="Reset"/> çağrılmalı.
+/// A cell value is read from the column's <see cref="DataGridViewColumn.DataPropertyName"/> (or <see cref="DataGridViewColumn.Name"/>);
+/// it can be changed with <see cref="CellValue"/>. <c>loadPage</c> is called on the UI thread and must be fast
+/// (e.g. OFFSET/FETCH in the database). In VirtualMode the grid cannot sort by itself; sort in the query and call
+/// <see cref="Reset"/>.
 /// </summary>
 public sealed class TwVirtualRows<T> : IDisposable
 {
@@ -25,10 +25,10 @@ public sealed class TwVirtualRows<T> : IDisposable
     private readonly LinkedList<(int Page, IReadOnlyList<T> Rows)> _recent = new LinkedList<(int, IReadOnlyList<T>)>();
     private readonly Dictionary<string, PropertyInfo?> _properties = new Dictionary<string, PropertyInfo?>(StringComparer.Ordinal);
 
-    /// <param name="grid">Bağlanacak grid; VirtualMode açılır, kullanıcı satır ekleyemez.</param>
-    /// <param name="loadPage"><c>(start, count)</c> aralığındaki satırlar; son sayfada daha az dönebilir.</param>
-    /// <param name="pageSize">Bir sayfadaki satır sayısı.</param>
-    /// <param name="cachedPages">Bellekte tutulan sayfa sayısı (en az 2: kaydırırken sayfa sınırında gidip gelme).</param>
+    /// <param name="grid">The grid to bind; VirtualMode is turned on and users cannot add rows.</param>
+    /// <param name="loadPage">The rows in the <c>(start, count)</c> range; may return fewer on the last page.</param>
+    /// <param name="pageSize">Number of rows per page.</param>
+    /// <param name="cachedPages">Number of pages kept in memory (at least 2, to avoid thrashing at a page boundary while scrolling).</param>
     public TwVirtualRows(DataGridView grid, Func<int, int, IReadOnlyList<T>> loadPage, int pageSize = 100, int cachedPages = 8)
     {
         _grid = grid ?? throw new ArgumentNullException(nameof(grid));
@@ -46,16 +46,16 @@ public sealed class TwVirtualRows<T> : IDisposable
 
     public int CachedPages { get; }
 
-    /// <summary>Satır sayısı (<see cref="Reset"/> ile değişir).</summary>
+    /// <summary>Number of rows (changed with <see cref="Reset"/>).</summary>
     public int RowCount => _grid.RowCount;
 
-    /// <summary>Bir satırın bir kolondaki değeri; verilmezse kolonun <c>DataPropertyName</c>'indeki özellik okunur.</summary>
+    /// <summary>The value of a row in a column; when not set, the property named by the column's <c>DataPropertyName</c> is read.</summary>
     public Func<T, DataGridViewColumn, object?>? CellValue { get; set; }
 
-    /// <summary>Yüklenen sayfa sayısı (önbellekten verilenler sayılmaz); tanı ve testler için.</summary>
+    /// <summary>Number of pages loaded (those served from the cache are not counted); for diagnostics and tests.</summary>
     public int PagesLoaded { get; private set; }
 
-    /// <summary>Önbelleği boşaltır ve satır sayısını ayarlar (veri ya da sıralama değişince).</summary>
+    /// <summary>Clears the cache and sets the row count (when the data or the sort changes).</summary>
     public void Reset(int rowCount)
     {
         _pages.Clear();
@@ -64,7 +64,7 @@ public sealed class TwVirtualRows<T> : IDisposable
         _grid.Invalidate();
     }
 
-    /// <summary>Satırın verisi (gerekirse sayfası yüklenir); satır yoksa <c>default</c>.</summary>
+    /// <summary>The row's data (its page is loaded if needed); <c>default</c> when there is no such row.</summary>
     public T? GetItem(int rowIndex)
     {
         if (rowIndex < 0 || rowIndex >= _grid.RowCount) return default;

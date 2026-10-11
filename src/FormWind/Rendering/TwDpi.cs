@@ -3,10 +3,10 @@
 namespace FormWind;
 
 /// <summary>
-/// .NET Framework'te WinForms, app.config'teki <c>DpiAwareness</c> ayarını ilk <see cref="Control"/> oluşturulurken uygular.
-/// GDI+ ise ekran DPI'ını başlatıldığı anda bir kez okur: ondan önce bir <c>Font</c> oluşturulursa (örn. tema yüklenirken)
-/// PerMonitorV2 uygulamada GDI+ 96 DPI'da kalır ve native kontrollerin (TextBox) fontları küçük çizilir. FormWind GDI+'ya
-/// dokunmadan önce bunu çağırır.
+/// On .NET Framework, WinForms applies the <c>DpiAwareness</c> setting from app.config when the first <see cref="Control"/> is created.
+/// GDI+ reads the screen DPI once when it starts: if a <c>Font</c> is created before that (e.g. while loading the theme), GDI+ stays at
+/// 96 DPI in a PerMonitorV2 application and native controls (TextBox) draw their fonts too small. FormWind calls this before
+/// touching GDI+.
 /// </summary>
 internal static class TwDpi
 {
@@ -17,8 +17,8 @@ internal static class TwDpi
     private static int _systemDpi;
 
     /// <summary>
-    /// Sürecin sistem DPI'ı (başlangıçtaki birincil ekran). Font boyutları punto cinsinden bu DPI'a göre piksele çevrilir;
-    /// PerMonitorV2'de başka DPI'lı bir ekrandaki kontrol için fontun <see cref="FontScale"/> ile büyütülmesi gerekir.
+    /// The process's system DPI (the primary screen at startup). Font sizes in points are converted to pixels with this DPI;
+    /// under PerMonitorV2 a control on a screen with another DPI needs its font enlarged by <see cref="FontScale"/>.
     /// </summary>
     public static int SystemDpi
     {
@@ -34,12 +34,12 @@ internal static class TwDpi
         }
     }
 
-    /// <summary>Kontrolün ekranı ile sistem DPI'ı arasındaki oran (DPI-unaware ve system-aware uygulamalarda 1).</summary>
+    /// <summary>Ratio between the control's screen and the system DPI (1 in DPI-unaware and system-aware applications).</summary>
     public static float FontScale(Control control) => DeviceDpi(control) / (float)SystemDpi;
 
     /// <summary>
-    /// Kontrolün bulunduğu ekranın DPI'ı. .NET Framework'te bazı kontroller (örn. Label) ekran değişince kendi
-    /// <c>DeviceDpi</c>'ını güncellemez; formun değeri esas alınır.
+    /// DPI of the screen the control is on. On .NET Framework some controls (e.g. Label) do not update their own
+    /// <c>DeviceDpi</c> when the screen changes; the form's value is used.
     /// </summary>
     public static int DeviceDpi(Control control) => control.FindForm()?.DeviceDpi ?? control.DeviceDpi;
 

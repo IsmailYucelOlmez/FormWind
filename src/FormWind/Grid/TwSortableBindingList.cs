@@ -6,16 +6,16 @@ using System.Linq;
 
 namespace FormWind;
 
-/// <summary>Kolon değerine göre süzülebilen liste (<see cref="TwGrid.EnableFilterMenu"/> bunu kullanır).</summary>
+/// <summary>A list that can be filtered by column values (used by <see cref="TwGrid.EnableFilterMenu"/>).</summary>
 public interface ITwFilterableList
 {
-    /// <summary>Özelliğin tüm (süzülmemiş) satırlardaki farklı değerleri, görünen metinleriyle, sıralı.</summary>
+    /// <summary>Distinct values of a property in all (unfiltered) rows, as display texts, sorted.</summary>
     IReadOnlyList<string> DistinctValues(string property);
 
-    /// <summary>Kolonda gösterilen değerler; süzme yoksa <c>null</c>.</summary>
+    /// <summary>Values shown in the column; <c>null</c> when not filtered.</summary>
     IReadOnlyCollection<string>? GetColumnFilter(string property);
 
-    /// <summary>Kolonda yalnızca verilen değerleri gösterir (<c>null</c> süzmeyi kaldırır).</summary>
+    /// <summary>Shows only the given values in the column (<c>null</c> removes the filter).</summary>
     void SetColumnFilter(string property, IEnumerable<string>? allowed);
 
     bool HasFilters { get; }
@@ -24,16 +24,16 @@ public interface ITwFilterableList
 }
 
 /// <summary>
-/// Sıralanabilen ve kolon değerine göre süzülebilen <see cref="BindingList{T}"/>. <c>List&lt;T&gt;</c> ya da düz
-/// <c>BindingList&lt;T&gt;</c> ile bağlanan DataGridView başlığa tıklanınca sıralamaz; bu liste ile kolonların
-/// <c>SortMode = Automatic</c> sıralaması, başlıktaki ok ve <see cref="TwGrid.EnableFilterMenu"/> süzme menüsü çalışır.
-/// Metinler geçerli kültüre göre (Türkçe harf sırası dahil), diğer değerler <see cref="IComparable"/> ile karşılaştırılır.
+/// A <see cref="BindingList{T}"/> that can be sorted and filtered by column values. A DataGridView bound to a <c>List&lt;T&gt;</c>
+/// or a plain <c>BindingList&lt;T&gt;</c> does not sort when its header is clicked; with this list, columns with
+/// <c>SortMode = Automatic</c> sort, the header arrow shows and the <see cref="TwGrid.EnableFilterMenu"/> filter menu works.
+/// Strings are compared with the current culture (including Turkish letter order), other values with <see cref="IComparable"/>.
 /// </summary>
 public class TwSortableBindingList<T> : BindingList<T>, ITwFilterableList
 {
     /// <summary>
-    /// Boş (<c>null</c> ya da boş metin) değerlerin süzme anahtarı (<see cref="SetColumnFilter"/>). Dilden bağımsızdır;
-    /// süzme menüsünde <see cref="TwTexts.Blank"/> olarak görünür.
+    /// Filter key of blank (<c>null</c> or empty text) values (<see cref="SetColumnFilter"/>). Language-independent;
+    /// shown as <see cref="TwTexts.Blank"/> in the filter menu.
     /// </summary>
     public const string EmptyValue = "(blank)";
 
@@ -56,7 +56,7 @@ public class TwSortableBindingList<T> : BindingList<T>, ITwFilterableList
         _original = new List<T>(Items);
     }
 
-    /// <summary>Süzmeden bağımsız tüm satırlar.</summary>
+    /// <summary>All rows, regardless of filtering.</summary>
     public IReadOnlyList<T> AllItems => _all;
 
     protected override bool SupportsSortingCore => true;

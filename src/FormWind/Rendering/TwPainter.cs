@@ -5,10 +5,10 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Yuvarlak dikdörtgen çizim yardımcıları. Tüm çizimler antialias ve yarım piksel ofsetle yapılır.</summary>
+/// <summary>Rounded rectangle drawing helpers. All drawing is anti-aliased with a half-pixel offset.</summary>
 internal static class TwPainter
 {
-    /// <summary>Yarıçapı kontrolün kısa kenarının yarısıyla sınırlar (<c>rounded-full</c> = hap şekli).</summary>
+    /// <summary>Limits the radius to half of the control's shorter side (<c>rounded-full</c> = pill shape).</summary>
     public static float EffectiveRadius(float radius, Size size) =>
         Math.Max(0f, Math.Min(radius, Math.Min(size.Width, size.Height) / 2f));
 
@@ -30,7 +30,7 @@ internal static class TwPainter
         return path;
     }
 
-    /// <summary>Köşelerin dışında kalan alanı ebeveynin arka plan rengiyle doldurur.</summary>
+    /// <summary>Fills the area outside the corners with the parent's background color.</summary>
     public static void PaintParentBackground(Control control, Graphics graphics)
     {
         var color = control.Parent?.BackColor ?? SystemColors.Control;
@@ -46,7 +46,7 @@ internal static class TwPainter
         FillRounded(graphics, bounds, radius, brush);
     }
 
-    /// <summary>Arka planı düz renkle ya da (varsa) gradient'le doldurur.</summary>
+    /// <summary>Fills the background with a solid color or (if any) a gradient.</summary>
     public static void FillSurface(Graphics graphics, Rectangle bounds, float radius, Color color, TwGradient? gradient)
     {
         if (gradient is TwGradient g && bounds.Width > 0 && bounds.Height > 0)
@@ -58,7 +58,7 @@ internal static class TwPainter
         FillRounded(graphics, bounds, radius, color);
     }
 
-    /// <summary>Kenarlığı çizer: tüm kenarlar eşitse yuvarlak çerçeve, değilse yalnızca tanımlı kenarlar (köşesiz).</summary>
+    /// <summary>Draws the border: a rounded frame when all sides are equal, otherwise only the defined sides (without corners).</summary>
     public static void StrokeChrome(Graphics graphics, Rectangle bounds, TwChrome chrome)
     {
         if (!chrome.HasBorder || chrome.BorderColor.A == 0) return;

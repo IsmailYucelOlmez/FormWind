@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Dört kenar için isteğe bağlı piksel değerleri (padding, margin). 96 DPI'a göredir.</summary>
+/// <summary>Optional pixel values for four sides (padding, margin), at 96 DPI.</summary>
 public sealed class TwSides
 {
     public int? Left { get; set; }
@@ -22,7 +22,7 @@ public sealed class TwSides
     }
 
     /// <summary>
-    /// Tanımlı kenarları DPI ölçeğiyle uygular, tanımsız kenarları <paramref name="fallback"/>'ten alır.
+    /// Applies the defined sides with the DPI scale and takes undefined sides from <paramref name="fallback"/>.
     /// </summary>
     public Padding ApplyTo(Padding fallback, float scale) => new Padding(
         Left is int left ? Scale(left, scale) : fallback.Left,

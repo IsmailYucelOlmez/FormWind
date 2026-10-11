@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace FormWind;
 
-/// <summary>Bir varyant (örn. <c>dark:hover</c> ya da <c>dark:header</c>) ve ona ait stil.</summary>
+/// <summary>A variant (e.g. <c>dark:hover</c> or <c>dark:header</c>) and its style.</summary>
 internal sealed class TwVariant
 {
     internal TwVariant(TwState conditions, string? part, string name)
@@ -13,12 +13,12 @@ internal sealed class TwVariant
         Name = name;
     }
 
-    /// <summary>Varyantın uygulanması için gereken durumlar. <see cref="TwState.None"/> = temel class'lar.</summary>
+    /// <summary>States required for the variant to apply. <see cref="TwState.None"/> = base classes.</summary>
     public TwState Conditions { get; }
 
     /// <summary>
-    /// Kontrolün bir parçası (örn. DataGridView'da <c>header</c>, <c>cell</c>). <c>null</c> = kontrolün kendisi.
-    /// Parça stillerini yalnızca o parçayı tanıyan uygulayıcı kullanır.
+    /// A part of the control (e.g. <c>header</c>, <c>cell</c> on a DataGridView). <c>null</c> = the control itself.
+    /// Part styles are used only by the applier that knows that part.
     /// </summary>
     public string? Part { get; }
 
@@ -27,7 +27,7 @@ internal sealed class TwVariant
     public TwStyle Style { get; } = new TwStyle();
 }
 
-/// <summary>Bir class dizisinin parse sonucu. Değişmezdir ve tema tarafından önbelleğe alınır.</summary>
+/// <summary>The parse result of a class string. Immutable and cached by the theme.</summary>
 public sealed class TwParsed
 {
     public static readonly TwParsed Empty = new TwParsed("", Array.Empty<TwVariant>(), Array.Empty<string>());
@@ -41,19 +41,19 @@ public sealed class TwParsed
 
     public string Classes { get; }
 
-    /// <summary>Uygulama sırasına dizilmiş varyantlar.</summary>
+    /// <summary>Variants in application order.</summary>
     internal IReadOnlyList<TwVariant> Variants { get; }
 
-    /// <summary>Tanınmayan class'lar (varyant önekleriyle birlikte).</summary>
+    /// <summary>Unknown classes (with their variant prefixes).</summary>
     public IReadOnlyList<string> Unknown { get; }
 
-    /// <summary>Kontrolün kendisi için: koşulları <paramref name="state"/> içinde kalan varyantları sırayla birleştirir.</summary>
+    /// <summary>For the control itself: merges, in order, the variants whose conditions are within <paramref name="state"/>.</summary>
     public TwStyle Resolve(TwState state) => ResolvePart(null, state);
 
-    /// <summary>Bir parça için (<c>null</c> = kontrolün kendisi) koşulları <paramref name="state"/> içinde kalan varyantları birleştirir.</summary>
+    /// <summary>For a part (<c>null</c> = the control itself): merges the variants whose conditions are within <paramref name="state"/>.</summary>
     /// <remarks>
-    /// <paramref name="state"/> <see cref="TwState.HighContrast"/> içeriyorsa diğer varyantların renkleri sistem renklerine
-    /// çevrilir; <c>forced-colors:</c> varyantları (en yüksek bit olduğundan en sonda) bunun üzerine uygulanır.
+    /// If <paramref name="state"/> contains <see cref="TwState.HighContrast"/>, the colors of other variants are converted to system
+    /// colors; <c>forced-colors:</c> variants (last, since they have the highest bit) are applied on top.
     /// </remarks>
     public TwStyle ResolvePart(string? part, TwState state)
     {
@@ -73,8 +73,7 @@ public sealed class TwParsed
         return style;
     }
 
-    /// <summary>Kontrolün kendisi için koşulları arasında <paramref name="condition"/> bulunan bir varyant var mı.</summary>
-    /// <summary>Herhangi bir varyant (parçalılar dahil) verilen durumlardan birini kullanıyor mu.</summary>
+    /// <summary>Whether any variant (including part variants) uses one of the given states.</summary>
     public bool UsesAny(TwState condition)
     {
         foreach (var variant in Variants)
@@ -82,6 +81,7 @@ public sealed class TwParsed
         return false;
     }
 
+    /// <summary>Whether the control itself has a variant with <paramref name="condition"/> among its conditions.</summary>
     public bool HasCondition(TwState condition)
     {
         foreach (var variant in Variants)
@@ -91,7 +91,7 @@ public sealed class TwParsed
         return false;
     }
 
-    /// <summary>Parçanın, koşulları arasında <paramref name="condition"/> bulunan bir varyantı var mı (örn. <c>row:hover:</c>).</summary>
+    /// <summary>Whether the part has a variant with <paramref name="condition"/> among its conditions (e.g. <c>row:hover:</c>).</summary>
     public bool HasPartCondition(string part, TwState condition)
     {
         foreach (var variant in Variants)
@@ -102,8 +102,8 @@ public sealed class TwParsed
     }
 
     /// <summary>
-    /// Koşulları <paramref name="required"/>'ın tamamını içeren ve <paramref name="allowed"/> dışına
-    /// çıkmayan varyantları birleştirir (yalnızca kontrolün kendisi). Durumları ayrı tutan kütüphaneler (örn. Krypton) için.
+    /// Merges the variants whose conditions contain all of <paramref name="required"/> and stay within
+    /// <paramref name="allowed"/> (control itself only). For libraries that keep states separate (e.g. Krypton).
     /// </summary>
     public TwStyle ResolveExact(TwState required, TwState allowed)
     {

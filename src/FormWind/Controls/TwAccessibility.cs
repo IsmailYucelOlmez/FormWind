@@ -8,7 +8,7 @@ namespace FormWind;
 // sekmeleri, liste satırlarını ve takvim günlerini ayrı öğeler olarak görür. Kontrolün AccessibleName/Role/Description
 // değerleri verilmişse onlar önceliklidir.
 
-/// <summary>Bir owner-draw kontrolün tek bir öğesi (sekme, satır, gün).</summary>
+/// <summary>A single item of an owner-drawn control (tab, row, day).</summary>
 internal abstract class TwItemAccessibleObject : AccessibleObject
 {
     protected TwItemAccessibleObject(Control owner, AccessibleObject parent, int index)
@@ -26,7 +26,7 @@ internal abstract class TwItemAccessibleObject : AccessibleObject
 
     public override AccessibleObject Parent => ParentObject;
 
-    /// <summary>Kontrol içindeki (istemci) konum.</summary>
+    /// <summary>Position within the control (client coordinates).</summary>
     protected abstract Rectangle ClientBounds { get; }
 
     public override Rectangle Bounds
@@ -51,7 +51,7 @@ internal abstract class TwItemAccessibleObject : AccessibleObject
     }
 }
 
-/// <summary>Kontrolün kendisi; çocukları dizinle üretilir (sanal liste için hepsi önceden oluşturulmaz).</summary>
+/// <summary>The control itself; children are created by index (a virtual list does not create them all up front).</summary>
 internal abstract class TwListAccessibleObject : Control.ControlAccessibleObject
 {
     protected TwListAccessibleObject(Control owner, AccessibleRole role) : base(owner)
@@ -71,10 +71,10 @@ internal abstract class TwListAccessibleObject : Control.ControlAccessibleObject
 
     protected abstract AccessibleObject CreateChild(int index);
 
-    /// <summary>Odaktaki/seçili öğenin dizini; yoksa -1.</summary>
+    /// <summary>Index of the focused/selected item; -1 when none.</summary>
     protected abstract int ActiveIndex { get; }
 
-    /// <summary>İstemci koordinatındaki öğe; yoksa -1.</summary>
+    /// <summary>The item at a client coordinate; -1 when none.</summary>
     protected abstract int IndexAt(Point client);
 
     public override int GetChildCount() => Count;
@@ -218,7 +218,7 @@ internal sealed class TwTabStripAccessibleObject : TwListAccessibleObject
     }
 }
 
-/// <summary>Takvim: 0 önceki ay, 1 sonraki ay düğmesi; 2–43 görünen günler.</summary>
+/// <summary>Calendar: 0 previous month, 1 next month button; 2–43 visible days.</summary>
 internal sealed class TwCalendarAccessibleObject : TwListAccessibleObject
 {
     public const int FirstDayChild = 2;
@@ -325,7 +325,7 @@ internal sealed class TwCalendarAccessibleObject : TwListAccessibleObject
     }
 }
 
-/// <summary>Açılır liste: ComboBox rolü, değer seçili öğe; varsayılan eylem menüyü açar.</summary>
+/// <summary>Drop-down list: ComboBox role, the value is the selected item; the default action opens the menu.</summary>
 internal sealed class TwSelectAccessibleObject : Control.ControlAccessibleObject
 {
     private readonly TwSelect _select;
@@ -360,7 +360,7 @@ internal sealed class TwSelectAccessibleObject : Control.ControlAccessibleObject
     public override void DoDefaultAction() => _select.ShowDropDown();
 }
 
-/// <summary>Varsayılan rolü değiştirilmiş kontrol (örn. resim için Graphic).</summary>
+/// <summary>A control whose default role was changed (e.g. Graphic for an image).</summary>
 internal sealed class TwRoleAccessibleObject : Control.ControlAccessibleObject
 {
     private readonly Control _owner;
@@ -375,7 +375,7 @@ internal sealed class TwRoleAccessibleObject : Control.ControlAccessibleObject
     public override AccessibleRole Role => _owner.AccessibleRole != AccessibleRole.Default ? _owner.AccessibleRole : _role;
 }
 
-/// <summary>Ağaç: Outline rolü; düğümler OutlineItem, açık/kapalı durumu ve düzeyiyle.</summary>
+/// <summary>Tree: Outline role; nodes are OutlineItems with expanded state and level.</summary>
 internal sealed class TwTreeAccessibleObject : TwListAccessibleObject
 {
     private readonly TwTreeView _tree;

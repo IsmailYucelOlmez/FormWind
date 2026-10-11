@@ -6,10 +6,10 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Şeride gömülü <see cref="ToolStripComboBox"/>'ın çerçevesi ve ok düğmesi. Şeridin renderer'ı
-/// <see cref="ToolStripProfessionalRenderer"/> değilse WinForms bunları sabit sistem renkleriyle çizer (açık gri düğme,
-/// siyah ok, beyaz çerçeve); koyu şeritte göze batardı. WinForms'un çiziminden sonra aynı alanlar kutunun
-/// <c>BackColor</c>/<c>ForeColor</c>'ıyla yeniden çizilir. Düzenleme alanına (alt pencere) dokunulmaz.
+/// Frame and arrow button of a <see cref="ToolStripComboBox"/> hosted in a strip. When the strip's renderer is not
+/// <see cref="ToolStripProfessionalRenderer"/>, WinForms draws them with fixed system colors (light gray button,
+/// black arrow, white frame), which stood out on a dark strip. After WinForms has painted, the same areas are redrawn with the
+/// box's <c>BackColor</c>/<c>ForeColor</c>. The edit area (a child window) is left alone.
 /// </summary>
 internal sealed class TwHostedComboPainter : NativeWindow
 {

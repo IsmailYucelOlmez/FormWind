@@ -8,10 +8,10 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace FormWind.Analyzers;
 
 /// <summary>
-/// FW002: .NET Framework'te <c>AutoScaleMode.Font</c> ile kurulan bir formun <c>Font</c>'u <c>InitializeComponent</c>'te
-/// <c>AutoScaleDimensions</c>'tan sonra atanıyor (Designer bu sırayla yazar). Uygulama PerMonitorV2 çalışırken WinForms bu
-/// font atamasında ölçeklemeyi atlar: kontroller 96 DPI boyutunda kalır, fontlar ve FormWind boşlukları ise ekran DPI'ıyla
-/// büyür; yazılar kırpılır. .NET (Core) WinForms'ta bu sorun yoktur.
+/// FW002: on .NET Framework, the <c>Font</c> of a form set up with <c>AutoScaleMode.Font</c> is assigned after <c>AutoScaleDimensions</c>
+/// in <c>InitializeComponent</c> (the Designer writes it in this order). When the application runs as PerMonitorV2, WinForms skips
+/// scaling for this font assignment: controls stay at their 96 DPI size while fonts and FormWind spacing grow with the screen DPI,
+/// and text gets clipped. .NET (Core) WinForms does not have this problem.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class FontScalingAnalyzer : DiagnosticAnalyzer

@@ -5,23 +5,23 @@ using System.Drawing.Drawing2D;
 namespace FormWind;
 
 /// <summary>
-/// İkon glyph'lerini font metriklerinden bağımsız çizer. İkon fontlarının satır yüksekliği glyph boyutuyla
-/// uyuşmadığından (Segoe Fluent Icons 15 pt'de 11 px yükseklik ölçer) metin çizimi ikonu kırpar; burada glyph
-/// bir yola çevrilir ve gerçek mürekkep sınırlarına göre kutunun ortasına yerleştirilir.
+/// Draws icon glyphs independently of font metrics. The line height of icon fonts does not match the glyph size
+/// (Segoe Fluent Icons measures 11 px tall at 15 pt), so text drawing clips the icon; here the glyph is converted
+/// to a path and centered in the box by its actual ink bounds.
 /// </summary>
 internal static class TwIconRenderer
 {
-    /// <summary>Font boyutuna karşılık gelen kare ikon kutusu (web'deki gibi: 20 px font = 20 px ikon).</summary>
+    /// <summary>Square icon box for a font size (as on the web: 20 px font = 20 px icon).</summary>
     /// <remarks>
-    /// GDI fontları puntoyu sürecin sistem DPI'ıyla piksele çevirir; PerMonitorV2'de başka DPI'lı bir ekrandaki kontrolün
-    /// fontu zaten büyütülmüş olduğundan ikon da sistem DPI'ıyla hesaplanır. <paramref name="dpi"/> artık kullanılmıyor
-    /// (eski çağrılar için duruyor).
+    /// GDI fonts convert points to pixels with the process's system DPI; under PerMonitorV2 the font of a control on a screen
+    /// with another DPI is already enlarged, so the icon is computed with the system DPI too. <paramref name="dpi"/> is no
+    /// longer used (kept for existing callers).
     /// </remarks>
     public static int EmPixels(float sizeInPoints, int dpi) =>
         Math.Max(1, (int)Math.Round(sizeInPoints * TwDpi.SystemDpi / 72f));
 
     /// <summary>
-    /// Adı verilen ikonu çizer: önce temadaki SVG ikon, yoksa ikon fontundaki glyph. İkon bulunamazsa <c>false</c>.
+    /// Draws a named icon: the theme's SVG icon first, otherwise the glyph in the icon font. <c>false</c> if the icon is not found.
     /// </summary>
     public static bool DrawIcon(Graphics graphics, string? name, int emPixels, Rectangle bounds, Color color, TwTheme? theme = null)
     {

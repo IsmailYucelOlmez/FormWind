@@ -10,8 +10,8 @@ using System.Text.RegularExpressions;
 namespace FormWind;
 
 /// <summary>
-/// Renk paleti, bileşen class'ları ve yazı tipi ayarları. Parse sonuçları tema başına önbelleğe alınır;
-/// tema değiştiğinde önbellek temizlenir.
+/// Color palette, component classes and font settings. Parse results are cached per theme;
+/// the cache is cleared when the theme changes.
 /// </summary>
 public sealed class TwTheme
 {
@@ -45,7 +45,7 @@ public sealed class TwTheme
     {
     }
 
-    /// <summary>Verilen Tailwind sürümünün varsayılan paletiyle bir tema oluşturur.</summary>
+    /// <summary>Creates a theme with the default palette of the given Tailwind version.</summary>
     public TwTheme(TwPaletteVersion palette)
     {
         LoadPalette(palette);
@@ -63,10 +63,10 @@ public sealed class TwTheme
         SetFontWeight("Segoe UI", 900, "Segoe UI Black");
     }
 
-    /// <summary>İkonların çizildiği font. Varsayılan: Segoe Fluent Icons (Win11), yoksa Segoe MDL2 Assets (Win10).</summary>
+    /// <summary>Font the icons are drawn with. Default: Segoe Fluent Icons (Win11), otherwise Segoe MDL2 Assets (Win10).</summary>
     public string IconFontFamily { get; set; } = TwIcons.DefaultFontFamily;
 
-    /// <summary>Bir font ailesinin belirli bir kalınlığı için kurulu ayrı aileyi tanımlar (örn. 600 → "Inter SemiBold").</summary>
+    /// <summary>Defines the installed family for a specific weight of a font family (e.g. 600 → "Inter SemiBold").</summary>
     public void SetFontWeight(string family, int weight, string face)
     {
         if (string.IsNullOrWhiteSpace(family)) throw new ArgumentException("The family name cannot be empty.", nameof(family));
@@ -80,8 +80,8 @@ public sealed class TwTheme
     }
 
     /// <summary>
-    /// Kalınlığı, kurulu ağırlık ailelerinden CSS'in eşleme kuralıyla seçer. Dönüş: kullanılacak aile ve
-    /// (400/700 gibi ailenin kendisine düşüldüğünde) kalın stil gerekip gerekmediği.
+    /// Chooses a weight from the installed weight families with CSS's matching rule. Returns the family to use and
+    /// whether a bold style is needed (when it falls back to the family itself, as for 400/700).
     /// </summary>
     public (string Face, bool Bold) ResolveFontWeight(string family, int weight) =>
         ResolveFontWeight(family, weight, TwFonts.IsInstalled);
@@ -124,7 +124,7 @@ public sealed class TwTheme
         return available[chosen ?? 400];
     }
 
-    /// <summary>Tema düzeyinde ikon ekler ya da yerleşik bir ikonu ezer (örn. özel ikon fontu için).</summary>
+    /// <summary>Adds a theme-level icon or overrides a built-in one (e.g. for a custom icon font).</summary>
     public void SetIcon(string name, char glyph)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("The icon name cannot be empty.", nameof(name));
@@ -132,8 +132,8 @@ public sealed class TwTheme
     }
 
     /// <summary>
-    /// SVG ikon ekler ya da aynı adlı glyph ikonunu ezer (SVG önceliklidir). Lucide/Heroicons gibi setlerin dosya içeriği
-    /// doğrudan verilebilir; renk çizildiği yerin metin rengidir.
+    /// Adds an SVG icon or overrides the glyph icon with the same name (SVG wins). The file content of sets such as
+    /// Lucide/Heroicons can be passed directly; the color is the text color where it is drawn.
     /// </summary>
     public void SetSvgIcon(string name, string svg)
     {
@@ -147,10 +147,10 @@ public sealed class TwTheme
         return !string.IsNullOrWhiteSpace(name) && _svgIcons.TryGetValue(name!, out icon);
     }
 
-    /// <summary>Adın bir SVG ya da glyph ikonu olup olmadığı.</summary>
+    /// <summary>Whether the name is an SVG or glyph icon.</summary>
     public bool HasIcon(string? name) => TryGetSvgIcon(name, out _) || TryGetIcon(name, out _);
 
-    /// <summary>İkon adını glyph'e çevirir: önce tema ikonları, sonra <see cref="TwIcons"/>; <c>#E710</c> biçimi de kabul edilir.</summary>
+    /// <summary>Converts an icon name to a glyph: theme icons first, then <see cref="TwIcons"/>; the <c>#E710</c> form is accepted too.</summary>
     public bool TryGetIcon(string? name, out char glyph)
     {
         glyph = '\0';
@@ -158,7 +158,7 @@ public sealed class TwTheme
         return _icons.TryGetValue(name!, out glyph) || TwIcons.TryGetGlyph(name!, out glyph);
     }
 
-    /// <summary>Kendi teması atanmamış tüm <see cref="TailwindProvider"/>'ların kullandığı tema.</summary>
+    /// <summary>The theme used by all <see cref="TailwindProvider"/>s without a theme of their own.</summary>
     public static TwTheme Current
     {
         get => _current;
@@ -172,8 +172,8 @@ public sealed class TwTheme
     public static event EventHandler? CurrentChanged;
 
     /// <summary>
-    /// Kod içine gömülü varsayılan bileşen class'ları. Designer, tema dosyasını okuyamadığı için
-    /// tasarım zamanı önizlemesi bunlarla yapılır.
+    /// Default component classes built into the code. The Designer cannot read the theme file,
+    /// so the design-time preview uses these.
     /// </summary>
     public static IReadOnlyDictionary<string, string> DefaultComponents { get; } = new Dictionary<string, string>
     {
@@ -209,7 +209,7 @@ public sealed class TwTheme
         set { _fontFamilyMono = value ?? throw new ArgumentNullException(nameof(value)); _cache.Clear(); }
     }
 
-    /// <summary>Boşluk ve boyut class'larında 1 birimin piksel karşılığı (Tailwind: 4).</summary>
+    /// <summary>Pixel value of one unit in spacing and size classes (Tailwind: 4).</summary>
     public int SpacingUnit
     {
         get => _spacingUnit;
@@ -221,7 +221,7 @@ public sealed class TwTheme
         }
     }
 
-    /// <summary>Renk verilmeden <c>border</c> kullanıldığında çizilen renk (Tailwind: gray-200).</summary>
+    /// <summary>Color drawn when <c>border</c> is used without a color (Tailwind: gray-200).</summary>
     public Color DefaultBorderColor { get; set; } = ColorTranslator.FromHtml("#e5e7eb");
 
     public IReadOnlyDictionary<string, string> Components => _components;
@@ -230,12 +230,12 @@ public sealed class TwTheme
 
     public void SetColor(string name, Color color) => SetColor(name, "", color);
 
-    /// <summary>Varsayılan paletin sürümü (<see cref="UsePalette"/> ya da tema dosyasındaki <c>"palette"</c>).</summary>
+    /// <summary>Version of the default palette (<see cref="UsePalette"/> or <c>"palette"</c> in the theme file).</summary>
     public TwPaletteVersion Palette { get; private set; }
 
     /// <summary>
-    /// Varsayılan paletin 22 rengini (red … rose, slate … stone) verilen sürümünkilerle değiştirir. Özel renkler
-    /// (<c>brand</c> gibi) korunur; aynı adla ezilmiş varsayılan renkler sürümün değerine döner.
+    /// Replaces the 22 colors of the default palette (red … rose, slate … stone) with those of the given version. Custom
+    /// colors (such as <c>brand</c>) are kept; default colors overridden under the same name return to the version's values.
     /// </summary>
     public void UsePalette(TwPaletteVersion palette)
     {
@@ -265,7 +265,7 @@ public sealed class TwTheme
         return colors;
     }
 
-    /// <summary>Paletteki bir rengi ekler ya da ezer. <paramref name="shade"/> boşsa renk tonsuz kullanılır (<c>bg-brand</c>).</summary>
+    /// <summary>Adds or overrides a palette color. When <paramref name="shade"/> is empty the color is used without a shade (<c>bg-brand</c>).</summary>
     public void SetColor(string name, string shade, Color color)
     {
         if (name is null || !ColorNameRx.IsMatch(name))
@@ -296,7 +296,7 @@ public sealed class TwTheme
 
     public string? GetComponent(string name) => _components.TryGetValue(name, out var classes) ? classes : null;
 
-    /// <summary>Class dizisini parse eder. Aynı (normalize edilmiş) dizi için aynı sonuç örneği döner.</summary>
+    /// <summary>Parses a class string. Returns the same result instance for the same (normalized) string.</summary>
     public TwParsed Parse(string? classes)
     {
         var key = TwParser.Normalize(classes);
@@ -310,7 +310,7 @@ public sealed class TwTheme
         return theme;
     }
 
-    /// <summary>Tema dosyasını yükler; <c>fonts</c> listesindeki yollar dosyanın klasörüne göre çözülür.</summary>
+    /// <summary>Loads a theme file; paths in the <c>fonts</c> list are resolved relative to the file's folder.</summary>
     public static TwTheme Load(string path)
     {
         var theme = new TwTheme();
@@ -318,12 +318,12 @@ public sealed class TwTheme
         return theme;
     }
 
-    /// <summary>Dosya varsa yükler (geçersizse hata fırlatır), yoksa varsayılan temayı döner.</summary>
+    /// <summary>Loads the file if it exists (throws if it is invalid), otherwise returns the default theme.</summary>
     public static TwTheme LoadIfExists(string path) => File.Exists(path) ? Load(path) : new TwTheme();
 
-    /// <summary><c>tw.config.json</c> biçimindeki ayarları bu temanın üzerine uygular.</summary>
-    /// <param name="json">Tema içeriği.</param>
-    /// <param name="baseDirectory"><c>fonts</c> yollarının göreli olduğu klasör (varsayılan: uygulama klasörü).</param>
+    /// <summary>Applies settings in the <c>tw.config.json</c> format on top of this theme.</summary>
+    /// <param name="json">Theme content.</param>
+    /// <param name="baseDirectory">Folder the <c>fonts</c> paths are relative to (default: the application folder).</param>
     public void ApplyJson(string json, string? baseDirectory = null)
     {
         var options = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };

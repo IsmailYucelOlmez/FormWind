@@ -6,8 +6,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Class'larla stillenen ipucu kutusu (owner-draw ToolTip). <see cref="Provider"/> verilirse onun koyu tema durumunu izler.
-/// Varsayılan: <c>bg-gray-900 text-white text-xs px-2 py-1 dark:bg-gray-100 dark:text-gray-900</c>.
+/// Tooltip styled with classes (owner-drawn ToolTip). Follows the dark mode of <see cref="Provider"/> when set.
+/// Default: <c>bg-gray-900 text-white text-xs px-2 py-1 dark:bg-gray-100 dark:text-gray-900</c>.
 /// </summary>
 [ToolboxItem(true)]
 [Description("Class'larla stillenen ipucu kutusu.")]
@@ -28,15 +28,15 @@ public class TwToolTip : ToolTip
     [Category("FormWind"), DefaultValue(DefaultClasses)]
     public string Classes { get; set; } = DefaultClasses;
 
-    /// <summary>Koyu tema durumunun alınacağı provider (isteğe bağlı).</summary>
+    /// <summary>The provider to take the dark mode state from (optional).</summary>
     [Category("FormWind"), DefaultValue(null)]
     public TailwindProvider? Provider { get; set; }
 
-    /// <summary>O anki tema durumuna göre çözülmüş stil.</summary>
+    /// <summary>The style resolved for the current theme state.</summary>
     public TwStyle ResolveStyle() =>
         (Provider?.Theme ?? TwTheme.Current).Parse(Classes).Resolve(Provider?.DarkMode == true ? TwState.Dark : TwState.None);
 
-    /// <summary>Metin için ipucu kutusunun boyutu (padding dahil).</summary>
+    /// <summary>Size of the tooltip box for a text (including padding).</summary>
     public Size MeasureTip(string text, int dpi = 96)
     {
         var style = ResolveStyle();

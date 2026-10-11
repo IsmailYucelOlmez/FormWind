@@ -6,8 +6,8 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Arka planını, köşelerini ve metnini kendisi çizen buton. <see cref="ButtonBase.Image"/> şu an çizilmez;
-/// <c>Paint</c> olayı tetiklenmez.
+/// A button that paints its own background, corners and text. <see cref="ButtonBase.Image"/> is not drawn yet;
+/// the <c>Paint</c> event is not raised.
 /// </summary>
 [ToolboxItem(true)]
 [Description("Owner-drawn button with rounded corners.")]

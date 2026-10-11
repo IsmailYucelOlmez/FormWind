@@ -4,16 +4,16 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// Son girişin klavyeden mi fareden mi geldiğini izler (tarayıcılardaki <c>:focus-visible</c> gibi). Odak halkaları ve
-/// <c>focus-visible:</c> varyantı yalnızca odak klavyeyle (Tab, oklar) geldiğinde gösterilir; fareyle tıklanan kontrolde
-/// görünmez. İzleme, ilk FormWind kontrolü ya da sağlayıcısı oluşturulduğunda o thread'in mesaj döngüsüne eklenir.
+/// Tracks whether the last input came from the keyboard or the mouse (like <c>:focus-visible</c> in browsers). Focus rings and
+/// the <c>focus-visible:</c> variant show only when focus came from the keyboard (Tab, arrows), not on a control clicked with
+/// the mouse. Tracking is added to the thread's message loop when the first FormWind control or provider is created.
 /// </summary>
 public static class TwFocusVisible
 {
     [ThreadStatic] private static bool _installed;
     [ThreadStatic] private static bool _keyboard;
 
-    /// <summary>Son giriş klavyeden mi geldi. Başlangıçta <c>false</c>: program açılışında verilen odakta halka çizilmez.</summary>
+    /// <summary>Whether the last input came from the keyboard. Initially <c>false</c>: no ring is drawn for the focus given at startup.</summary>
     public static bool LastInputWasKeyboard
     {
         get => _keyboard;

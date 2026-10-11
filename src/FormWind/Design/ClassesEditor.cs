@@ -9,8 +9,8 @@ using System.Windows.Forms.Design;
 namespace FormWind.Design;
 
 /// <summary>
-/// Property penceresinde <c>Classes</c> alanı için "…" düğmesi. Bileşen listesi ve bilinmeyen class uyarısı içerir.
-/// .NET 8+ projelerinde out-of-process Designer bu editörü yüklemez; orada alan düz metin olarak düzenlenir.
+/// The "…" button for the <c>Classes</c> field in the Properties window. Includes a component list and an unknown-class warning.
+/// In .NET 8+ projects the out-of-process Designer does not load this editor; there the field is edited as plain text.
 /// </summary>
 public sealed class ClassesEditor : UITypeEditor
 {
