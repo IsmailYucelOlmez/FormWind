@@ -108,6 +108,24 @@ public class ContrastTests
         form.Close();
     });
 
+    [Fact]
+    public void Include_disabled_checks_disabled_text_boxes_against_the_system_background()
+    {
+        using var panel = new Panel { BackColor = ColorTranslator.FromHtml("#111827") };
+        // İçerik göstermek için devre dışı bırakılmış kutu; yazı rengi uygulama tarafından açık atanmış.
+        var display = new RichTextBox { Text = "Açıklama", ForeColor = ColorTranslator.FromHtml("#f3f4f6"), Enabled = false };
+        var plain = new TextBox { Text = "Varsayılan", Enabled = false };
+        panel.Controls.Add(display);
+        panel.Controls.Add(plain);
+
+        Assert.Empty(TwContrast.Audit(panel));
+
+        var issue = Assert.Single(TwContrast.Audit(panel, includeDisabled: true));
+        Assert.Same(display, issue.Control);
+        Assert.Equal("disabled text", issue.Part);
+        Assert.Equal(SystemColors.Control.ToArgb(), issue.Background.ToArgb());
+    }
+
     // Kütüphanenin varsayılan bileşen class'ları açık ve koyu temada, iki palet sürümüyle de okunabilir olmalı.
     [Theory]
     [InlineData(false, TwPaletteVersion.V3)]

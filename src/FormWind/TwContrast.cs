@@ -27,15 +27,18 @@ public static class TwContrast
     }
 
     /// <summary>
-    /// <paramref name="root"/> ve alt kontrollerindeki düşük kontrastlı renk çiftleri. Devre dışı ve gizli kontroller
-    /// atlanır (WCAG devre dışı öğeleri kapsamaz). <c>transition</c> geçişi süren renkler için varılacak renk denetlenir;
+    /// <paramref name="root"/> ve alt kontrollerindeki düşük kontrastlı renk çiftleri. Gizli kontroller atlanır. Devre dışı
+    /// kontroller WCAG'ın kapsamı dışında olduğundan varsayılan olarak atlanır; <paramref name="includeDisabled"/> onları da
+    /// denetler. Bu, devre dışı bir kontrolün içerik göstermek için kullanıldığı durumlarda (örn. imleç görünmesin diye
+    /// devre dışı bırakılmış bir RichTextBox) işe yarar. Devre dışı native metin kutularında zemin, Windows'un çizdiği
+    /// sistem zemini (<see cref="SystemColors.Control"/>) sayılır. <c>transition</c> geçişi süren renkler için varılacak renk denetlenir;
     /// böylece tema değişiminin hemen ardından da doğru sonuç verir.
     /// </summary>
-    public static IReadOnlyList<TwContrastIssue> Audit(Control root, TailwindProvider? provider = null, double minimum = TextMinimum)
+    public static IReadOnlyList<TwContrastIssue> Audit(Control root, TailwindProvider? provider = null, double minimum = TextMinimum, bool includeDisabled = false)
     {
         if (root is null) throw new ArgumentNullException(nameof(root));
         var issues = new List<TwContrastIssue>();
-        Visit(root, provider, minimum, issues);
+        Visit(root, provider, minimum, includeDisabled, issues);
         return issues;
     }
 
@@ -43,10 +46,18 @@ public static class TwContrast
     // yalnızca ebeveyni görünürken kendisi görünmüyorsa gizli sayılır.
     private static bool IsHidden(Control control) => !control.Visible && control.Parent is Control parent && parent.Visible;
 
-    private static void Visit(Control control, TailwindProvider? provider, double minimum, List<TwContrastIssue> issues)
+    private static void Visit(Control control, TailwindProvider? provider, double minimum, bool includeDisabled, List<TwContrastIssue> issues)
     {
         if (IsHidden(control)) return;
-        if (control.Enabled)
+        if (!control.Enabled && includeDisabled && control is TextBoxBase)
+        {
+            // Windows devre dışı metin kutusunun yazı satırının arkasına sistem zeminini çizer; yazı rengi açıkça
+            // atanmamışsa sistemin gri rengini kullanır.
+            var disabledFore = TwOriginal.IsExplicit(control, nameof(Control.ForeColor)) ? control.ForeColor : SystemColors.GrayText;
+            double disabledRequired = IsLarge(control.Font) ? Math.Min(minimum, LargeTextMinimum) : minimum;
+            Check(issues, control, "disabled text", disabledFore, SystemColors.Control, disabledRequired);
+        }
+        else if (control.Enabled || includeDisabled)
         {
             double required = IsLarge(control.Font) ? Math.Min(minimum, LargeTextMinimum) : minimum;
             var back = EffectiveBack(control);
@@ -75,7 +86,7 @@ public static class TwContrast
         }
 
         foreach (Control child in control.Controls)
-            Visit(child, provider, minimum, issues);
+            Visit(child, provider, minimum, includeDisabled, issues);
     }
 
     private static void CheckToolStrip(ToolStrip strip, double required, List<TwContrastIssue> issues)
@@ -171,7 +182,7 @@ public sealed class TwContrastIssue
 
     public Control Control { get; }
 
-    /// <summary>Denetlenen bölüm: <c>text</c>, <c>hover</c>, <c>strip</c>, <c>item:hover</c>, <c>menu</c>, <c>cell</c>, <c>selected</c>, <c>header</c>.</summary>
+    /// <summary>Denetlenen bölüm: <c>text</c>, <c>disabled text</c>, <c>hover</c>, <c>strip</c>, <c>item:hover</c>, <c>menu</c>, <c>cell</c>, <c>selected</c>, <c>header</c>.</summary>
     public string Part { get; }
 
     public Color Foreground { get; }

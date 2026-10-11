@@ -1113,7 +1113,7 @@ static FormWind.TwBreakpoints.Xxl.get -> int
 static FormWind.TwBreakpoints.Xxl.set -> void
 static FormWind.TwChrome.FromStyle(FormWind.TwStyle! style, float scale, System.Drawing.Color defaultBorderColor) -> FormWind.TwChrome
 static FormWind.TwChrome.None.get -> FormWind.TwChrome
-static FormWind.TwContrast.Audit(System.Windows.Forms.Control! root, FormWind.TailwindProvider? provider = null, double minimum = 4.5) -> System.Collections.Generic.IReadOnlyList<FormWind.TwContrastIssue!>!
+static FormWind.TwContrast.Audit(System.Windows.Forms.Control! root, FormWind.TailwindProvider? provider = null, double minimum = 4.5, bool includeDisabled = false) -> System.Collections.Generic.IReadOnlyList<FormWind.TwContrastIssue!>!
 static FormWind.TwContrast.Ratio(System.Drawing.Color foreground, System.Drawing.Color background) -> double
 static FormWind.TwOklch.ToColor(double lightness, double chroma, double hue, double alpha = 1) -> System.Drawing.Color
 static FormWind.TwOklch.TryParse(string? text, out System.Drawing.Color color) -> bool

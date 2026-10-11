@@ -43,11 +43,23 @@ public static class Program
 
         var theme = config != null ? TwTheme.Load(config) : new TwTheme();
         var converter = new DesignerConverter(theme) { ColorTolerance = tolerance };
+        // Uygulamanın kendi kontrol tipleri (örn. ToolStripComboBox'tan türeyen bir sınıf) kaynak koddan çözülür: hedef klasör
+        // ve kardeş projeler için üst klasörü taranır.
+        var root = Directory.Exists(target) ? Path.GetFullPath(target) : Path.GetDirectoryName(Path.GetFullPath(target))!;
+        var searchRoot = Directory.GetParent(root)?.FullName ?? root;
+        var sources = Directory.EnumerateFiles(searchRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                        && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar))
+            .Select(f => { try { return File.ReadAllText(f); } catch (IOException) { return ""; } });
+        converter.BaseTypes = DesignerConverter.CollectBaseTypes(sources);
         var markdown = new StringBuilder("# FormWind dönüştürme raporu\n\n");
         int changedFiles = 0, classCount = 0, noteCount = 0;
 
         foreach (var file in files)
         {
+            // Dosyanın BOM'u korunur: BOM'suz dosyaya BOM eklemek her dosyada gereksiz bir diff satırı üretir.
+            var bytes = File.ReadAllBytes(file);
+            bool bom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
             var source = File.ReadAllText(file);
             var result = converter.Convert(source);
             var relevant = result.Controls.Where(c => c.Classes.Count > 0 || c.Notes.Count > 0).ToList();
@@ -59,6 +71,12 @@ public static class Program
             {
                 Console.WriteLine($"  + TailwindProvider eklendi ({result.ProviderName})");
                 markdown.Append($"TailwindProvider eklendi: `{result.ProviderName}`.\n\n");
+            }
+            foreach (var note in result.FileNotes)
+            {
+                Console.WriteLine($"  ! {note}");
+                markdown.Append($"⚠ {note}\n\n");
+                noteCount++;
             }
             foreach (var control in relevant)
             {
@@ -78,7 +96,7 @@ public static class Program
             if (result.Changed)
             {
                 changedFiles++;
-                if (write) File.WriteAllText(file, result.Source, new UTF8Encoding(true));
+                if (write) File.WriteAllText(file, result.Source, new UTF8Encoding(bom));
             }
         }
 

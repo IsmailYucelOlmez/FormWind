@@ -163,7 +163,10 @@ public class InvariantTests
 
                 TwAnimator.Step(DateTime.UtcNow.AddSeconds(10));
                 var state = CurrentState(provider, control, hovered);
-                var style = theme.Parse(classes).Resolve(state);
+                // Devre dışı native metin kutusunda yalnızca disabled: renkleri uygulanır (Windows zemin rengine uymaz).
+                var style = control is TextBoxBase && !control.Enabled
+                    ? theme.Parse(classes).ResolveExact(TwState.Disabled, state)
+                    : theme.Parse(classes).Resolve(state);
                 var mismatch = CheckColor("BackColor", control.BackColor, appBack ?? style.BackColor)
                                ?? CheckColor("ForeColor", control.ForeColor, appFore ?? style.ForeColor);
                 if (mismatch != null) return $"{log}\n  -> state={state}: {mismatch}";

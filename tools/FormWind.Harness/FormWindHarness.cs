@@ -1,3 +1,5 @@
+#nullable enable
+// Uygulamalara kod olarak da eklenebilir (.NET Framework'te startup hook yoktur); nullable bağlamı açık olmayan projelerde de derlenir.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,6 +19,17 @@ namespace FormWind.Harness;
 /// <item><description><c>FORMWIND_SKIP=DataGridView,ToolStrip</c> bu tipleri stillemez.</description></item>
 /// <item><description><c>FORMWIND_SELFTEST=1</c> her yeni formu açık ve koyu temada çizer (DrawToBitmap), kontrastını denetler.</description></item>
 /// <item><description><c>FORMWIND_EXIT_AFTER=60</c> verilen saniye sonra süreci sonlandırır (gözetimsiz çalıştırma).</description></item>
+/// <item><description><c>FORMWIND_DUMP=1</c> hiç stil uygulamaz; her formun kontrollerinin renk, font ve padding değerlerini
+/// <c>dump-&lt;form&gt;.txt</c> dosyasına yazar (örn. dönüştürme aracından önce ve sonra karşılaştırmak için).</description></item>
+/// <item><description><c>FORMWIND_CLOSE=FormSettings</c> adı verilen formları işlendikten sonra kapatır (açılıştaki modal
+/// pencerelerin arkasındaki formlara gözetimsiz ulaşmak için).</description></item>
+/// <item><description><c>FORMWIND_WALK=Launch</c> ilk formdaki bu yazıya sahip butonlara sırayla basar; açılan her formu işler,
+/// <c>FORMWIND_WALK_WAIT</c> ms (varsayılan 4000) sonra kapatır ve sonrakine geçer; bitince süreci sonlandırır.
+/// <c>FORMWIND_WALK_SKIP=33,40</c> bu sıradaki (1'den başlayan) butonları atlar.</description></item>
+/// <item><description><c>FORMWIND_SKIP=*</c> hiçbir kontrolü stillemez ama ölçer (karşılaştırma çalıştırması).</description></item>
+/// <item><description><c>FORMWIND_OPEN=SettingsForm,AboutForm</c> bu form tiplerini (kısa ya da tam ad) yüklü derlemelerde bulur,
+/// parametresiz constructor'la sırayla açar, işler ve <c>FORMWIND_WALK_WAIT</c> ms sonra kapatır; bitince süreci sonlandırır.
+/// Menüden ya da tepsiden açılan formlara gözetimsiz ulaşmak için (test amaçlı yansıma).</description></item>
 /// </list>
 /// Log ve görüntüler: <c>%TEMP%\FormWind-Harness\&lt;süreç&gt;-&lt;zaman&gt;</c>.
 /// </summary>
@@ -59,6 +72,14 @@ public static class FormWindHarness
     private static string _logPath = "";
     private static bool _dark;
     private static bool _selfTest;
+    private static bool _dump;
+    private static readonly HashSet<Form> Dumped = new();
+    private static HashSet<string> _close = new(StringComparer.OrdinalIgnoreCase);
+    private static string? _walkText;
+    private static int _walkWait = 4000;
+    private static Form? _walkRoot;
+    private static HashSet<int> _walkSkip = new();
+    private static Form? _opened;
     private static HashSet<string> _skip = new(StringComparer.OrdinalIgnoreCase);
     private static int _paints;
     private static int _busySeconds;
@@ -73,6 +94,14 @@ public static class FormWindHarness
 
         _dark = Environment.GetEnvironmentVariable("FORMWIND_DARK") == "1";
         _selfTest = Environment.GetEnvironmentVariable("FORMWIND_SELFTEST") == "1";
+        _dump = Environment.GetEnvironmentVariable("FORMWIND_DUMP") == "1";
+        _walkText = Environment.GetEnvironmentVariable("FORMWIND_WALK") is { Length: > 0 } walk ? walk : null;
+        if (int.TryParse(Environment.GetEnvironmentVariable("FORMWIND_WALK_WAIT"), out int wait) && wait > 0) _walkWait = wait;
+        _walkSkip = new HashSet<int>((Environment.GetEnvironmentVariable("FORMWIND_WALK_SKIP") ?? "")
+            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => int.TryParse(x.Trim(), out int n) ? n : -1));
+        _close = new HashSet<string>(
+            (Environment.GetEnvironmentVariable("FORMWIND_CLOSE") ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()),
+            StringComparer.OrdinalIgnoreCase);
         // .NET Framework'te de derlenir (projeye kopyalanarak kullanılabilir): Split(char, TrimEntries) yok.
         _skip = new HashSet<string>(
             (Environment.GetEnvironmentVariable("FORMWIND_SKIP") ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()),
@@ -82,7 +111,7 @@ public static class FormWindHarness
         _directory = Path.Combine(Path.GetTempPath(), "FormWind-Harness", $"{process}-{DateTime.Now:yyyyMMdd-HHmmss}");
         Directory.CreateDirectory(_directory);
         _logPath = Path.Combine(_directory, "log.txt");
-        Log($"STARTED {process} FormWind {typeof(TailwindProvider).Assembly.GetName().Version} dark={_dark} selftest={_selfTest} skip=[{string.Join(",", _skip)}]");
+        Log($"STARTED {process} FormWind {typeof(TailwindProvider).Assembly.GetName().Version} dark={_dark} selftest={_selfTest} dump={_dump} skip=[{string.Join(",", _skip)}]");
 
         Application.AddMessageFilter(new DarkToggleFilter());
         if (int.TryParse(Environment.GetEnvironmentVariable("FORMWIND_EXIT_AFTER"), out int seconds) && seconds > 0)
@@ -95,6 +124,8 @@ public static class FormWindHarness
             };
             exit.Start();
         }
+
+        if (Environment.GetEnvironmentVariable("FORMWIND_OPEN") is { Length: > 0 } open) StartOpening(open);
 
         // Tek zamanlayıcı: yeni formları bulur, donmaları (geç gelen tik) ve saniyedeki çizim sayısını kaydeder.
         var timer = new Timer { Interval = 50 };
@@ -125,8 +156,43 @@ public static class FormWindHarness
     {
         foreach (Form form in Application.OpenForms.Cast<Form>().ToList())
         {
-            if (!Providers.ContainsKey(form) && !form.IsDisposed && form.Visible) Attach(form);
+            if (form.IsDisposed || !form.Visible) continue;
+            if (_dump)
+            {
+                if (Dumped.Add(form)) ScheduleDump(form);
+                continue;
+            }
+            if (!Providers.ContainsKey(form)) Attach(form);
         }
+    }
+
+    // Form yüklemesi (uygulamanın Load'da atadıkları) bittikten sonra bir kez yazılır.
+    private static void ScheduleDump(Form form)
+    {
+        var timer = new Timer { Interval = 2000 };
+        timer.Tick += (_, _) =>
+        {
+            timer.Dispose();
+            if (form.IsDisposed) return;
+            var lines = new List<string>();
+            Dump(form, form.Name.Length > 0 ? form.Name : form.GetType().Name, lines);
+            string path = Path.Combine(_directory, $"dump-{form.GetType().FullName}.txt");
+            File.WriteAllLines(path, lines);
+            Log($"DUMP {form.GetType().FullName}: {lines.Count} controls -> {path}");
+            CloseIfRequested(form);
+            if (form == _opened) CloseLater(form, 100);
+        };
+        timer.Start();
+    }
+
+    private static void Dump(Control control, string path, List<string> lines)
+    {
+        var font = control.Font;
+        lines.Add($"{path} [{control.GetType().Name}] back=#{control.BackColor.ToArgb():X8} fore=#{control.ForeColor.ToArgb():X8} " +
+                  $"font={font.Name} {font.SizeInPoints:0.##}pt {font.Style} padding={control.Padding.Left},{control.Padding.Top},{control.Padding.Right},{control.Padding.Bottom}");
+        int index = 0;
+        foreach (Control child in control.Controls)
+            Dump(child, $"{path}/{(child.Name.Length > 0 ? child.Name : "#" + index++)}", lines);
     }
 
     private static void Attach(Form form)
@@ -162,15 +228,187 @@ public static class FormWindHarness
             Log($"  unstyled: {string.Join(", ", unstyled.GroupBy(t => t).OrderByDescending(g => g.Count()).Select(g => $"{g.Key}={g.Count()}"))}");
 
         AuditContrast(form, provider, _dark ? "dark" : "light");
+        if (form is ThreadExceptionDialog) Log($"APP EXCEPTION dialog opened: {form.Text}");
+        if (_walkText != null)
+        {
+            if (_walkRoot is null)
+            {
+                _walkRoot = form;
+                StartWalk(form);
+            }
+            else if (form != _walkRoot)
+            {
+                CloseLater(form, _walkWait);
+            }
+        }
+        else if (form == _opened)
+        {
+            CloseLater(form, _walkWait);
+        }
         if (_selfTest) SelfTest(form, provider);
+        else if (_close.Contains(form.GetType().Name))
+        {
+            var timer = new Timer { Interval = 2000 };
+            timer.Tick += (_, _) =>
+            {
+                timer.Dispose();
+                CloseIfRequested(form);
+            };
+            timer.Start();
+        }
+    }
+
+    // Formlar sırayla açılır: bir sonraki, öncekinin kapanmasını bekler.
+    private static void StartOpening(string list)
+    {
+        var names = new Queue<string>(list.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(n => n.Trim()));
+        Log($"OPEN queue: {string.Join(", ", names)}");
+        var timer = new Timer { Interval = 1000 };
+        int idle = 0;
+        timer.Tick += (_, _) =>
+        {
+            if (_opened != null && !_opened.IsDisposed) return;
+            if (++idle < 3) return; // açılışın ve önceki formun kapanışının oturması için
+            idle = 0;
+            if (names.Count == 0)
+            {
+                timer.Dispose();
+                Log($"OPEN done: {_forms} forms styled");
+                Environment.Exit(0);
+                return;
+            }
+            string name = names.Dequeue();
+            var type = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => { try { return a.GetTypes(); } catch (System.Reflection.ReflectionTypeLoadException e) { return e.Types.Where(t => t != null)!; } })
+                .FirstOrDefault(t => t != null && typeof(Form).IsAssignableFrom(t) && !t.IsAbstract && (t.FullName == name || t.Name == name));
+            if (type is null)
+            {
+                Log($"OPEN {name}: type not found");
+                return;
+            }
+            try
+            {
+                _opened = (Form)Activator.CreateInstance(type, nonPublic: true)!;
+                Log($"OPEN {type.FullName}");
+                _opened.Show();
+            }
+            catch (Exception ex)
+            {
+                _opened = null;
+                Log($"OPEN {type.FullName} failed: {(ex.InnerException ?? ex).GetType().Name}: {(ex.InnerException ?? ex).Message}");
+            }
+        };
+        timer.Start();
+    }
+
+    private static void CloseLater(Form form, int milliseconds)
+    {
+        var timer = new Timer { Interval = milliseconds };
+        timer.Tick += (_, _) =>
+        {
+            timer.Dispose();
+            if (form.IsDisposed) return;
+            Log($"WALK closing {form.GetType().FullName}");
+            form.Close();
+            // Bazı formlar kapanmayı reddeder (örn. seçim yapılmadan kapanmayan bir dialog); dolaşma takılmasın diye
+            // form zorla dispose edilir.
+            if (!form.IsDisposed && form.Visible)
+            {
+                Log($"WALK close cancelled by {form.GetType().FullName}; disposing");
+                form.Dispose();
+            }
+        };
+        timer.Start();
+    }
+
+    // Butonlara sırayla basılır. Buton modal bir form açarsa PerformClick form kapanana kadar döner (iç içe mesaj döngüsü);
+    // zamanlayıcılar o sırada da çalışır, bu yüzden bir sonraki tıklama önceki bitene kadar bekler.
+    private static void StartWalk(Form root)
+    {
+        var start = new Timer { Interval = 2000 };
+        start.Tick += (_, _) =>
+        {
+            start.Dispose();
+            var buttons = Descendants(root).Where(c => c is IButtonControl && c.Text == _walkText).ToList();
+            Log($"WALK {buttons.Count} '{_walkText}' buttons");
+            int index = 0;
+            bool busy = false;
+            var step = new Timer { Interval = 500 };
+            step.Tick += (_, _) =>
+            {
+                if (busy) return;
+                if (index >= buttons.Count)
+                {
+                    step.Dispose();
+                    Log($"WALK done: {buttons.Count} buttons, {_forms} forms styled");
+                    Environment.Exit(0);
+                    return;
+                }
+                var button = buttons[index++];
+                if (_walkSkip.Contains(index))
+                {
+                    Log($"WALK {index}/{buttons.Count} skipped");
+                    return;
+                }
+                busy = true;
+                Log($"WALK {index}/{buttons.Count} click {Describe(button)}");
+                try
+                {
+                    ((IButtonControl)button).PerformClick();
+                }
+                catch (Exception ex)
+                {
+                    Log($"EXCEPTION walking button {index}: {ex.GetType().Name}: {ex.Message}");
+                }
+                finally
+                {
+                    busy = false;
+                }
+            };
+            step.Start();
+        };
+        start.Start();
+    }
+
+    private static IEnumerable<Control> Descendants(Control root)
+    {
+        foreach (Control child in root.Controls)
+        {
+            yield return child;
+            foreach (var nested in Descendants(child)) yield return nested;
+        }
+    }
+
+    private static void CloseIfRequested(Form form)
+    {
+        if (form.IsDisposed || !_close.Contains(form.GetType().Name)) return;
+        Log($"CLOSE {form.GetType().FullName}");
+        form.Close();
     }
 
     private static string Summary(Dictionary<string, int> counts) =>
         string.Join(", ", counts.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Key}={kv.Value}"));
 
+    // Yalnızca içerik taşımak için yapılmış konteynerlere inilir. Bileşik kontrollerin (KryptonTextBox'ın içindeki
+    // TextBox, PropertyGrid'in yardım paneli, NumericUpDown'ın düzenleme kutusu) iç parçaları kontrolün kendisine aittir
+    // ve kendi renkleriyle çizilir; onları stillemek uyumsuz renk çiftleri üretir.
+    private static bool IsContentContainer(Control control) =>
+        control is not PropertyGrid && control is not UpDownBase
+        && (control is Form || control is Panel || control is GroupBox || control is TabControl || control is SplitContainer
+            || control is UserControl || control is ToolStripContainer || control is ToolStripPanel);
+
     private static void Walk(TailwindProvider provider, Control control, Dictionary<string, int> counts, List<string>? unstyled)
     {
         Style(provider, control, counts, unstyled);
+        if (!IsContentContainer(control))
+        {
+            if (Hooked.Add(control))
+            {
+                control.Paint += (_, _) => _paints++;
+                control.Disposed += (_, _) => Hooked.Remove(control);
+            }
+            return;
+        }
         if (Hooked.Add(control))
         {
             control.Paint += (_, _) => _paints++;
@@ -197,7 +435,7 @@ public static class FormWindHarness
             unstyled?.Add(control.GetType().Name);
             return;
         }
-        if (_skip.Contains(match.Type.Name)) return;
+        if (_skip.Contains(match.Type.Name) || _skip.Contains("*")) return;
 
         try
         {
@@ -214,7 +452,7 @@ public static class FormWindHarness
     {
         try
         {
-            var issues = TwContrast.Audit(form, provider);
+            var issues = TwContrast.Audit(form, provider, includeDisabled: true);
             int fresh = 0;
             foreach (var issue in issues)
             {

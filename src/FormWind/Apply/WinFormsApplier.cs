@@ -28,9 +28,11 @@ public class WinFormsApplier : IStyleApplier
         var applied = AppliedTable.GetValue(control, _ => new Applied());
         var original = context.Original;
 
-        ApplyColors(control, style, original, applied, TransitionDuration(control, style, context), context.DesignMode);
+        var (back, fore) = ColorTargets(control, style, context);
+        ApplyColors(control, back, fore, original, applied, TransitionDuration(control, style, context), context.DesignMode);
         ApplyFont(control, style, original, applied, context.Theme);
         ApplySpacing(control, style, original, applied, context.Scale);
+        if (!context.DesignMode) WatchSpacing(control, applied);
         ApplySize(control, style, context.Scale);
         FitPadding(control, applied);
         ApplyTextAlign(control, style);
@@ -193,10 +195,23 @@ public class WinFormsApplier : IStyleApplier
     private static int TransitionDuration(Control control, TwStyle style, TwApplyContext context) =>
         style.Transition == true && !context.DesignMode && control.IsHandleCreated ? style.DurationMs ?? 150 : 0;
 
-    private static void ApplyColors(Control control, TwStyle style, TwOriginal original, Applied applied, int duration, bool designMode)
+    private static void ApplyColors(Control control, Color? back, Color? fore, TwOriginal original, Applied applied, int duration, bool designMode)
     {
-        ApplyColor(control, TwColorChannel.Back, style.BackColor, original.BackColor, applied.Back, duration, designMode);
-        ApplyColor(control, TwColorChannel.Fore, style.ForeColor, original.ForeColor, applied.Fore, duration, designMode);
+        ApplyColor(control, TwColorChannel.Back, back, original.BackColor, applied.Back, duration, designMode);
+        ApplyColor(control, TwColorChannel.Fore, fore, original.ForeColor, applied.Fore, duration, designMode);
+    }
+
+    /// <summary>
+    /// Devre dışı native metin kutusu (TextBox, RichTextBox, MaskedTextBox) zemin rengine güvenilir biçimde uymaz: Windows,
+    /// rengin handle'dan ve devre dışı bırakılmadan önce mi sonra mı atandığına göre bazen sistem zeminini (#F0F0F0) çizer.
+    /// Yazı rengi ise her zaman uygulanır; koyu temada açık zeminde açık yazı çıkardı. Bu yüzden devre dışıyken yalnızca
+    /// <c>disabled:</c> varyantlarının renkleri uygulanır, yoksa özgün renkler (Windows'un devre dışı görünümü) kalır.
+    /// </summary>
+    internal static (Color? Back, Color? Fore) ColorTargets(Control control, TwStyle style, TwApplyContext context)
+    {
+        if (context.DesignMode || !(control is TextBoxBase) || control.Enabled) return (style.BackColor, style.ForeColor);
+        var disabled = context.Parsed.ResolveExact(TwState.Disabled, context.State);
+        return (disabled.BackColor, disabled.ForeColor);
     }
 
     /// <summary>Kanalın rengini uygulama kodu değiştirdiyse (örn. durum rengi) class'lar o kanala bir daha dokunmaz.</summary>
@@ -364,14 +379,37 @@ public class WinFormsApplier : IStyleApplier
         if (!style.Margin.IsEmpty)
         {
             var margin = style.Margin.ApplyTo(original.Margin, scale);
-            if (control.Margin != margin) control.Margin = margin;
             applied.Margin = true;
+            applied.DesiredMargin = margin;
+            if (control.Margin != margin) control.Margin = margin;
         }
         else if (applied.Margin)
         {
-            control.Margin = original.Margin;
             applied.Margin = false;
+            applied.DesiredMargin = null;
+            control.Margin = original.Margin;
         }
+    }
+
+    // Class'lar padding/margin tanımlıyorsa değer başka biri değiştirince geri yazılır. WinForms'un AutoScale'i değerleri
+    // FormWind'den sonra ölçekleyebilir; kendi AutoScaleMode'u olan iç içe UserControl'lerde bu, handle oluştuktan sonra da
+    // olur (%125'te p-2: 8 → 10 → 12 px). Uygulama kodunun çalışma anındaki atamaları da geri alınır: class'lar o özelliği
+    // yönettiği sürece class kazanır (FW001 bu atamaları uyarır). Class'lar kaldırılınca izleme durur. Ekran değişiminde
+    // WinForms'un ölçeklemesi bir an geri alınır; ardından DPI yenilemesi yeni ölçekle uygular.
+    private static void WatchSpacing(Control control, Applied applied)
+    {
+        if (applied.SpacingWatched || (!applied.Padding && !applied.Margin)) return;
+        applied.SpacingWatched = true;
+        control.PaddingChanged += (_, _) =>
+        {
+            if (applied.DesiredPadding is not Padding desired) return;
+            var expected = control is ButtonBase || control is Label ? FitToText(control, desired) : desired;
+            if (control.Padding != expected) control.Padding = expected;
+        };
+        control.MarginChanged += (_, _) =>
+        {
+            if (applied.DesiredMargin is Padding desired && control.Margin != desired) control.Margin = desired;
+        };
     }
 
     // CSS'te padding kutuyu büyütür; AutoSize kapalı bir buton ya da etikette ise içeriği daraltır. Kalan yükseklik
@@ -585,7 +623,9 @@ public class WinFormsApplier : IStyleApplier
         public BorderStyle? NativeBorder;
         public bool Hidden;
         public Padding? DesiredPadding;
+        public Padding? DesiredMargin;
         public bool FitHooked;
+        public bool SpacingWatched;
     }
 
     private sealed class ChannelState

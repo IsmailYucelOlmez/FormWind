@@ -30,5 +30,6 @@ public sealed class TwSides
         Right is int right ? Scale(right, scale) : fallback.Right,
         Bottom is int bottom ? Scale(bottom, scale) : fallback.Bottom);
 
-    public static int Scale(int pixels, float scale) => (int)Math.Round(pixels * scale);
+    // WinForms'un ölçeklemesi gibi .5 yukarı yuvarlanır (2 px %125'te 3 olur, bankacı yuvarlamasıyla 2 olurdu).
+    public static int Scale(int pixels, float scale) => (int)Math.Round(pixels * scale, MidpointRounding.AwayFromZero);
 }

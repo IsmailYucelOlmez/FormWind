@@ -13,6 +13,7 @@ internal sealed class TwBinding
     private TwOriginal? _original;
     private bool _hovered;
     private bool _pressed;
+    private bool _reappliedOnHandle;
     private readonly HashSet<Control> _hookedDescendants = new HashSet<Control>();
 
     private TwParsed? _lastParsed;
@@ -41,7 +42,18 @@ internal sealed class TwBinding
         // Ekran değişimi formun DpiChanged olayıyla güvenilir biçimde gelir (alt kontrollerin olayları .NET Framework'te
         // her zaman tetiklenmez); kontrolün formu bulunduğunda sağlayıcı ona abone olur.
         _control.ParentChanged += (_, _) => _owner.HookForm(_control);
-        _control.HandleCreated += (_, _) => _owner.HookForm(_control);
+        // InitializeComponent'teki SetClasses ölçeklenmiş değerleri atar; formun AutoScale'i (ResumeLayout'ta) aynı padding,
+        // margin ve boyutları bir kez daha ölçekler (%125'te 8 px → 10 → 12). Handle, ölçeklemeden sonra ve Load'dan önce
+        // oluşur: class'lar burada yeniden uygulanınca değerler doğruya döner, Load'daki atamalar da sonra gelir.
+        // Yalnızca ilk handle'da: bazı atamalar (örn. ComboBox'ın DrawMode'u) handle'ı yeniden oluşturur ve her
+        // oluşumda yeniden uygulamak sonsuz döngü olurdu.
+        _control.HandleCreated += (_, _) =>
+        {
+            _owner.HookForm(_control);
+            if (_reappliedOnHandle) return;
+            _reappliedOnHandle = true;
+            Refresh(force: true);
+        };
         _owner.HookForm(_control);
         if (_control is Form form) form.DpiChanged += OnDpiChanged;
         if (_control is CheckBox checkBox) checkBox.CheckedChanged += OnStateChanged;

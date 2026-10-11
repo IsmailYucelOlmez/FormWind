@@ -127,5 +127,198 @@ public class ConverterTests
         Assert.Equal(Color.FromArgb(90, 140, 60), style.ForeColor);
         Assert.Equal(13f, style.FontSizePx);
     }
+
+    // Visual Studio'nun yeni Designer'ı "this." yazmaz; Git Extensions'ın 189 Designer dosyasının hiçbirinde yoktu.
+    private const string ModernDesigner = """
+        namespace Demo
+        {
+            partial class SettingsForm
+            {
+                private System.ComponentModel.IContainer components = null;
+
+                private void InitializeComponent()
+                {
+                    components = new System.ComponentModel.Container();
+                    DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+                    buttonOk = new Button();
+                    menuFile = new ToolStripMenuItem();
+                    statusList = new GitUI.UserControls.StatusList();
+                    pushButton = new GitUI.ToolStripPushButton();
+                    SuspendLayout();
+                    dataGridViewCellStyle1.BackColor = Color.White;
+                    buttonOk.BackColor = Color.White;
+                    buttonOk.Padding = new Padding(8);
+                    menuFile.ForeColor = Color.Red;
+                    statusList.ForeColor = Color.Black;
+                    pushButton.BackColor = Color.White;
+                    BackColor = Color.White;
+                    ResumeLayout(false);
+                }
+
+                private Button buttonOk;
+                private ToolStripMenuItem menuFile;
+                private GitUI.UserControls.StatusList statusList;
+                private GitUI.ToolStripPushButton pushButton;
+            }
+        }
+        """;
+
+    [Fact]
+    public void Converts_designer_code_without_this_prefix()
+    {
+        var result = new DesignerConverter().Convert(ModernDesigner);
+
+        Assert.Contains("this.tailwindProvider1.SetClasses(buttonOk, \"bg-white p-2\");", result.Source);
+        Assert.Contains("this.tailwindProvider1.SetClasses(this, \"bg-white\");", result.Source);
+        Assert.DoesNotContain("buttonOk.BackColor", result.Source);
+        Assert.Contains("this.tailwindProvider1 = new FormWind.TailwindProvider(this.components);", result.Source);
+    }
+
+    [Fact]
+    public void Leaves_toolstrip_items_and_local_cell_styles_alone()
+    {
+        var result = new DesignerConverter().Convert(ModernDesigner);
+
+        // Control olmayan öğeler SetClasses alamaz: satır kalır, not düşülür.
+        Assert.Contains("menuFile.ForeColor = Color.Red;", result.Source);
+        Assert.Contains("pushButton.BackColor = Color.White;", result.Source);
+        Assert.DoesNotContain("SetClasses(menuFile", result.Source);
+        Assert.DoesNotContain("SetClasses(pushButton", result.Source);
+        Assert.Contains(result.Controls, c => c.Control == "menuFile" && c.Notes.Exists(n => n.Contains("Control değil")));
+        // Yerel hücre stili hiç dokunulmaz.
+        Assert.Contains("dataGridViewCellStyle1.BackColor = Color.White;", result.Source);
+        Assert.DoesNotContain(result.Controls, c => c.Control == "dataGridViewCellStyle1");
+        // Uygulamanın kendi kontrolü: notla dönüştürülür.
+        Assert.Contains("SetClasses(statusList, \"text-black\")", result.Source);
+        Assert.Contains(result.Controls, c => c.Control == "statusList" && c.Notes.Exists(n => n.Contains("doğrulanamadı")));
+    }
+
+    [Fact]
+    public void Local_controls_are_referenced_without_this()
+    {
+        const string source = """
+            partial class AboutForm
+            {
+                private System.ComponentModel.IContainer components = null;
+
+                private void InitializeComponent()
+                {
+                    TableLayoutPanel tableLayoutPanel1;
+                    components = new System.ComponentModel.Container();
+                    tableLayoutPanel1 = new TableLayoutPanel();
+                    tableLayoutPanel1.Padding = new Padding(8);
+                }
+            }
+            """;
+        var result = new DesignerConverter().Convert(source);
+
+        Assert.Contains("this.tailwindProvider1.SetClasses(tableLayoutPanel1, \"p-2\");", result.Source);
+    }
+
+    [Fact]
+    public void Existing_components_container_is_reused_not_recreated()
+    {
+        // Yeni Designer "components = new ..." yazar; ikinci bir kapsayıcı provider'ı dispose edilmeyen ilk kapsayıcıda bırakırdı.
+        var result = new DesignerConverter().Convert(ModernDesigner);
+
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(result.Source, @"components\s*=\s*new"));
+        var lines = result.Source.Split('\n');
+        int container = System.Array.FindIndex(lines, l => l.Contains("components = new"));
+        Assert.Contains("this.tailwindProvider1 = new FormWind.TailwindProvider(this.components);", lines[container + 1]);
+    }
+
+    [Fact]
+    public void Adds_a_components_field_when_the_class_has_none_and_notes_disposal()
+    {
+        const string source = """
+            namespace Demo;
+
+            internal partial class FilterToolBar
+            {
+                private void InitializeComponent()
+                {
+                    filterBox = new ToolStripTextBox();
+                    Padding = new Padding(0);
+                }
+
+                private ToolStripTextBox filterBox;
+            }
+            """;
+        var result = new DesignerConverter().Convert(source);
+
+        Assert.Contains("private System.ComponentModel.IContainer components = null;", result.Source);
+        Assert.Contains("this.components = new System.ComponentModel.Container();", result.Source);
+        Assert.Contains(result.FileNotes, n => n.Contains("components.Dispose()"));
+    }
+
+    [Fact]
+    public void Provider_field_is_added_after_protected_internal_fields()
+    {
+        const string source = """
+            namespace Demo;
+
+            partial class GitExtensionsDialog
+            {
+                private System.ComponentModel.IContainer components = null;
+
+                private void InitializeComponent()
+                {
+                    MainPanel = new Panel();
+                    MainPanel.Padding = new Padding(12);
+                }
+
+                protected internal Panel MainPanel;
+            }
+            """;
+        var result = new DesignerConverter().Convert(source);
+
+        Assert.Contains("    protected internal Panel MainPanel;\n    private FormWind.TailwindProvider tailwindProvider1;", result.Source.Replace("\r\n", "\n"));
+    }
+
+    // Greenshot 1.3'te bulundu: eski Designer süslü parantezi metotla aynı satıra yazar ve sekmeyle girintiler.
+    [Fact]
+    public void Adds_the_provider_when_the_brace_is_on_the_method_line()
+    {
+        const string source = "namespace Demo {\n\tpartial class PleaseWaitForm {\n\t\tprivate System.ComponentModel.IContainer components = null;\n\n" +
+                              "\t\tprivate void InitializeComponent() {\n\t\t\tthis.label1 = new System.Windows.Forms.Label();\n" +
+                              "\t\t\tthis.label1.Padding = new System.Windows.Forms.Padding(10);\n\t\t}\n" +
+                              "\t\tprivate System.Windows.Forms.Label label1;\n\t}\n}";
+        var result = new DesignerConverter().Convert(source);
+
+        Assert.Contains("\t\t\tthis.components = new System.ComponentModel.Container();", result.Source);
+        Assert.Contains("\t\t\tthis.tailwindProvider1 = new FormWind.TailwindProvider(this.components);", result.Source);
+        Assert.Contains("\t\tprivate FormWind.TailwindProvider tailwindProvider1;", result.Source);
+    }
+
+    // Greenshot 1.3'te bulundu: FontFamilyComboBox bir ToolStripComboBox'tır; adından anlaşılmaz, SetClasses derlenmezdi.
+    [Fact]
+    public void Resolves_application_types_through_their_base_types()
+    {
+        var baseTypes = DesignerConverter.CollectBaseTypes(new[]
+        {
+            "internal class FontFamilyComboBox : ToolStripComboBox, IGreenshotLanguageBindable { }",
+            "public class GreenshotButton : Button, IGreenshotLanguageBindable { }",
+            "public class FancyPanel : BasePanel { } public abstract class BasePanel : System.Windows.Forms.Panel { }",
+        });
+
+        Assert.False(DesignerConverter.IsControlType("Greenshot.Editor.Controls.FontFamilyComboBox", baseTypes, out var comboUnverified));
+        Assert.False(comboUnverified);
+        Assert.True(DesignerConverter.IsControlType("GreenshotButton", baseTypes, out var buttonUnverified));
+        Assert.False(buttonUnverified);
+        Assert.True(DesignerConverter.IsControlType("FancyPanel", baseTypes, out var chainUnverified));
+        Assert.False(chainUnverified);
+    }
+
+    [Theory]
+    [InlineData("System.Windows.Forms.Button", true, false)]
+    [InlineData("ToolStripMenuItem", false, false)]
+    [InlineData("System.Windows.Forms.DataGridViewTextBoxColumn", false, false)]
+    [InlineData("GitUI.UserControls.RevisionGridControl", true, true)]
+    [InlineData("GitUI.ToolStripPushButton", false, true)]
+    public void Classifies_control_types(string type, bool control, bool unverified)
+    {
+        Assert.Equal(control, DesignerConverter.IsControlType(type, out var isUnverified));
+        Assert.Equal(unverified, isUnverified);
+    }
 }
 #endif

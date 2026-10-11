@@ -13,12 +13,15 @@
     .\tools\run-harness.ps1 -Exe C:\apps\MyApp.exe -SelfTest -ExitAfter 60
 .EXAMPLE
     .\tools\run-harness.ps1 -Exe C:\apps\MyApp.exe -Arguments '--file','a.txt' -Dark -Skip DataGridView
+.EXAMPLE
+    .\tools\run-harness.ps1 -Exe C:\apps\MyApp.exe -Dump -ExitAfter 20   # stil uygulamadan değerleri yazar
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Exe,
     [string[]]$Arguments = @(),
     [switch]$Dark,
     [switch]$SelfTest,
+    [switch]$Dump,
     [int]$ExitAfter = 0,
     [string]$Skip = "",
     [string]$WorkingDirectory = ""
@@ -36,6 +39,7 @@ $environment = @{
     DOTNET_STARTUP_HOOKS = $hook
     FORMWIND_DARK        = $(if ($Dark) { '1' } else { $null })
     FORMWIND_SELFTEST    = $(if ($SelfTest) { '1' } else { $null })
+    FORMWIND_DUMP        = $(if ($Dump) { '1' } else { $null })
     FORMWIND_EXIT_AFTER  = $(if ($ExitAfter -gt 0) { "$ExitAfter" } else { $null })
     FORMWIND_SKIP        = $(if ($Skip) { $Skip } else { $null })
 }

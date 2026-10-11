@@ -193,6 +193,127 @@ public class ApplierTests
         Assert.Equal(ColorTranslator.FromHtml("#374151").ToArgb(), button.ForeColor.ToArgb());
     }
 
+    // Dönüştürme aracı Git Extensions'ta denenirken bulundu: %125'te p-2 (8 px) önce FormWind'le 10 px, sonra formun
+    // AutoScale'iyle 12 px oluyordu.
+    [Fact]
+    public void Classes_are_reapplied_after_the_form_auto_scales() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        var panel = new Panel();
+        form.Controls.Add(panel);
+        provider.SetClasses(panel, "p-2");
+        var applied = panel.Padding;
+
+        form.Scale(new SizeF(1.25f, 1.25f)); // InitializeComponent sonundaki AutoScale'in yaptığı
+        Assert.Equal(applied, panel.Padding);
+
+        form.Show(); // handle oluşur
+        Assert.Equal(applied, panel.Padding);
+        form.Close();
+    });
+
+    // Kendi AutoScaleMode'u olan iç içe UserControl'ler handle oluştuktan sonra da ölçeklenebilir (Git Extensions'ta
+    // InteractiveGitActionControl).
+    [Fact]
+    public void Padding_and_margin_survive_scaling_after_the_handle_exists() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), ShowInTaskbar = false };
+        var host = new UserControl();
+        var panel = new Panel();
+        host.Controls.Add(panel);
+        form.Controls.Add(host);
+        form.Show();
+        provider.SetClasses(panel, "p-2 m-1");
+        var padding = panel.Padding;
+        var margin = panel.Margin;
+
+        host.Scale(new SizeF(1.25f, 1.25f));
+
+        Assert.Equal(padding, panel.Padding);
+        Assert.Equal(margin, panel.Margin);
+        form.Close();
+    });
+
+    [Fact]
+    public void Class_padding_wins_over_runtime_assignments_until_classes_are_removed()
+    {
+        using var provider = new TailwindProvider();
+        using var panel = new Panel();
+        provider.SetClasses(panel, "p-2");
+        var padding = panel.Padding;
+
+        panel.Padding = new Padding(20);
+        Assert.Equal(padding, panel.Padding);
+
+        provider.SetClasses(panel, "");
+        panel.Padding = new Padding(20);
+        Assert.Equal(new Padding(20), panel.Padding);
+    }
+
+    [Fact]
+    public void Watching_padding_keeps_fixed_button_fitting()
+    {
+        using var provider = new TailwindProvider();
+        using var button = new Button { Text = "OK", Size = new Size(84, 25) };
+        provider.SetClasses(button, "px-4 py-2 text-sm");
+        var fitted = button.Padding;
+
+        button.Padding = new Padding(0);   // geri alınır: sığdırılmış değere döner
+        Assert.Equal(fitted, button.Padding);
+
+        button.Height = 60;                // büyüyünce istenen değer
+        Assert.Equal(new Padding(16, 8, 16, 8), button.Padding);
+    }
+
+    [Theory]
+    [InlineData(2, 1.25f, 3)]
+    [InlineData(8, 1.25f, 10)]
+    [InlineData(3, 1.5f, 5)]
+    [InlineData(4, 1f, 4)]
+    public void Spacing_scales_with_midpoint_rounding_away_from_zero(int pixels, float scale, int expected) =>
+        Assert.Equal(expected, TwSides.Scale(pixels, scale));
+
+    // ScottPlot demosunda bulundu: imleç görünmesin diye devre dışı bırakılan RichTextBox koyu temada açık zeminde açık
+    // yazıyla çiziliyordu (Windows devre dışı metin kutusunda zemin rengine güvenilir biçimde uymaz, yazı rengine uyar).
+    [Theory]
+    [InlineData(typeof(TextBox))]
+    [InlineData(typeof(RichTextBox))]
+    public void Disabled_native_text_box_keeps_windows_colors_unless_disabled_variants(Type type)
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form();
+        var box = (TextBoxBase)Activator.CreateInstance(type)!;
+        form.Controls.Add(box);
+        provider.SetClasses(box, "bg-gray-900 text-gray-100");
+
+        box.Enabled = false;
+        Assert.False(IsExplicit(box, nameof(Control.BackColor)));
+        Assert.False(IsExplicit(box, nameof(Control.ForeColor)));
+
+        box.Enabled = true;
+        Assert.Equal(ColorTranslator.FromHtml("#111827").ToArgb(), box.BackColor.ToArgb());
+        Assert.Equal(ColorTranslator.FromHtml("#f3f4f6").ToArgb(), box.ForeColor.ToArgb());
+
+        provider.SetClasses(box, "bg-gray-900 text-gray-100 disabled:bg-gray-800 disabled:text-gray-400");
+        box.Enabled = false;
+        Assert.Equal(ColorTranslator.FromHtml("#1f2937").ToArgb(), box.BackColor.ToArgb());
+        Assert.Equal(ColorTranslator.FromHtml("#9ca3af").ToArgb(), box.ForeColor.ToArgb());
+    }
+
+    [Fact]
+    public void Disabled_owner_drawn_controls_keep_class_colors()
+    {
+        using var provider = new TailwindProvider();
+        using var button = new Button();
+        provider.SetClasses(button, "bg-gray-900 text-gray-100");
+
+        button.Enabled = false;
+
+        Assert.Equal(ColorTranslator.FromHtml("#111827").ToArgb(), button.BackColor.ToArgb());
+    }
+
     // Değişmez testlerinin (InvariantTests) bulduğu hataların regresyonları.
 
     [Fact]

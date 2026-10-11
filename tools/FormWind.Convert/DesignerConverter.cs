@@ -25,13 +25,17 @@ public sealed class ControlConversion
 
 public sealed class ConversionResult
 {
-    public ConversionResult(string source, IReadOnlyList<ControlConversion> controls, string providerName, bool providerAdded)
+    public ConversionResult(string source, IReadOnlyList<ControlConversion> controls, string providerName, bool providerAdded, IReadOnlyList<string>? fileNotes = null)
     {
         Source = source;
         Controls = controls;
         ProviderName = providerName;
         ProviderAdded = providerAdded;
+        FileNotes = fileNotes ?? Array.Empty<string>();
     }
+
+    /// <summary>Dosya geneli notlar (örn. eklenen <c>components</c> alanının dispose edilmesi).</summary>
+    public IReadOnlyList<string> FileNotes { get; }
 
     /// <summary>Dönüştürülmüş <c>.Designer.cs</c> içeriği.</summary>
     public string Source { get; }
@@ -55,13 +59,28 @@ public sealed class ConversionResult
 /// </summary>
 public sealed class DesignerConverter
 {
+    // Visual Studio'nun yeni Designer'ı "this." yazmaz (buttonOk.BackColor = ...); ikisi de tanınır.
     private static readonly Regex AssignmentRx = new Regex(
-        @"^(?<indent>\s*)this\.(?:(?<control>\w+)\.)?(?<property>BackColor|ForeColor|Font|Padding|FlatAppearance\.BorderColor|FlatAppearance\.BorderSize|FlatAppearance\.MouseOverBackColor|FlatAppearance\.MouseDownBackColor)\s*=\s*(?<value>.+?);\s*$",
+        @"^(?<indent>\s*)(?:this\.)?(?:(?<control>\w+)\.)?(?<property>BackColor|ForeColor|Font|Padding|FlatAppearance\.BorderColor|FlatAppearance\.BorderSize|FlatAppearance\.MouseOverBackColor|FlatAppearance\.MouseDownBackColor)\s*=\s*(?<value>.+?);\s*$",
         RegexOptions.CultureInvariant);
 
-    private static readonly Regex ProviderFieldRx = new Regex(@"this\.(?<name>\w+)\s*=\s*new\s+(?:global::)?(?:FormWind\.)?TailwindProvider\(", RegexOptions.CultureInvariant);
-    private static readonly Regex SetClassesRx = new Regex(@"^\s*this\.(?<provider>\w+)\.SetClasses\(this(?:\.(?<control>\w+))?,\s*""(?<classes>[^""]*)""\);\s*$", RegexOptions.CultureInvariant);
+    private static readonly Regex ProviderFieldRx = new Regex(@"(?:this\.)?(?<name>\w+)\s*=\s*new\s+(?:global::)?(?:FormWind\.)?TailwindProvider\(", RegexOptions.CultureInvariant);
+    private static readonly Regex SetClassesRx = new Regex(@"^\s*(?:this\.)?(?<provider>\w+)\.SetClasses\((?:this|(?:this\.)?(?<control>\w+)),\s*""(?<classes>[^""]*)""\);\s*$", RegexOptions.CultureInvariant);
+    private static readonly Regex ComponentsFieldRx = new Regex(@"\b(?:System\.ComponentModel\.)?I?Container\s+components\b", RegexOptions.CultureInvariant);
+    private static readonly Regex ComponentsCreationRx = new Regex(@"^\s*(?:this\.)?components\s*=\s*new\b", RegexOptions.CultureInvariant);
+    private static readonly Regex FieldRx = new Regex(@"^\s*(?:private|protected|internal|public)(?:\s+(?:internal|protected|readonly|static))*\s+[\w.<>,?]+\s+\w+\s*(?:=\s*[^;(]+)?;\s*$", RegexOptions.CultureInvariant);
     private static readonly Regex IntegerRx = new Regex(@"\d+", RegexOptions.CultureInvariant);
+
+    // InitializeComponent'teki oluşturma satırı alanın tipini verir: "this.btnSave = new System.Windows.Forms.Button();".
+    // Yerel değişkenler ("DataGridViewCellStyle style1 = new ...") tip adıyla başladığı için eşleşmez.
+    private static readonly Regex CreationRx = new Regex(@"^\s*(?:this\.)?(?<name>\w+)\s*=\s*new\s+(?:global::)?(?<type>[\w.]+)\s*\(", RegexOptions.CultureInvariant);
+
+    // Tipi WinForms'ta bulunamayan (uygulamanın kendi) öğeleri: adından ToolStrip öğesi ya da kolon olduğu anlaşılanlar.
+    private static readonly Regex NonControlNameRx = new Regex(
+        @"(ToolStrip\w*(Item|Button|Label|Separator|ComboBox|TextBox|ProgressBar|DropDown\w*)|MenuItem|Column|Cell|CellStyle)$", RegexOptions.CultureInvariant);
+
+    private static readonly Dictionary<string, Type> WinFormsTypes = typeof(System.Windows.Forms.Control).Assembly.GetExportedTypes()
+        .GroupBy(t => t.Name).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
 
     private static readonly (string Name, float Px)[] FontSizes =
     {
@@ -92,12 +111,43 @@ public sealed class DesignerConverter
         var indents = new Dictionary<string, string>(StringComparer.Ordinal);
         var remove = new HashSet<int>();
 
+        var types = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var line in lines)
+        {
+            var creation = CreationRx.Match(line);
+            if (creation.Success) types[creation.Groups["name"].Value] = creation.Groups["type"].Value;
+        }
+        var skipped = new HashSet<string>(StringComparer.Ordinal);
+        // Kontrolün kaynakta yazıldığı biçim: "this.btnSave" ya da "btnSave" (yerel değişkenlerde "this." olamaz).
+        var qualified = new Dictionary<string, bool>(StringComparer.Ordinal);
+
         for (int i = 0; i < lines.Count; i++)
         {
             var match = AssignmentRx.Match(lines[i]);
             if (!match.Success) continue;
             var control = match.Groups["control"].Success ? match.Groups["control"].Value : "this";
+            // Yalnızca formun kendisi ve InitializeComponent'te oluşturulan kontroller: yerel nesneler (hücre stilleri)
+            // ve Control olmayan bileşenler (ToolStrip öğeleri, kolonlar) SetClasses alamaz.
+            if (control != "this")
+            {
+                if (!types.TryGetValue(control, out var typeName)) continue;
+                if (!IsControlType(typeName, BaseTypes, out var unverified))
+                {
+                    if (skipped.Add(control))
+                    {
+                        if (!conversions.TryGetValue(control, out var skip)) conversions[control] = skip = new ControlConversion(control);
+                        skip.Notes.Add($"{typeName} bir Control değil; stil satırları bırakıldı.");
+                    }
+                    continue;
+                }
+                if (unverified && skipped.Add(control))
+                {
+                    if (!conversions.TryGetValue(control, out var note)) conversions[control] = note = new ControlConversion(control);
+                    note.Notes.Add($"{typeName} tipi doğrulanamadı; Control olduğu varsayıldı.");
+                }
+            }
             if (!conversions.TryGetValue(control, out var conversion)) conversions[control] = conversion = new ControlConversion(control);
+            if (control != "this") qualified[control] = lines[i].TrimStart().StartsWith("this.", StringComparison.Ordinal);
 
             var classes = Translate(match.Groups["property"].Value, match.Groups["value"].Value, conversion.Notes);
             if (classes is null) continue;
@@ -120,7 +170,8 @@ public sealed class DesignerConverter
         var insertAfter = new Dictionary<int, List<string>>();
         foreach (var conversion in conversions.Values.Where(c => c.Classes.Count > 0))
         {
-            var target = conversion.Control == "this" ? "this" : "this." + conversion.Control;
+            var target = conversion.Control == "this" ? "this"
+                : qualified.TryGetValue(conversion.Control, out var withThis) && withThis ? "this." + conversion.Control : conversion.Control;
             if (existing.TryGetValue(conversion.Control, out var index))
             {
                 var match = SetClassesRx.Match(lines[index]);
@@ -142,10 +193,55 @@ public sealed class DesignerConverter
         }
 
         bool changed = conversions.Values.Any(c => c.Classes.Count > 0);
-        if (changed && providerAdded) AddProvider(output, provider);
+        var fileNotes = new List<string>();
+        if (changed && providerAdded) AddProvider(output, provider, fileNotes);
         else providerAdded = false;
 
-        return new ConversionResult(string.Join(newline, output), conversions.Values.ToList(), provider, providerAdded);
+        return new ConversionResult(string.Join(newline, output), conversions.Values.ToList(), provider, providerAdded, fileNotes);
+    }
+
+    /// <summary>
+    /// Tip WinForms'ta varsa Control'dan türeyip türemediğine bakılır; yoksa (uygulamanın kendi tipi) adına bakılır ve
+    /// <paramref name="unverified"/> true döner.
+    /// </summary>
+    internal static bool IsControlType(string typeName, out bool unverified) => IsControlType(typeName, null, out unverified);
+
+    /// <summary>
+    /// <paramref name="baseTypes"/> uygulamanın kendi tiplerinin taban tipleridir (kaynak koddan: "class FontFamilyComboBox :
+    /// ToolStripComboBox"); zincir bir WinForms tipine ulaşırsa sonuç kesindir.
+    /// </summary>
+    internal static bool IsControlType(string typeName, IReadOnlyDictionary<string, string>? baseTypes, out bool unverified)
+    {
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        var current = typeName;
+        while (visited.Add(current))
+        {
+            var simple = current.Substring(current.LastIndexOf('.') + 1);
+            if (WinFormsTypes.TryGetValue(simple, out var type) && (current == simple || current == type.FullName || current.EndsWith("Forms." + simple, StringComparison.Ordinal)))
+            {
+                unverified = false;
+                return typeof(System.Windows.Forms.Control).IsAssignableFrom(type);
+            }
+            if (baseTypes is null || !baseTypes.TryGetValue(simple, out var baseType)) break;
+            current = baseType;
+        }
+        unverified = true;
+        return !NonControlNameRx.IsMatch(typeName.Substring(typeName.LastIndexOf('.') + 1));
+    }
+
+    /// <summary>Uygulamanın kendi tiplerinin taban tipleri; <see cref="CollectBaseTypes"/> ile kaynak koddan toplanır.</summary>
+    public IReadOnlyDictionary<string, string>? BaseTypes { get; set; }
+
+    private static readonly Regex ClassDeclarationRx = new Regex(@"\bclass\s+(?<name>\w+)(?:<[^>]*>)?\s*:\s*(?<base>[\w.]+)", RegexOptions.CultureInvariant);
+
+    /// <summary>Kaynak dosyalardaki "class X : Y" bildirimlerinden ad → taban tip eşlemesi.</summary>
+    public static Dictionary<string, string> CollectBaseTypes(IEnumerable<string> sources)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var source in sources)
+            foreach (Match match in ClassDeclarationRx.Matches(source))
+                if (!map.ContainsKey(match.Groups["name"].Value)) map[match.Groups["name"].Value] = match.Groups["base"].Value;
+        return map;
     }
 
     /// <summary>Bir atamayı class'lara çevirir; çevrilemiyorsa <c>null</c> (satır kalır, not düşülür).</summary>
@@ -334,27 +430,51 @@ public sealed class DesignerConverter
     private static string Merge(string existing, IEnumerable<string> added) =>
         string.Join(" ", Dedupe(existing.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Concat(added)));
 
-    // Alan ve InitializeComponent başına oluşturma satırı.
-    private static void AddProvider(List<string> lines, string provider)
+    // Alan ve InitializeComponent başına oluşturma satırı. Provider components kapsayıcısına eklenir; böylece formun
+    // Dispose'unda dispose edilir (provider statik bir olaya abone olduğundan dispose edilmezse form bellekte kalır).
+    private static void AddProvider(List<string> lines, string provider, List<string> notes)
     {
         int init = lines.FindIndex(l => Regex.IsMatch(l, @"void\s+InitializeComponent\s*\("));
         if (init < 0) return;
-        int brace = lines.FindIndex(init, l => l.Trim() == "{");
+        // Eski Designer süslü parantezi metotla aynı satıra yazar: "private void InitializeComponent() {".
+        int brace = lines[init].TrimEnd().EndsWith("{", StringComparison.Ordinal) ? init : lines.FindIndex(init, l => l.Trim() == "{");
         if (brace < 0) return;
-        var indent = Regex.Match(lines[brace], @"^\s*").Value + "    ";
+        // Girinti ilk kod satırından alınır (sekmeyle girintilenen dosyalar).
+        int firstCode = lines.FindIndex(brace + 1, l => l.Trim().Length > 0);
+        var indent = firstCode >= 0 && lines[firstCode].Trim() != "}"
+            ? Regex.Match(lines[firstCode], @"^\s*").Value
+            : Regex.Match(lines[brace], @"^\s*").Value + "    ";
 
-        int components = lines.FindIndex(brace, l => l.Contains("this.components = new"));
+        bool hasField = lines.Any(l => ComponentsFieldRx.IsMatch(l));
+        int components = lines.FindIndex(brace, l => ComponentsCreationRx.IsMatch(l));
         var creation = new List<string>();
         if (components < 0) creation.Add($"{indent}this.components = new System.ComponentModel.Container();");
         creation.Add($"{indent}this.{provider} = new FormWind.TailwindProvider(this.components);");
         lines.InsertRange(components >= 0 ? components + 1 : brace + 1, creation);
 
-        int lastField = lines.FindLastIndex(l => Regex.IsMatch(l, @"^\s*private\s+[\w.]+\s+\w+;\s*$"));
+        var fields = new List<string> { $"private FormWind.TailwindProvider {provider};" };
+        if (!hasField)
+        {
+            fields.Insert(0, "private System.ComponentModel.IContainer components = null;");
+            if (!lines.Any(l => l.Contains("components.Dispose(") || l.Contains("components?.Dispose(")))
+                notes.Add("Sınıfta components alanı yoktu; eklendi. Dispose(bool) içinde components.Dispose() çağrılmalı, yoksa TailwindProvider dispose edilmez.");
+        }
+
+        int lastField = lines.FindLastIndex(l => FieldRx.IsMatch(l));
         if (lastField >= 0)
         {
             var fieldIndent = Regex.Match(lines[lastField], @"^\s*").Value;
-            lines.Insert(lastField + 1, $"{fieldIndent}private FormWind.TailwindProvider {provider};");
+            lines.InsertRange(lastField + 1, fields.Select(f => fieldIndent + f));
+            return;
         }
+
+        // Hiç alan yoksa sınıfın kapanışından önce: dosya kapsamlı namespace'te son "}", blok namespace'te sondan ikinci.
+        var closings = Enumerable.Range(0, lines.Count).Where(i => lines[i].Trim() == "}").ToList();
+        bool fileScoped = lines.Any(l => Regex.IsMatch(l, @"^\s*namespace\s+[\w.]+\s*;"));
+        int classEnd = fileScoped ? closings.LastOrDefault(-1) : closings.Count >= 2 ? closings[closings.Count - 2] : -1;
+        if (classEnd < 0) return;
+        var classIndent = Regex.Match(lines[classEnd], @"^\s*").Value + "    ";
+        lines.InsertRange(classEnd, fields.Select(f => classIndent + f));
     }
 }
 

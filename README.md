@@ -76,7 +76,9 @@ dotnet new formwind-app -n MyApp --Framework net8.0-windows --Palette v4
 - Aynı varyant içinde sonra gelen class kazanır: `p-2 px-4` → dikey 8 px, yatay 16 px.
 - Tanınmayan class'lar `TailwindProvider.UnknownClasses` olayına (dinleyici yoksa Debug çıktısına) bildirilir.
 - CSS'te padding kutuyu büyütür; WinForms'ta boyutu sabit (`AutoSize` kapalı) bir buton ya da etikette ise içeriği daraltır. Bu kontrollerde padding, yazı tek satıra sığacak kadar kısılır (örn. 25 px yüksekliğindeki bir butona `btn` verildiğinde `py-2` küçülür). Kontrol büyüyünce, fontu ya da metni değişince yeniden hesaplanır ve yer varsa tam değere döner.
+- Padding sığdırma fontu küçültemez: sabit boyutlu bir kontrole fontunu büyüten bir class (örn. `btn`'deki `text-sm font-semibold`) verilirse padding sıfıra inse de yazı sığmayabilir; böyle kontrollerde font class'ı vermeyin ya da kontrolü büyütün.
 - `hidden` kaldırıldığında FormWind'in gizlediği kontrol yeniden görünür olur.
+- **Devre dışı native metin kutuları** (`TextBox`, `RichTextBox`, `MaskedTextBox`): Windows devre dışı metin kutusunda zemin rengine güvenilir biçimde uymaz (rengin ne zaman atandığına göre sistem zeminini çizebilir), yazı rengine ise uyar; koyu temada açık zeminde açık yazı çıkardı. Bu yüzden devre dışıyken yalnızca `disabled:` varyantlarının renkleri uygulanır, yoksa Windows'un kendi devre dışı görünümü (açık zeminde gri yazı) kalır. FormWind'in kendi çizdiği kontroller (`TwTextBox` dahil) bundan etkilenmez.
 - Class rengi ebeveynden kalıtılan renkle aynı olsa da kontrole açıkça atanır; ebeveynin rengi sonradan değişince class rengi değişmez.
 - Class'lar kaldırıldığında (`SetClasses(control, "")`) renk, font, padding, margin, imleç, görünürlük, köşe ve ToolStrip renderer'ı class'lardan önceki değerlerine döner. Boyutlar (`w-*`, `h-*`) geri alınmaz; yerleşim kontrolü sonradan yeniden boyutlandırmış olabilir.
 
@@ -499,7 +501,8 @@ foreach (var issue in TwContrast.Audit(this, tw))
 | DataGridView hücreleri, seçili hücreler ve başlıklar | `cell`, `selected`, `header` |
 
 - Eşik normal metinde 4,5:1, büyük metinde (18 pt ya da 14 pt kalın) 3:1 (WCAG AA). `minimum` parametresiyle değiştirilebilir.
-- Saydam zeminler ebeveynin zeminiyle birleştirilerek hesaplanır. Devre dışı ve gizli kontroller atlanır (WCAG devre dışı öğeleri kapsamaz).
+- Saydam zeminler ebeveynin zeminiyle birleştirilerek hesaplanır. Gizli kontroller atlanır.
+- Devre dışı kontroller WCAG'ın kapsamı dışında olduğundan varsayılan olarak atlanır. `includeDisabled: true` onları da denetler (bölüm adı `disabled text`); bu, devre dışı bir kontrolün içerik göstermek için kullanıldığı durumları yakalar (örn. imleç görünmesin diye devre dışı bırakılmış bir açıklama kutusu). Devre dışı native metin kutularında zemin Windows'un çizdiği sistem zemini sayılır. Harness denetimi bu seçenekle çalıştırır.
 - `transition` geçişi süren renklerde varılacak renk denetlenir; denetim tema değişiminin hemen ardından çağrılabilir.
 - `TwContrast.Ratio(ön, zemin)` iki renk arasındaki oranı verir.
 - Varsayılan bileşenler (`btn-primary`, `btn-ghost`, `card`, `input`, `table`) açık ve koyu temada bu denetimden geçer (`ContrastTests`). `btn-primary` koyu temada da `blue-600`/`blue-700` kullanır; beyaz yazı `blue-500` üzerinde 3,7:1, `blue-400` üzerinde 2,5:1 ile eşiğin altında kalır.
@@ -563,7 +566,16 @@ FormWind.Krypton.KryptonApplier.Register();   // Program.Main içinde
 - `AutoScaleMode.Font` ile tasarlanmış formlarda ekran değişiminde hâlâ sorunlar var (iç TextBox fontu, native buton metni kırpılması, dar grid kolonları); `AutoScaleMode.Dpi` önerilir.
 - Test: `Controls_*_at_150/200_percent` görsel testleri vitrini ayrı bir PerMonitorV2 sürecinde açıp WM_DPICHANGED ile ölçekler (`FormWind.Showcase.exe --snapshot x.png --controls --dpi 192`; yalnızca PerMonitorV2 yapılandırmasıyla etkili). Referans adı sürecin sistem DPI'ını da içerir.
 
-Piksel değerleri kontrolün `DeviceDpi / 96` oranıyla ölçeklenir. Uygulama DPI-aware (örn. `PerMonitorV2`) çalışıyor ama formların AutoScale'i yerleşimi büyütmüyorsa boşluklar büyür, kontroller büyümez ve metinler sığmaz. Bu durumda AutoScale'i düzeltin ya da `TailwindProvider.ScaleWithDpi = false` yapın. DPI-unaware uygulamalarda (çoğu 4.7.2 projesinin varsayılanı) Windows ölçeklemeyi kendisi yapar ve ek ayar gerekmez.
+Piksel değerleri kontrolün `DeviceDpi / 96` oranıyla ölçeklenir; class'lardaki değerler 96 DPI birimidir (`p-2` %125'te 10 px). Uygulamanın kendisinin DPI'a göre ölçeklemediği kontrollerde (örn. AutoScale'i çalışmayan UserControl'ler) bu, özgün değerlerden farklı sonuç verir.
+
+- **Formun AutoScale'i:** `InitializeComponent` içindeki `SetClasses` ölçeklenmiş değeri atar; formun AutoScale'i (sondaki `ResumeLayout`) aynı padding'i bir kez daha ölçeklerdi (%125'te 8 → 10 → 12 px). Kendi `AutoScaleMode`'u olan iç içe UserControl'lerde bu ölçekleme handle oluştuktan sonra da olur. FormWind bunu iki yolla önler:
+  - Class'lar padding ya da margin tanımlıyorsa değer değiştiğinde (`PaddingChanged`/`MarginChanged`) FormWind'in değeri geri yazılır.
+  - Class'lar kontrolün ilk handle'ı oluşunca (ölçeklemeden sonra, `Load`'dan önce) bir kez yeniden uygulanır; boyut ve font da düzelir.
+- **Sonuç:** class'lar padding/margin'i yönettiği sürece uygulama kodunun bu özelliklere çalışma anındaki atamaları geri alınır (FW001 bu atamaları uyarır); uygulamanın değeri için class'tan padding/margin'i kaldırın. Class'lar kaldırılınca izleme durur. Renklerde tersi geçerlidir: uygulamanın ataması [korunur](#uygulama-kodunun-atadığı-renkler). Designer'da izleme yapılmaz. Ekran değişiminde WinForms'un ölçeklemesi bir an geri alınır, ardından DPI yenilemesi yeni ölçekle uygular.
+- Doğrulama: Git Extensions'ın dönüştürülmüş formlarında %125'te özgün uygulamayla karşılaştırıldı; kalan farklar 1 px yuvarlama ve uygulamanın hiç ölçeklemediği kontrollerden geliyor.
+- Ölçeklenen pikseller WinForms gibi yuvarlanır (.5 yukarı).
+
+Uygulama DPI-aware (örn. `PerMonitorV2`) çalışıyor ama formların AutoScale'i yerleşimi büyütmüyorsa boşluklar büyür, kontroller büyümez ve metinler sığmaz. Bu durumda AutoScale'i düzeltin ya da `TailwindProvider.ScaleWithDpi = false` yapın. DPI-unaware uygulamalarda (çoğu 4.7.2 projesinin varsayılanı) Windows ölçeklemeyi kendisi yapar ve ek ayar gerekmez.
 
 ## Designer
 
@@ -580,7 +592,7 @@ tw.SetClasses(btnSave, "btn-primary");
 btnSave.BackColor = Color.Red;   // FW001: 'btnSave' kontrolünün class'ları var; 'BackColor' ataması class'larla çakışır.
 ```
 
-Çalışma zamanında böyle bir atama kazanır: FormWind o renk kanalını uygulamaya bırakır (bkz. [Uygulama kodunun atadığı renkler](#uygulama-kodunun-atadığı-renkler)). Uyarı, bunun bilerek mi yapıldığını sorgulatmak içindir; durum rengi gibi bilinçli atamalarda bastırılabilir.
+Çalışma zamanında renk ataması kazanır: FormWind o renk kanalını uygulamaya bırakır (bkz. [Uygulama kodunun atadığı renkler](#uygulama-kodunun-atadığı-renkler)); durum rengi gibi bilinçli atamalarda uyarı bastırılabilir. Padding ve margin atamaları ise geri alınır, class kazanır (bkz. [DPI](#dpi)); bu durumda uyarı gerçek bir çakışmayı gösterir.
 
 Yalnızca class metni sabit olan çağrılar ve class'ların gerçekten yönettiği özellikler denetlenir (`bg-*` → BackColor, `text-{renk}` → ForeColor, `text-{boyut}` → Font, `p-*` → Padding, `m-*` → Margin, `cursor-*` → Cursor; varsayılan bileşenler dahil). `font-sans` ya da `font-semibold` varken temel `Font` ataması uyarı vermez. Kapatmak için `.editorconfig`'te `dotnet_diagnostic.FW001.severity = none`.
 
@@ -684,6 +696,11 @@ Bu testlerin bulduğu her hata için `ApplierTests` içinde ayrıca açık bir r
 | `-ExitAfter 60` / `FORMWIND_EXIT_AFTER` | Verilen saniye sonra süreci sonlandırır (gözetimsiz çalıştırma). |
 | `-Skip DataGridView,ToolStrip` / `FORMWIND_SKIP` | Bu tipleri stillemez; bir sorunu bir kontrol tipine indirmek için. |
 | `FORMWIND_DISABLE=1` | Harness'i kapatır; aynı senaryoyu FormWind'siz karşılaştırmak için. |
+| `-Dump` / `FORMWIND_DUMP=1` | Hiç stil uygulamaz; her formun kontrollerinin renk, font ve padding değerlerini `dump-<form>.txt` dosyasına yazar. Dönüştürme aracından önce ve sonra çalıştırılıp karşılaştırılır. |
+| `FORMWIND_CLOSE=FormSettings` | Adı verilen formları işlendikten sonra kapatır; açılıştaki modal pencerelerin arkasındaki formlara gözetimsiz ulaşmak için. |
+| `FORMWIND_WALK=Launch` | İlk formdaki bu yazıya sahip butonlara sırayla basar; açılan her formu işler, kapatır ve sonrakine geçer; bitince süreci sonlandırır (örn. bir demo uygulamasının bütün örnekleri). `FORMWIND_WALK_WAIT` form başına bekleme (ms, varsayılan 4000), `FORMWIND_WALK_SKIP=33,40` atlanacak butonların sırası. |
+| `FORMWIND_OPEN=SettingsForm,AboutForm` | Bu form tiplerini yüklü derlemelerde bulup parametresiz constructor'la sırayla açar, işler ve kapatır; menüden ya da tepsiden açılan formlara gözetimsiz ulaşmak için (test amaçlı yansıma). Kapanmayı reddeden formlar zorla dispose edilir. |
+| `-Skip '*'` / `FORMWIND_SKIP=*` | Hiçbir kontrolü stillemez ama ölçer; aynı senaryonun FormWind'siz karşılaştırması için (donma, çizim sayısı, uygulama hataları). |
 
 Log ve görüntüler `%TEMP%\FormWind-Harness\<süreç>-<zaman>\` altına yazılır:
 
@@ -697,9 +714,11 @@ Log ve görüntüler `%TEMP%\FormWind-Harness\<süreç>-<zaman>\` altına yazıl
 | `EXCEPTION`, `UNKNOWN` | Stil uygulanırken çıkan hata; tanınmayan class |
 
 - Startup hook yalnızca .NET (Core) uygulamalarında vardır; trim edilmiş ya da hook'u kapatılmış uygulamalarda yüklenmez. .NET Framework uygulamalarında projeye `FormWind.Harness`'teki `FormWindHarness.cs` eklenip UI iş parçacığında `FormWindHarness.Install()` çağrılmalıdır.
+- Harness yalnızca içerik taşıyan konteynerlere (form, panel, GroupBox, sekme, SplitContainer, UserControl, ToolStrip konteynerleri) iner. Bileşik kontrollerin iç parçaları (örn. `KryptonTextBox`'ın içindeki `TextBox`, `PropertyGrid`'in yardım paneli, `NumericUpDown`'ın düzenleme kutusu) kontrolün kendisine aittir ve stillenmez.
+- Self-test görüntüleri `DrawToBitmap` ile alınır: başlık çubuğu Windows'un çizdiği gibi görünmez ve `RichTextBox` yanlış çizilir. Bu ikisi görüntüdeki hatalardır, uygulamada yoktur.
 - Formlar bir zamanlayıcıyla bulunur; uygulama WinForms ya da WPF mesaj döngüsüyle çalışsa da (örn. Greenshot) olur. Class'lar form gösterildikten sonra uygulandığından açılışta kısa bir an stilsiz görünebilir; o anda uygulamanın atadığı renkler özgün değer sayılır.
 - Bir sorun bulunduğunda önce `FORMWIND_DISABLE=1` ile FormWind'siz tekrarlayın; sorun yine oluyorsa uygulamanındır. Sonra `-Skip` ile sorunu bir kontrol tipine indirin.
-- Git Extensions (.NET 10, startup hook ile) ve Greenshot (.NET Framework 4.8, WPF döngüsü) bu yolla denendi; bulunan sorunlar bu README'deki davranışlara ve testlere dönüştü.
+- Denenen uygulamalar: Git Extensions (.NET 10, startup hook), Greenshot (.NET Framework 4.8, WPF döngüsü), Greenshot 1.3 (.NET Framework 4.7.2, WinForms döngüsü, harness kod olarak), mRemoteNG (.NET 10, DockPanelSuite), Krypton Toolkit örnekleri (.NET 9: grid, giriş formu, ribbon, docking), ScottPlot WinForms demosu (.NET 10, 45 demo, `FORMWIND_WALK` ile). Bulunan sorunlar bu README'deki davranışlara ve testlere dönüştü. Kendi tema motoru olan uygulamalarda (mRemoteNG) uygulamanın atadığı renkler korunduğu için koyu tema kısmen görünür; bu beklenen davranıştır.
 
 ### Görsel regresyon testleri
 
@@ -742,9 +761,14 @@ dotnet run --project tools/FormWind.Convert -- src/MyApp --write
 | `Padding` | `p-*`, `px-*`/`py-*` ya da kenar bazlı (4 px = 1 birim; `[7px]`) |
 | `FlatAppearance` | `BorderSize` → `border-0`/`border`, `BorderColor` → `border-*`, `MouseOverBackColor` → `hover:bg-*`, `MouseDownBackColor` → `active:bg-*` |
 
-- Varsayılan kuru çalıştırmadır: ne değişeceğini ve notları yazar. `--write` dosyaları yerinde günceller; önce commit'leyin.
-- Çevrilen satırlar silinir, yerine `SetClasses` yazılır; kontrolün mevcut `SetClasses` çağrısı varsa class'lar ona eklenir. Dosyada `TailwindProvider` yoksa eklenir.
-- Sistem renkleri (`SystemColors.*`) ve temadakinden farklı font aileleri çevrilmez; satır kalır ve raporda not edilir.
+- Varsayılan kuru çalıştırmadır: ne değişeceğini ve notları yazar. `--write` dosyaları yerinde günceller; önce commit'leyin. Dosyaların BOM'u korunur.
+- Çevrilen satırlar silinir, yerine `SetClasses` yazılır; kontrolün mevcut `SetClasses` çağrısı varsa class'lar ona eklenir. Dosyada `TailwindProvider` yoksa eklenir ve `components` kapsayıcısına eklenerek formla birlikte dispose edilir. Sınıfta `components` alanı yoksa eklenir; `Dispose` onu çağırmıyorsa rapora not düşülür.
+- Visual Studio'nun yeni Designer'ının `this.` yazmadığı kod (`buttonOk.BackColor = ...`) ve yerel değişken olarak üretilen kontroller (`GenerateMember = false`) desteklenir; kontrol kaynakta nasıl yazılmışsa `SetClasses`'a öyle verilir.
+- Yalnızca `InitializeComponent`'te oluşturulan **Control**'ler çevrilir. ToolStrip öğeleri, kolonlar ve yerel hücre stilleri (`dataGridViewCellStyle1`) `SetClasses` alamaz; satırları kalır. Uygulamanın kendi tipleri, hedef klasör ve üst klasöründeki (kardeş projeler) `class X : Y` bildirimleri izlenerek bir WinForms tipine çözülür (örn. `ToolStripComboBox`'tan türeyen bir sınıf çevrilmez); çözülemeyenler notla çevrilir.
+- Eski Designer biçimi (`this.` önekli, süslü parantez metotla aynı satırda, sekmeyle girinti) de desteklenir.
+- Sistem renkleri (`SystemColors.*`), uygulamanın kendi renk ifadeleri (`AppColor.X.GetThemeColor()`), türetilmiş fontlar (`new Font(Font, FontStyle.Bold)`) ve temadakinden farklı font aileleri çevrilmez; satır kalır ve raporda not edilir.
+- **Gerçek projede doğrulama (Greenshot 1.3, .NET Framework 4.7.2):** dönüştürülen proje Visual Studio MSBuild'iyle uyarı ve hata olmadan derlendi; 7 formun 311 kontrolünde renk ve fontlar birebir aynı, padding farkları 1 px (DPI yuvarlaması).
+- **Gerçek projede doğrulama:** Git Extensions'ın 74 Designer dosyasında 360 class üretildi; sonuç uyarı ve hata olmadan derlendi (uyarıları hata sayan, StyleCop kullanan bir projede). Harness'in `-Dump` moduyla dönüşümden önce ve sonra alınan değerlerde 270 kontrolün renk ve fontları birebir aynıydı; padding farkları DPI davranışından geliyordu ve iki kütüphane hatasını ortaya çıkardı (çift ölçekleme; bkz. [DPI](#dpi)).
 - `--config tw.config.json` uygulamanın kendi paletini kullanır; `--tolerance` en yakın renk eşiğini değiştirir.
 
 Vitrin formunun ekran görüntüsü (`--controls` kontroller formunu açar):
@@ -792,6 +816,7 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 - [x] WCAG kontrast denetimi (`TwContrast`), koyu native ipuçları (`DarkToolTips`)
 - [x] Değişmez testleri; gerçek uygulamalarda deneme aracı (`tools/run-harness.ps1`)
 - [ ] Kendi çizen kontroller (örn. owner-draw grid'ler) hücre stillerini yok sayar; koyu temada açık kalabilirler
+- [ ] `KryptonDataGridView` başlıkları Krypton paletiyle çizer: FormWind'in başlık yazı rengi kullanılır ama zemin rengi yok sayılır, koyu temada başlıklar okunmaz olur. `FormWind.Krypton` bu kontrolü henüz kapsamıyor; kontrast denetimi de ekrana çizilen zemini bilemediği için bunu yakalamaz
 - [ ] Vitrinin `tw.config.json` dosyasındaki `btn-primary` koyu renkleri (`blue-500`/`blue-400`) kontrast eşiğinin altında; düzeltmek koyu tema görsel referanslarının yeniden üretilmesini gerektirir
 - [ ] Grid için `row-span`, `grid-rows`; farklı yükseklikte liste satırları; DataGridView VirtualMode yardımcısı
 - [ ] Gölge animasyonları
