@@ -796,7 +796,6 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 - [ ] `AutoScaleMode.Font` forms when moving between screens
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
 - [ ] `KryptonDataGridView` draws headers with the Krypton palette: FormWind's header text color is used but the background color is ignored, so headers become unreadable in dark mode. `FormWind.Krypton` does not cover this control yet, and the contrast audit cannot catch it because it does not know the background painted on screen
-- [ ] The dark `btn-primary` colors (`blue-500`/`blue-400`) in the showcase's `tw.config.json` are below the contrast threshold; fixing them requires regenerating the dark-mode visual baselines
 - [ ] `row-span`, `grid-rows` for grid; list rows with varying heights; a DataGridView VirtualMode helper
 - [ ] Shadow animations
 - [ ] Porting `ClassesEditor` to the .NET 8+ out-of-process Designer with the Designer SDK

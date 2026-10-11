@@ -821,7 +821,6 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 - [x] Değişmez testleri; gerçek uygulamalarda deneme aracı (`tools/run-harness.ps1`)
 - [ ] Kendi çizen kontroller (örn. owner-draw grid'ler) hücre stillerini yok sayar; koyu temada açık kalabilirler
 - [ ] `KryptonDataGridView` başlıkları Krypton paletiyle çizer: FormWind'in başlık yazı rengi kullanılır ama zemin rengi yok sayılır, koyu temada başlıklar okunmaz olur. `FormWind.Krypton` bu kontrolü henüz kapsamıyor; kontrast denetimi de ekrana çizilen zemini bilemediği için bunu yakalamaz
-- [ ] Vitrinin `tw.config.json` dosyasındaki `btn-primary` koyu renkleri (`blue-500`/`blue-400`) kontrast eşiğinin altında; düzeltmek koyu tema görsel referanslarının yeniden üretilmesini gerektirir
 - [ ] Grid için `row-span`, `grid-rows`; farklı yükseklikte liste satırları; DataGridView VirtualMode yardımcısı
 - [ ] Gölge animasyonları
 - [ ] .NET 8+ out-of-process Designer için `ClassesEditor`'ün Designer SDK ile taşınması
