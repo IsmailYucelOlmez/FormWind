@@ -10,9 +10,9 @@ using FormWind.Design;
 namespace FormWind;
 
 /// <summary>
-/// Forma eklendiğinde her kontrole <c>Classes</c> property'si ekler (ToolTip ile aynı mekanizma).
-/// Class'lar parse edilir, kontrolün durumuna (hover, focus, active, disabled, dark) göre birleştirilir
-/// ve uygun <see cref="IStyleApplier"/> ile uygulanır.
+/// Adds a <c>Classes</c> property to every control on the form (the same mechanism as ToolTip).
+/// Classes are parsed, merged for the control's state (hover, focus, active, disabled, dark)
+/// and applied with the matching <see cref="IStyleApplier"/>.
 /// </summary>
 [Designer(typeof(Design.TailwindProviderDesigner))]
 [ProvideProperty("Classes", typeof(Control))]
@@ -50,14 +50,14 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         container.Add(this);
     }
 
-    /// <summary>Bir kontrolün class'larında tanınmayan değer bulunduğunda tetiklenir. Dinleyici yoksa Debug çıktısına yazılır.</summary>
+    /// <summary>Raised when a control's classes contain unknown values. Written to the Debug output when nobody listens.</summary>
     public event EventHandler<TwUnknownClassesEventArgs>? UnknownClasses;
 
     /// <summary>
-    /// Stil uygulanırken bir hata çıktığında tetiklenir (örn. özel bir <see cref="IStyleApplier"/> ya da
-    /// <see cref="SetRowClasses"/> kuralı istisna fırlattı). Hata yutulur: uygulama çalışmaya devam eder, kontrol o ana
-    /// kadar uygulanan stille kalır. Dinleyici yoksa Debug çıktısına yazılır; dinleyici istisnayı yeniden fırlatabilir.
-    /// Bellek yetersizliği gibi kritik istisnalar yakalanmaz.
+    /// Raised when an error occurs while applying styles (e.g. a custom <see cref="IStyleApplier"/> or a
+    /// <see cref="SetRowClasses"/> rule threw). The error is swallowed: the application keeps running and the control keeps
+    /// the style applied so far. Written to the Debug output when nobody listens; a listener may rethrow the exception.
+    /// Critical exceptions such as out-of-memory are not caught.
     /// </summary>
     public event EventHandler<TwStyleErrorEventArgs>? StyleError;
 
@@ -87,9 +87,9 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     }
 
     /// <summary>
-    /// Boşluk, boyut, köşe ve kenarlık değerlerini kontrolün DPI'ına göre ölçekler (96 DPI = 1).
-    /// Form yerleşimi DPI ile ölçeklenmeyen (AutoScale çalışmayan) uygulamalarda kapatılmalıdır;
-    /// aksi halde class değerleri büyürken kontrol boyutları sabit kalır.
+    /// Scales spacing, size, corner and border values with the control's DPI (96 DPI = 1).
+    /// Turn it off in applications whose form layout does not scale with DPI (AutoScale not working);
+    /// otherwise class values grow while control sizes stay fixed.
     /// </summary>
     [Category("FormWind"), DefaultValue(true), Description("Scales class pixel values with the control's DPI.")]
     public bool ScaleWithDpi
@@ -104,13 +104,9 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     }
 
     /// <summary>
-    /// Koyu temada native kaydırma çubuklarını (panel, TextBox, ListBox, TreeView, ListView, DataGridView) da
-    /// koyulaştırır. Windows 10 1809+ gerekir ve belgelenmemiş bir tema adı kullanır; sorun olursa kapatılabilir.
-    /// </summary>
-    /// <summary>
-    /// Windows Yüksek Karşıtlık modu açıkken class renkleri yerine sistem renklerini kullanır (zemin ve yazı özgün değerlerine
-    /// döner, seçili ve hover parçaları vurgu rengini alır, gölge ve gradient çizilmez); <c>forced-colors:</c> varyantları
-    /// yine uygulanır. Boşluk, yazı boyutu, köşe ve yerleşim değişmez. Mod çalışırken değişirse stiller yeniden uygulanır.
+    /// In Windows High Contrast mode, uses system colors instead of class colors (background and text return to their original
+    /// values, selected and hovered parts get the highlight color, shadows and gradients are not drawn); <c>forced-colors:</c>
+    /// variants still apply. Spacing, font size, corners and layout do not change. Styles are reapplied when the mode changes.
     /// </summary>
     [Category("FormWind"), DefaultValue(true), Description("Uses system colors in High Contrast mode.")]
     public bool RespectHighContrast
@@ -124,11 +120,11 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         }
     }
 
-    /// <summary>Sistem renkleri kullanılıyor mu (Yüksek Karşıtlık açık ve <see cref="RespectHighContrast"/>).</summary>
+    /// <summary>Whether system colors are used (High Contrast is on and <see cref="RespectHighContrast"/>).</summary>
     [Browsable(false)]
     public bool HighContrastActive => _respectHighContrast && !DesignMode && TwHighContrast.IsActive;
 
-    /// <summary>Kontrolden bağımsız durum: koyu tema ve Yüksek Karşıtlık.</summary>
+    /// <summary>Control-independent state: dark mode and High Contrast.</summary>
     internal TwState BaseState =>
         (_darkMode ? TwState.Dark : TwState.None) | (HighContrastActive ? TwState.HighContrast : TwState.None);
 
@@ -137,6 +133,10 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         if (_respectHighContrast) RefreshAll();
     }
 
+    /// <summary>
+    /// Also darkens native scrollbars (panel, TextBox, ListBox, TreeView, ListView, DataGridView) in dark mode. Requires
+    /// Windows 10 1809+ and uses an undocumented theme name; turn it off if it causes problems.
+    /// </summary>
     [Category("FormWind"), DefaultValue(true), Description("Also darkens native scrollbars in dark mode.")]
     public bool DarkScrollbars
     {
@@ -150,9 +150,9 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     }
 
     /// <summary>
-    /// Koyu temada native ipucu pencerelerini (ToolTip bileşenleri, ToolStrip öğe ipuçları) da koyulaştırır. İpuçları
-    /// uygulamanın bileşenlerine ait olduğundan etki iş parçacığı genelindedir. Windows 10 1809+ gerekir ve belgelenmemiş
-    /// bir tema adı kullanır; sorun olursa kapatılabilir.
+    /// Also darkens native tooltip windows (ToolTip components, ToolStrip item tooltips) in dark mode. Because tooltips
+    /// belong to the application's components, the effect is thread-wide. Requires Windows 10 1809+ and uses an undocumented
+    /// theme name; turn it off if it causes problems.
     /// </summary>
     [Category("FormWind"), DefaultValue(true), Description("Also darkens native tooltips in dark mode.")]
     public bool DarkToolTips
@@ -171,7 +171,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         if (!DesignMode) TwNativeToolTips.SetDark(this, _darkMode && _darkToolTips);
     }
 
-    /// <summary>Bu provider'ın kullandığı tema. Atanmamışsa <see cref="TwTheme.Current"/>.</summary>
+    /// <summary>The theme used by this provider. <see cref="TwTheme.Current"/> when not set.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TwTheme Theme
     {
@@ -210,8 +210,8 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     }
 
     /// <summary>
-    /// Satır bazlı koşullu stil. Kural her satır için class'lar döndürür (null = değişiklik yok); koyu tema
-    /// varyantları da çalışır. <c>null</c> kural mevcut kuralı kaldırır.
+    /// Conditional styles per row. The rule returns classes for each row (null = no change); dark mode
+    /// variants work too. A <c>null</c> rule removes the current rule.
     /// </summary>
     public void SetRowClasses(DataGridView grid, Func<DataGridViewRow, string?>? rule)
     {
@@ -253,7 +253,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     internal TwParsed? GetParsed(Control control) =>
         _bindings.TryGetValue(control, out var binding) ? binding.Parsed : null;
 
-    /// <summary>Kontrolün stilini yeniden hesaplar (örn. uygulama kodu bir property'yi değiştirdikten sonra).</summary>
+    /// <summary>Recalculates the control's style (e.g. after application code changed a property).</summary>
     public void Refresh(Control control)
     {
         if (control != null && _bindings.TryGetValue(control, out var binding))
@@ -264,9 +264,9 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     private readonly HashSet<Control> _clearOnEdit = new HashSet<Control>();
 
     /// <summary>
-    /// Kontrolün doğrulama hatasını verir (<c>null</c>/boş temizler). Hata varken kontrole <c>invalid:</c> varyantı uygulanır;
-    /// kontrol bir <see cref="TwField"/> içindeyse hata metni alanın altında gösterilir. Kullanıcı değeri değiştirince hata
-    /// kendiliğinden temizlenir.
+    /// Sets the control's validation error (<c>null</c>/empty clears it). While there is an error the <c>invalid:</c> variant is
+    /// applied; if the control is inside a <see cref="TwField"/>, the message is shown below the field. The error clears itself
+    /// when the user changes the value.
     /// </summary>
     public void SetError(Control control, string? message)
     {
@@ -307,7 +307,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     [Browsable(false)]
     public bool HasErrors => _errors.Count > 0;
 
-    /// <summary>Hata eklendiğinde ya da temizlendiğinde.</summary>
+    /// <summary>When an error is added or cleared.</summary>
     public event EventHandler? ErrorsChanged;
 
     public void ClearErrors()
@@ -316,8 +316,8 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     }
 
     /// <summary>
-    /// <paramref name="container"/> içindeki tüm <see cref="TwField"/>'ların kurallarını denetler, hataları gösterir ve ilk
-    /// hatalı alana odaklanır. Hepsi geçerliyse <c>true</c>.
+    /// Checks the rules of every <see cref="TwField"/> in <paramref name="container"/>, shows the errors and focuses the first
+    /// invalid field. <c>true</c> when all are valid.
     /// </summary>
     public bool Validate(Control container)
     {
@@ -348,7 +348,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         BreakpointChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Bir formun genişlik eşiği değiştiğinde (sm:/md:… varyantları yeniden uygulandıktan sonra).</summary>
+    /// <summary>When a form's width breakpoint changes (after the sm:/md:… variants have been reapplied).</summary>
     public event EventHandler? BreakpointChanged;
 
     internal bool HasError(Control control) =>

@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Menü ve araç çubuğu renkleri. Boş bırakılan renkler varsayılan açık temadan gelir.</summary>
+/// <summary>Menu and toolbar colors. Colors left empty come from the default light theme.</summary>
 internal sealed class TwMenuColors
 {
     public Color Back { get; set; } = Color.White;
@@ -17,13 +17,13 @@ internal sealed class TwMenuColors
     public Color ItemHoverFore { get; set; } = ColorTranslator.FromHtml("#111827"); // gray-900
     public Color Separator { get; set; } = ColorTranslator.FromHtml("#e5e7eb");
     public Color Accent { get; set; } = ColorTranslator.FromHtml("#2563eb");        // blue-600
-    /// <summary>Şeride gömülü metin kutusu ve açılır kutuların (<see cref="ToolStripTextBox"/>, <see cref="ToolStripComboBox"/>) zemini.</summary>
+    /// <summary>Background of text boxes and combo boxes hosted in a strip (<see cref="ToolStripTextBox"/>, <see cref="ToolStripComboBox"/>).</summary>
     public Color InputBack { get; set; } = Color.White;
     public Color? BottomBorder { get; set; }
     public float ItemRadius { get; set; } = 4;
 }
 
-/// <summary>Tema renkleriyle çizen ToolStrip renderer'ı: düz yüzeyler, yuvarlak hover, ince kenarlıklar.</summary>
+/// <summary>ToolStrip renderer that paints with theme colors: flat surfaces, rounded hover, thin borders.</summary>
 internal class TwToolStripRenderer : ToolStripRenderer
 {
     public TwToolStripRenderer(TwMenuColors colors) => Colors = colors ?? throw new ArgumentNullException(nameof(colors));
@@ -137,8 +137,8 @@ internal class TwToolStripRenderer : ToolStripRenderer
 }
 
 /// <summary>
-/// MenuStrip, ToolStrip, StatusStrip ve ContextMenuStrip'i stiller. Temel class'lar şeridin kendisine,
-/// <c>menu:</c> açılan menülere, <c>item:</c> öğelere uygulanır:
+/// Styles MenuStrip, ToolStrip, StatusStrip and ContextMenuStrip. Base classes apply to the strip itself,
+/// <c>menu:</c> to drop-down menus and <c>item:</c> to items:
 /// <c>bg-white text-gray-700 border-b menu:bg-white menu:border-gray-200 item:hover:bg-gray-100 item:rounded-md divide-gray-200</c>.
 /// </summary>
 internal class ToolStripApplier : WinFormsApplier
@@ -249,7 +249,7 @@ internal class ToolStripApplier : WinFormsApplier
         && a.BottomBorder?.ToArgb() == b.BottomBorder?.ToArgb()
         && a.ItemRadius == b.ItemRadius;
 
-    /// <summary>Şerit/menü renklerini temel class'lar ile <c>menu:</c> ve <c>item:</c> parçalarından kurar.</summary>
+    /// <summary>Builds the strip/menu colors from the base classes and the <c>menu:</c> and <c>item:</c> parts.</summary>
     public static TwMenuColors BuildColors(TwStyle style, TwApplyContext context)
     {
         var state = context.State & ~(TwState.Hover | TwState.Active);
@@ -287,11 +287,11 @@ internal class ToolStripApplier : WinFormsApplier
 }
 
 /// <summary>
-/// Şeride gömülü metin kutusu ve açılır kutular (<see cref="ToolStripTextBox"/>, <see cref="ToolStripComboBox"/>) şeridin
-/// renderer'ıyla çizilmez, native kontrolün kendi renkleriyle kalır; koyu şeritte beyaz kutular çıkardı (açılır kutunun
-/// çerçevesi ve ok düğmesi için bkz. <see cref="TwHostedComboPainter"/>). Şeridin yazı rengini
-/// ve <see cref="TwMenuColors.InputBack"/> zeminini alırlar; renderer'ı paylaşan alt menülerdekiler de. Uygulamanın bu
-/// kontrollere atadığı renklere dokunulmaz; class'lar kaldırılınca özgün renkler geri gelir.
+/// Text boxes and combo boxes hosted in a strip (<see cref="ToolStripTextBox"/>, <see cref="ToolStripComboBox"/>) are not
+/// painted by the strip's renderer and keep the native control's own colors; on a dark strip they showed up as white
+/// boxes (for the combo box frame and arrow button see <see cref="TwHostedComboPainter"/>). They get the strip's text color
+/// and the <see cref="TwMenuColors.InputBack"/> background, as do those in sub-menus sharing the renderer. Colors the
+/// application assigned to these controls are left alone; removing the classes restores the original colors.
 /// </summary>
 internal static class TwHostedColors
 {
@@ -308,8 +308,8 @@ internal static class TwHostedColors
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, object> Watched =
         new System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, object>();
 
-    /// <param name="strip">Şerit.</param>
-    /// <param name="colors">Şeridin renkleri; <c>null</c> = class'lar kaldırıldı, özgün renkler geri yüklenir.</param>
+    /// <param name="strip">The strip.</param>
+    /// <param name="colors">The strip's colors; <c>null</c> = classes removed, the original colors are restored.</param>
     public static void Update(ToolStrip strip, TwMenuColors? colors)
     {
         if (colors != null && !Watched.TryGetValue(strip, out _))
@@ -376,9 +376,9 @@ internal static class TwHostedColors
 }
 
 /// <summary>
-/// Form'un başlık çubuğunu stiller (Windows 10 20H1+: koyu başlık; Windows 11: başlık, metin ve çerçeve rengi).
-/// Koyu tema açıkken başlık çubuğu otomatik koyulaşır; renkler <c>caption:bg-*</c>, <c>caption:text-*</c>,
-/// <c>caption:border-*</c> ile verilir. Eski Windows sürümlerinde sessizce yok sayılır.
+/// Styles a Form's title bar (Windows 10 20H1+: dark title bar; Windows 11: caption, text and border colors).
+/// The title bar turns dark automatically in dark mode; colors are given with <c>caption:bg-*</c>, <c>caption:text-*</c>,
+/// <c>caption:border-*</c>. Silently ignored on older Windows versions.
 /// </summary>
 internal class FormApplier : WinFormsApplier
 {
@@ -402,10 +402,10 @@ internal class FormApplier : WinFormsApplier
 }
 
 /// <summary>
-/// MDI kabuğunun çocuk pencerelerin arkasındaki alanı (<see cref="MdiClient"/>) formun zeminini almaz, sistemin
-/// <see cref="SystemColors.AppWorkspace"/> rengiyle kalır; koyu temada açık gri bir alan çıkardı. Form'un <c>bg-*</c>
-/// rengi bu alana da verilir ve form zemini değiştikçe (geçişler dahil) izlenir. Uygulamanın MdiClient'a atadığı renge
-/// dokunulmaz; class'lar zemini bırakınca özgün renk geri yüklenir.
+/// The area behind an MDI parent's child windows (<see cref="MdiClient"/>) does not take the form's background and stays
+/// <see cref="SystemColors.AppWorkspace"/>; in dark mode it showed up as a light gray area. The form's <c>bg-*</c>
+/// color is given to this area too and followed as the form background changes (transitions included). A color the
+/// application assigned to the MdiClient is left alone; the original color is restored when the classes release the background.
 /// </summary>
 internal sealed class TwMdiBackground
 {

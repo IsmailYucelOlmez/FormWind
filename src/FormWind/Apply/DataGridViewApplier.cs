@@ -6,16 +6,16 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// DataGridView'u parça önekleriyle stiller:
+/// Styles a DataGridView with part prefixes:
 /// <list type="bullet">
-/// <item><description>temel class'lar: arka plan (<c>bg-*</c>), metin, font, kenarlık; <c>divide-x/y</c> ve <c>divide-{renk}</c> ızgara çizgileri</description></item>
-/// <item><description><c>cell:</c> tüm hücreler (renk, font, <c>px-*</c>/<c>py-*</c>, <c>text-right</c>)</description></item>
-/// <item><description><c>alt:</c> alternatif satırlar, <c>selected:</c> seçili hücreler</description></item>
-/// <item><description><c>header:</c> kolon başlıkları (renk, font, padding, <c>h-*</c>, <c>border-0</c>)</description></item>
-/// <item><description><c>row:</c> satır yüksekliği (<c>row:h-10</c>) ve satır hover'ı (<c>row:hover:bg-*</c>)</description></item>
-/// <item><description><c>row-header:</c> satır başlıkları (<c>row-header:hidden</c>)</description></item>
+/// <item><description>base classes: background (<c>bg-*</c>), text, font, border; <c>divide-x/y</c> and <c>divide-{color}</c> grid lines</description></item>
+/// <item><description><c>cell:</c> all cells (color, font, <c>px-*</c>/<c>py-*</c>, <c>text-right</c>)</description></item>
+/// <item><description><c>alt:</c> alternating rows, <c>selected:</c> selected cells</description></item>
+/// <item><description><c>header:</c> column headers (color, font, padding, <c>h-*</c>, <c>border-0</c>)</description></item>
+/// <item><description><c>row:</c> row height (<c>row:h-10</c>) and row hover (<c>row:hover:bg-*</c>)</description></item>
+/// <item><description><c>row-header:</c> row headers (<c>row-header:hidden</c>)</description></item>
 /// </list>
-/// Her uygulamada stiller kontrolün orijinal değerlerinden yeniden kurulur; class kaldırıldığında orijinale dönülür.
+/// Styles are rebuilt from the control's original values on every application; removing the classes restores the original.
 /// </summary>
 internal class DataGridViewApplier : WinFormsApplier
 {
@@ -245,7 +245,7 @@ internal class DataGridViewApplier : WinFormsApplier
         public bool RowHeadersVisible;
         public DataGridViewCellStyle DefaultCellStyle = null!;
 
-        /// <summary>Özgün değerlerin yakalandığı DPI ve son uygulanan DPI (kolon genişliklerini ölçeklemek için).</summary>
+        /// <summary>DPI at which the original values were captured and the last applied DPI (to scale column widths).</summary>
         public int Dpi = 96;
         public int LastDpi;
         public DataGridViewCellStyle AlternatingRowsDefaultCellStyle = null!;
@@ -274,7 +274,7 @@ internal class DataGridViewApplier : WinFormsApplier
     }
 }
 
-/// <summary><c>row:h-*</c> yüksekliğini VirtualMode/DataSource grid'lerine satırları paylaşımdan çıkarmadan verir.</summary>
+/// <summary>Supplies <c>row:h-*</c> heights to VirtualMode/DataSource grids without unsharing rows.</summary>
 internal sealed class TwGridRowHeights
 {
     private static readonly ConditionalWeakTable<DataGridView, TwGridRowHeights> Table = new ConditionalWeakTable<DataGridView, TwGridRowHeights>();
@@ -287,17 +287,17 @@ internal sealed class TwGridRowHeights
         };
     }
 
-    /// <summary>Class'tan gelen yükseklik; <c>null</c> = satırlar kendi yüksekliğinde.</summary>
+    /// <summary>Height from the classes; <c>null</c> = rows keep their own height.</summary>
     public int? Height { get; set; }
 
-    /// <summary>Grid RowHeightInfoNeeded'ı yalnızca bu koşullarda tetikler.</summary>
+    /// <summary>The grid raises RowHeightInfoNeeded only under these conditions.</summary>
     public static bool Applies(DataGridView grid) =>
         (grid.VirtualMode || grid.DataSource != null) && grid.AutoSizeRowsMode == DataGridViewAutoSizeRowsMode.None;
 
     public static TwGridRowHeights For(DataGridView grid) => Table.GetValue(grid, g => new TwGridRowHeights(g));
 }
 
-/// <summary>DataGridView'a satır hover'ı ekler: imlecin altındaki satır <c>row:hover:</c> renkleriyle boyanır.</summary>
+/// <summary>Adds row hover to a DataGridView: the row under the cursor is painted with the <c>row:hover:</c> colors.</summary>
 internal sealed class TwGridHover
 {
     private static readonly ConditionalWeakTable<DataGridView, TwGridHover> Table = new ConditionalWeakTable<DataGridView, TwGridHover>();

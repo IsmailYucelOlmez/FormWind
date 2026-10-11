@@ -4,14 +4,14 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Hesaplanan stili belirli bir kontrol ailesine uygular.</summary>
+/// <summary>Applies the computed style to a family of controls.</summary>
 public interface IStyleApplier
 {
     bool CanApply(Control control);
 
-    /// <param name="control">Stillenecek kontrol.</param>
-    /// <param name="style">Kontrolün o anki durumu için birleştirilmiş stil.</param>
-    /// <param name="context">Parse sonucu, durum, DPI ölçeği ve kontrolün orijinal değerleri.</param>
+    /// <param name="control">The control to style.</param>
+    /// <param name="style">The merged style for the control's current state.</param>
+    /// <param name="context">Parse result, state, DPI scale and the control's original values.</param>
     void Apply(Control control, TwStyle style, TwApplyContext context);
 }
 
@@ -37,12 +37,12 @@ public sealed class TwApplyContext
     public TwOriginal Original { get; }
     public bool DesignMode { get; }
 
-    /// <summary>Koyu temada native kaydırma çubukları da koyulaştırılsın mı (<see cref="TailwindProvider.DarkScrollbars"/>).</summary>
+    /// <summary>Whether native scrollbars are darkened in dark mode too (<see cref="TailwindProvider.DarkScrollbars"/>).</summary>
     public bool DarkScrollbars { get; init; } = true;
 }
 
 /// <summary>
-/// Kayıtlı uygulayıcılar. Sonra kaydedilen önce denenir; hiçbiri uymazsa <see cref="WinFormsApplier"/> kullanılır.
+/// Registered appliers. The last registered is tried first; if none matches, <see cref="WinFormsApplier"/> is used.
 /// </summary>
 public static class TwAppliers
 {
@@ -75,8 +75,8 @@ public static class TwAppliers
     }
 
     /// <summary>
-    /// FormWind'in kendi uygulayıcısı; kayıtlı uygulayıcılar atlanır. Bir kontrol kütüphanesinin uygulayıcısı yapısal
-    /// stillemeyi (örn. DataGridView satır yüksekliği, ızgara çizgileri) buna bırakıp yalnızca kendi paletini doldurabilir.
+    /// FormWind's own applier; registered appliers are skipped. A control library's applier can leave structural styling
+    /// (e.g. DataGridView row height, grid lines) to it and fill only its own palette.
     /// </summary>
     public static IStyleApplier FindBuiltIn(Control control)
     {

@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace FormWind;
 
-/// <summary>Bir kontrolün class'larını, durumunu ve olay aboneliklerini tutar.</summary>
+/// <summary>Holds a control's classes, state and event subscriptions.</summary>
 internal sealed class TwBinding
 {
     private readonly TailwindProvider _owner;
@@ -72,14 +72,14 @@ internal sealed class TwBinding
 
     public TwParsed Parsed => _parsed;
 
-    /// <summary>Class'larda <c>sm:</c>/<c>md:</c>… varyantı var mı (form boyutu değişince yeniden uygulanır).</summary>
+    /// <summary>Whether the classes have <c>sm:</c>/<c>md:</c>… variants (reapplied when the form is resized).</summary>
     public bool UsesBreakpoints => _parsed.UsesAny(TwState.Breakpoints);
 
     public string Classes { get; private set; } = "";
 
     public bool Hovered => _hovered;
 
-    /// <summary><c>group</c> class'ı var: alt kontrollerin <c>group-hover:</c> varyantları bu kontrolün hover'ını izler.</summary>
+    /// <summary>Has the <c>group</c> class: the <c>group-hover:</c> variants of descendants follow this control's hover.</summary>
     public bool IsGroup { get; private set; }
 
     public void SetClasses(string classes, TwTheme theme)

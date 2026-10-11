@@ -6,19 +6,19 @@ using System.Windows.Forms;
 namespace FormWind;
 
 /// <summary>
-/// WCAG kontrast denetimi. <see cref="Audit"/> bir kontrol ağacının o anki renklerini (koyu tema açıksa koyu) tarar:
-/// metin taşıyan kontroller, ToolStrip/menü renkleri (normal, hover, açılır menü) ve DataGridView hücre/başlık/seçim
-/// renkleri. Provider verilirse class'lardaki <c>hover:</c> varyantları da çözülüp denetlenir.
+/// WCAG contrast audit. <see cref="Audit"/> scans the current colors of a control tree (dark if dark mode is on):
+/// controls with text, ToolStrip/menu colors (normal, hover, drop-down) and DataGridView cell/header/selection
+/// colors. When a provider is given, the <c>hover:</c> variants in the classes are resolved and checked too.
 /// </summary>
 public static class TwContrast
 {
-    /// <summary>Normal metin için WCAG AA eşiği.</summary>
+    /// <summary>WCAG AA threshold for normal text.</summary>
     public const double TextMinimum = 4.5;
 
-    /// <summary>Büyük metin (18 pt, ya da 14 pt kalın) için WCAG AA eşiği.</summary>
+    /// <summary>WCAG AA threshold for large text (18 pt, or 14 pt bold).</summary>
     public const double LargeTextMinimum = 3.0;
 
-    /// <summary>WCAG 2 kontrast oranı (1–21). Saydam ön plan renk zemine karıştırılarak hesaplanır.</summary>
+    /// <summary>WCAG 2 contrast ratio (1–21). A transparent foreground is blended over the background.</summary>
     public static double Ratio(Color foreground, Color background)
     {
         var fore = Composite(foreground, background);
@@ -27,13 +27,12 @@ public static class TwContrast
     }
 
     /// <summary>
-    /// <paramref name="root"/> ve alt kontrollerindeki düşük kontrastlı renk çiftleri. Gizli kontroller atlanır. Devre dışı
-    /// kontroller WCAG'ın kapsamı dışında olduğundan varsayılan olarak atlanır; <paramref name="includeDisabled"/> onları da
-    /// denetler. Bu, devre dışı bir kontrolün içerik göstermek için kullanıldığı durumlarda (örn. imleç görünmesin diye
-    /// devre dışı bırakılmış bir RichTextBox) işe yarar. Devre dışı native metin kutularında zemin, Windows'un çizdiği
-    /// sistem zemini (<see cref="SystemColors.Control"/>) sayılır. Devre dışı butonlarda ekrana çizilen yazı rengi 3:1 eşiğiyle
-    /// denetlenir (görünmez yazıyı yakalamak için). <c>transition</c> geçişi süren renkler için varılacak renk denetlenir;
-    /// böylece tema değişiminin hemen ardından da doğru sonuç verir.
+    /// Low-contrast color pairs in <paramref name="root"/> and its descendants. Hidden controls are skipped. Disabled controls
+    /// are outside the scope of WCAG and skipped by default; <paramref name="includeDisabled"/> checks them too. This helps
+    /// when a disabled control is used to display content (e.g. a RichTextBox disabled to hide the caret). For disabled
+    /// native text boxes the background is the system background Windows paints (<see cref="SystemColors.Control"/>).
+    /// For disabled buttons the text color drawn on screen is checked against 3:1 (to catch invisible text). For colors in
+    /// the middle of a <c>transition</c>, the target color is checked, so the result is correct right after a theme change.
     /// </summary>
     public static IReadOnlyList<TwContrastIssue> Audit(Control root, TailwindProvider? provider = null, double minimum = TextMinimum, bool includeDisabled = false)
     {
@@ -176,11 +175,11 @@ public static class TwContrast
     private static bool IsLarge(Font font) => font.SizeInPoints >= 18f || (font.Bold && font.SizeInPoints >= 14f);
 
     /// <summary>
-    /// Renklerini uygulamanın kendisinin çizdiği kontroller: <see cref="Audit"/> bunların ekrandaki renklerini bilemez ve
-    /// class'ların hücre/öğe renkleri onlarda yok sayılabilir (örn. koyu temada açık kalan bir grid). Bulunanlar:
-    /// <c>CellPainting</c>/<c>RowPrePaint</c>/<c>RowPostPaint</c> aboneleri ya da <c>OnPaint</c>/<c>OnCellPainting</c>'i
-    /// ezen DataGridView'lar; <c>OwnerDraw</c> açık ListView ve TabControl; <c>DrawMode</c>'u <c>Normal</c> olmayan
-    /// ListBox, ComboBox ve TreeView. FormWind'in kendi kontrolleri sayılmaz.
+    /// Controls whose colors the application paints itself: <see cref="Audit"/> cannot know their on-screen colors and
+    /// class cell/item colors may be ignored by them (e.g. a grid that stays light in dark mode). Found:
+    /// DataGridViews with <c>CellPainting</c>/<c>RowPrePaint</c>/<c>RowPostPaint</c> handlers or overriding
+    /// <c>OnPaint</c>/<c>OnCellPainting</c>; ListView and TabControl with <c>OwnerDraw</c>; ListBox, ComboBox and TreeView
+    /// whose <c>DrawMode</c> is not <c>Normal</c>. FormWind's own controls are not reported.
     /// </summary>
     public static IReadOnlyList<TwOwnerDrawn> FindOwnerDrawn(Control root)
     {
@@ -247,7 +246,7 @@ public static class TwContrast
     }
 }
 
-/// <summary>Eşiğin altında kalan bir ön plan/zemin çifti.</summary>
+/// <summary>A foreground/background pair below the threshold.</summary>
 public sealed class TwContrastIssue
 {
     internal TwContrastIssue(Control control, string part, Color foreground, Color background, double ratio, double required)
@@ -262,7 +261,7 @@ public sealed class TwContrastIssue
 
     public Control Control { get; }
 
-    /// <summary>Denetlenen bölüm: <c>text</c>, <c>disabled text</c>, <c>hover</c>, <c>strip</c>, <c>item:hover</c>, <c>menu</c>, <c>cell</c>, <c>selected</c>, <c>header</c>.</summary>
+    /// <summary>Checked part: <c>text</c>, <c>disabled text</c>, <c>hover</c>, <c>strip</c>, <c>item:hover</c>, <c>menu</c>, <c>cell</c>, <c>selected</c>, <c>header</c>.</summary>
     public string Part { get; }
 
     public Color Foreground { get; }
@@ -278,7 +277,7 @@ public sealed class TwContrastIssue
         $"(#{Foreground.R:X2}{Foreground.G:X2}{Foreground.B:X2} on #{Background.R:X2}{Background.G:X2}{Background.B:X2})";
 }
 
-/// <summary>Renklerini uygulamanın kendisinin çizdiği bir kontrol (bkz. <see cref="TwContrast.FindOwnerDrawn"/>).</summary>
+/// <summary>A control whose colors the application paints itself (see <see cref="TwContrast.FindOwnerDrawn"/>).</summary>
 public sealed class TwOwnerDrawn
 {
     internal TwOwnerDrawn(Control control, string reason)
@@ -289,7 +288,7 @@ public sealed class TwOwnerDrawn
 
     public Control Control { get; }
 
-    /// <summary>Neden: <c>CellPainting olayı</c>, <c>OnPaint ezilmiş</c>, <c>OwnerDraw</c>, <c>DrawMode.OwnerDrawFixed</c>…</summary>
+    /// <summary>Reason: <c>CellPainting event</c>, <c>OnPaint override</c>, <c>OwnerDraw</c>, <c>DrawMode.OwnerDrawFixed</c>…</summary>
     public string Reason { get; }
 
     public override string ToString() => $"{Control.GetType().Name} '{Control.Name}': {Reason}";

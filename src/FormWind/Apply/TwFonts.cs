@@ -11,10 +11,10 @@ using System.Runtime.InteropServices;
 namespace FormWind;
 
 /// <summary>
-/// Paylaşılan <see cref="Font"/> örnekleri ve uygulamayla dağıtılan fontlar. Her <c>new Font</c> bir GDI handle'ı
-/// tuttuğundan aynı aile/boyut/stil için tek örnek kullanılır; örnekler süreç boyunca yaşar ve dispose edilmemelidir.
-/// Kontroller fontları tuttuğundan önbellek küçültülemez; <see cref="CacheWarningThreshold"/> aşılınca bir kez Debug uyarısı yazılır
-/// (genelde kodla üretilen <c>text-[…px]</c> class'larının işareti).
+/// Shared <see cref="Font"/> instances and fonts shipped with the application. Every <c>new Font</c> holds a GDI handle,
+/// so a single instance is used per family/size/style; instances live for the process and must not be disposed.
+/// Because controls hold the fonts, the cache cannot shrink; when <see cref="CacheWarningThreshold"/> is exceeded a Debug
+/// warning is written once (usually a sign of <c>text-[…px]</c> classes generated in code).
 /// </summary>
 public static class TwFonts
 {
@@ -26,7 +26,7 @@ public static class TwFonts
     private static readonly ConcurrentDictionary<(string Family, float Size, FontStyle Style), Font> Cache =
         new ConcurrentDictionary<(string Family, float Size, FontStyle Style), Font>();
 
-    /// <summary>Önbellekteki font sayısı bunu aşınca Debug çıktısına bir kez uyarı yazılır.</summary>
+    /// <summary>When the number of cached fonts exceeds this, a warning is written to the Debug output once.</summary>
     public const int CacheWarningThreshold = 256;
 
     private static int _warned;
@@ -44,9 +44,9 @@ public static class TwFonts
     });
 
     /// <summary>
-    /// Bir font dosyasını kurulum gerektirmeden bu süreç için kaydeder: hem GDI+ (<see cref="PrivateFontCollection"/>) hem
-    /// GDI (<c>AddFontResourceEx</c>, FR_PRIVATE) tarafında; böylece TextRenderer ve kontroller de fontu bulur.
-    /// Dosyadaki aile adlarını döner. Aynı dosyayı tekrar kaydetmek zararsızdır.
+    /// Registers a font file for this process without installing it: on both the GDI+ (<see cref="PrivateFontCollection"/>)
+    /// and GDI (<c>AddFontResourceEx</c>, FR_PRIVATE) side, so TextRenderer and controls find the font too.
+    /// Returns the family names in the file. Registering the same file again is harmless.
     /// </summary>
     public static IReadOnlyList<string> Register(string path)
     {
@@ -71,7 +71,7 @@ public static class TwFonts
         return names;
     }
 
-    /// <summary>Kurulu ya da <see cref="Register"/> ile kaydedilmiş bir font ailesi mi.</summary>
+    /// <summary>Whether a font family is installed or registered with <see cref="Register"/>.</summary>
     public static bool IsInstalled(string family)
     {
         lock (Gate)
@@ -81,12 +81,12 @@ public static class TwFonts
         return Installed.Value.Contains(family);
     }
 
-    /// <summary>Hiçbir aile bulunamadığında kullanılan sistem arayüz fontu (genelde Segoe UI).</summary>
+    /// <summary>The system UI font used when no family is found (usually Segoe UI).</summary>
     public static string DefaultFamily { get; } = SystemFonts.MessageBoxFont?.FontFamily.Name ?? "Segoe UI";
 
     /// <summary>
-    /// CSS font yığınını çözer: <c>"Quicksand, 'Segoe UI', sans-serif"</c> → kullanılabilen ilk aile.
-    /// Hiçbiri yoksa sistem arayüz fontu (Segoe UI) döner.
+    /// Resolves a CSS font stack: <c>"Quicksand, 'Segoe UI', sans-serif"</c> → the first available family.
+    /// Returns the system UI font (Segoe UI) when none is available.
     /// </summary>
     public static string ResolveFamily(string stack)
     {
@@ -117,22 +117,22 @@ public static class TwFonts
         });
     }
 
-    /// <summary>Önbellekteki font sayısı (testler için).</summary>
+    /// <summary>Number of cached fonts (for tests).</summary>
     internal static int CachedCount => Cache.Count;
 
     /// <summary>
-    /// Stilin font değerlerini <paramref name="baseFont"/> üzerine uygular. Kalınlık, temadaki
-    /// ağırlık ailelerine (örn. 600 → "Segoe UI Semibold") çözülür.
+    /// Applies the style's font values on top of <paramref name="baseFont"/>. The weight is resolved to the theme's
+    /// weight families (e.g. 600 → "Segoe UI Semibold").
     /// </summary>
     public static Font Create(TwStyle style, Font baseFont, TwTheme theme) => Create(style, baseFont, theme, 1f);
 
-    /// <summary><see cref="Create(TwStyle, Font, TwTheme)"/>; <c>text-*</c> boyutları <paramref name="pixelScale"/> ile çarpılır.</summary>
-    /// <param name="style">Uygulanacak stil.</param>
-    /// <param name="baseFont">Stilde verilmeyen değerlerin alındığı font.</param>
-    /// <param name="theme">Kalınlık aileleri için tema.</param>
+    /// <summary><see cref="Create(TwStyle, Font, TwTheme)"/>; <c>text-*</c> sizes are multiplied by <paramref name="pixelScale"/>.</summary>
+    /// <param name="style">The style to apply.</param>
+    /// <param name="baseFont">The font that supplies values the style does not set.</param>
+    /// <param name="theme">The theme for weight families.</param>
     /// <param name="pixelScale">
-    /// <c>text-*</c> boyutlarının çarpanı: PerMonitorV2'de kontrolün ekranı sistem DPI'ından farklıysa
-    /// <see cref="TwDpi.FontScale"/>. Temel fonttan gelen boyut zaten o ekrana göredir ve çarpılmaz.
+    /// Multiplier for <c>text-*</c> sizes: <see cref="TwDpi.FontScale"/> when, under PerMonitorV2, the control's screen differs
+    /// from the system DPI. A size taken from the base font already matches that screen and is not multiplied.
     /// </param>
     public static Font Create(TwStyle style, Font baseFont, TwTheme theme, float pixelScale)
     {
