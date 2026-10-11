@@ -17,6 +17,8 @@ internal sealed class TwMenuColors
     public Color ItemHoverFore { get; set; } = ColorTranslator.FromHtml("#111827"); // gray-900
     public Color Separator { get; set; } = ColorTranslator.FromHtml("#e5e7eb");
     public Color Accent { get; set; } = ColorTranslator.FromHtml("#2563eb");        // blue-600
+    /// <summary>Şeride gömülü metin kutusu ve açılır kutuların (<see cref="ToolStripTextBox"/>, <see cref="ToolStripComboBox"/>) zemini.</summary>
+    public Color InputBack { get; set; } = Color.White;
     public Color? BottomBorder { get; set; }
     public float ItemRadius { get; set; } = 4;
 }
@@ -173,6 +175,7 @@ internal class ToolStripApplier : WinFormsApplier
         if (context.Parsed.Variants.Count == 0)
         {
             Restore(strip, original);
+            TwHostedColors.Update(strip, null);
             return;
         }
         var colors = BuildColors(style, context);
@@ -183,6 +186,7 @@ internal class ToolStripApplier : WinFormsApplier
             strip.Renderer = new TwToolStripRenderer(colors);
         }
         ShareWithDropDowns(strip.Items, strip.Renderer);
+        TwHostedColors.Update(strip, colors);
     }
 
     private static void Restore(ToolStrip strip, OriginalRenderer original)
@@ -241,6 +245,7 @@ internal class ToolStripApplier : WinFormsApplier
         && a.ItemHoverFore.ToArgb() == b.ItemHoverFore.ToArgb()
         && a.Separator.ToArgb() == b.Separator.ToArgb()
         && a.Accent.ToArgb() == b.Accent.ToArgb()
+        && a.InputBack.ToArgb() == b.InputBack.ToArgb()
         && a.BottomBorder?.ToArgb() == b.BottomBorder?.ToArgb()
         && a.ItemRadius == b.ItemRadius;
 
@@ -267,6 +272,7 @@ internal class ToolStripApplier : WinFormsApplier
             colors.ItemHoverBack = Mix(colors.Back, colors.Fore, 0.12f);
             colors.MenuBorder = Mix(colors.MenuBack, colors.Fore, 0.2f);
             colors.Separator = Mix(colors.Back, colors.Fore, 0.2f);
+            colors.InputBack = Mix(colors.Back, colors.Fore, 0.08f);
         }
         if (itemHover.BackColor is Color hoverBack) colors.ItemHoverBack = hoverBack;
         colors.ItemHoverFore = itemHover.ForeColor ?? colors.Fore;
@@ -277,6 +283,95 @@ internal class ToolStripApplier : WinFormsApplier
         if ((style.BorderSides.Bottom ?? style.BorderWidth ?? 0) > 0)
             colors.BottomBorder = style.BorderColor ?? context.Theme.DefaultBorderColor;
         return colors;
+    }
+}
+
+/// <summary>
+/// Şeride gömülü metin kutusu ve açılır kutular (<see cref="ToolStripTextBox"/>, <see cref="ToolStripComboBox"/>) şeridin
+/// renderer'ıyla çizilmez, native kontrolün kendi renkleriyle kalır; koyu şeritte beyaz kutular çıkardı (açılır kutunun
+/// çerçevesi ve ok düğmesi için bkz. <see cref="TwHostedComboPainter"/>). Şeridin yazı rengini
+/// ve <see cref="TwMenuColors.InputBack"/> zeminini alırlar; renderer'ı paylaşan alt menülerdekiler de. Uygulamanın bu
+/// kontrollere atadığı renklere dokunulmaz; class'lar kaldırılınca özgün renkler geri gelir.
+/// </summary>
+internal static class TwHostedColors
+{
+    private sealed class State
+    {
+        public bool AppOwned;
+        public Color? Back;
+        public Color? Fore;
+    }
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Control, State> States =
+        new System.Runtime.CompilerServices.ConditionalWeakTable<Control, State>();
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, object> Watched =
+        new System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, object>();
+
+    /// <param name="strip">Şerit.</param>
+    /// <param name="colors">Şeridin renkleri; <c>null</c> = class'lar kaldırıldı, özgün renkler geri yüklenir.</param>
+    public static void Update(ToolStrip strip, TwMenuColors? colors)
+    {
+        if (colors != null && !Watched.TryGetValue(strip, out _))
+        {
+            Watched.Add(strip, new object());
+            // Sonradan eklenen öğeler de renk alır.
+            strip.ItemAdded += (_, _) =>
+            {
+                if (strip.Renderer is TwToolStripRenderer renderer) Visit(strip.Items, renderer, renderer.Colors);
+            };
+        }
+        Visit(strip.Items, strip.Renderer, colors);
+    }
+
+    private static void Visit(ToolStripItemCollection items, ToolStripRenderer renderer, TwMenuColors? colors)
+    {
+        foreach (ToolStripItem item in items)
+        {
+            if (item is ToolStripComboBox || item is ToolStripTextBox)
+            {
+                var control = ((ToolStripControlHost)item).Control;
+                if (colors != null) Apply(control, colors.InputBack, colors.Fore);
+                else Restore(control);
+            }
+            else if (item is ToolStripDropDownItem { HasDropDown: true } owner && (colors is null || owner.DropDown.Renderer == renderer))
+            {
+                Visit(owner.DropDown.Items, renderer, colors);
+            }
+        }
+    }
+
+    private static void Apply(Control control, Color back, Color fore)
+    {
+        if (!States.TryGetValue(control, out var state))
+        {
+            state = new State
+            {
+                AppOwned = TwOriginal.IsExplicit(control, nameof(Control.BackColor)) || TwOriginal.IsExplicit(control, nameof(Control.ForeColor)),
+            };
+            States.Add(control, state);
+        }
+        // Bizden sonra değiştirilen renk uygulamanındır.
+        if (state.Back is Color setBack && control.BackColor.ToArgb() != setBack.ToArgb()
+            || state.Fore is Color setFore && control.ForeColor.ToArgb() != setFore.ToArgb())
+            state.AppOwned = true;
+        if (state.AppOwned) return;
+
+        if (control.BackColor.ToArgb() != back.ToArgb()) control.BackColor = back;
+        if (control.ForeColor.ToArgb() != fore.ToArgb()) control.ForeColor = fore;
+        state.Back = back;
+        state.Fore = fore;
+        if (control is ComboBox combo) TwHostedComboPainter.Attach(combo);
+    }
+
+    private static void Restore(Control control)
+    {
+        if (!States.TryGetValue(control, out var state) || state.AppOwned || state.Back is null) return;
+        if (control.BackColor.ToArgb() == state.Back.Value.ToArgb()) control.ResetBackColor();
+        if (control.ForeColor.ToArgb() == state.Fore!.Value.ToArgb()) control.ResetForeColor();
+        state.Back = null;
+        state.Fore = null;
+        if (control is ComboBox combo) TwHostedComboPainter.Detach(combo);
     }
 }
 

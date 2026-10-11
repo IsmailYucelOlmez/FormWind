@@ -218,4 +218,80 @@ public class TogglesMenusTitleBarTests
         }
         form.Close();
     });
+
+    [Fact]
+    public void Hosted_combo_and_text_boxes_follow_the_strip_colors() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var strip = new ToolStrip();
+        var combo = new ToolStripComboBox();
+        var text = new ToolStripTextBox();
+        var menu = new ToolStripDropDownButton("Ara");
+        var search = new ToolStripTextBox();
+        menu.DropDownItems.Add(search);
+        strip.Items.AddRange(new ToolStripItem[] { combo, menu });
+        provider.SetClasses(strip, "bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100");
+        strip.Items.Add(text); // sonradan eklenen
+
+        Assert.Equal(Color.White.ToArgb(), combo.ComboBox.BackColor.ToArgb());
+        Assert.Equal(Argb("#1f2937"), combo.ComboBox.ForeColor.ToArgb());
+
+        provider.DarkMode = true;
+        foreach (var control in new Control[] { combo.ComboBox, text.TextBox, search.TextBox })
+        {
+            Assert.True(control.BackColor.GetBrightness() < 0.3f, $"{control.GetType().Name} koyu şeritte açık kaldı: {control.BackColor}");
+            Assert.Equal(Argb("#f3f4f6"), control.ForeColor.ToArgb());
+        }
+
+        provider.SetClasses(strip, "");
+        Assert.Equal(SystemColors.Window.ToArgb(), combo.ComboBox.BackColor.ToArgb());
+        Assert.Equal(SystemColors.WindowText.ToArgb(), combo.ComboBox.ForeColor.ToArgb());
+    });
+
+    [Fact]
+    public void Hosted_box_colors_assigned_by_app_are_kept() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var strip = new ToolStrip();
+        var before = new ToolStripTextBox { BackColor = Color.LightYellow };
+        var after = new ToolStripComboBox();
+        strip.Items.AddRange(new ToolStripItem[] { before, after });
+        provider.SetClasses(strip, "bg-white dark:bg-gray-800 dark:text-gray-100");
+        Assert.Equal(Color.LightYellow.ToArgb(), before.TextBox.BackColor.ToArgb());
+
+        after.ComboBox.BackColor = Color.Pink;
+        provider.DarkMode = true;
+        Assert.Equal(Color.Pink.ToArgb(), after.ComboBox.BackColor.ToArgb());
+    });
+
+    // WinForms, profesyonel olmayan renderer'lı şeritte açılır kutunun ok düğmesini sistem renkleriyle çizer.
+    [Fact]
+    public void Hosted_combo_button_and_frame_are_painted_with_the_box_colors() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider { DarkMode = true };
+        using var strip = new ToolStrip();
+        var combo = new ToolStripComboBox();
+        strip.Items.Add(combo);
+        provider.SetClasses(strip, "dark:bg-gray-800 dark:text-gray-100");
+        Assert.True(TwHostedComboPainter.IsAttached(combo.ComboBox));
+
+        var box = combo.ComboBox;
+        box.Size = new Size(120, 23);
+        var client = box.ClientSize;
+        using var bitmap = new Bitmap(client.Width, client.Height);
+        using (var g = Graphics.FromImage(bitmap))
+        {
+            g.Clear(SystemColors.Control); // WinForms'un çizdiği açık gri düğme
+            TwHostedComboPainter.Paint(g, box);
+        }
+        int light = 0;
+        for (int x = client.Width - SystemInformation.HorizontalScrollBarArrowWidth - 1; x < client.Width; x++)
+            for (int y = 0; y < client.Height; y++)
+                if (bitmap.GetPixel(x, y).ToArgb() == SystemColors.Control.ToArgb()) light++;
+        Assert.Equal(0, light);
+        Assert.Equal(box.BackColor.ToArgb(), bitmap.GetPixel(client.Width - 4, 3).ToArgb());
+
+        provider.SetClasses(strip, "");
+        Assert.False(TwHostedComboPainter.IsAttached(combo.ComboBox));
+    });
 }
