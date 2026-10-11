@@ -10,7 +10,7 @@ namespace FormWind;
 /// <c>Paint</c> olayı tetiklenmez.
 /// </summary>
 [ToolboxItem(true)]
-[Description("Yuvarlak köşeli, owner-draw buton.")]
+[Description("Owner-drawn button with rounded corners.")]
 public class TwButton : Button, ITwChrome
 {
     private TwChrome _chrome = TwChrome.None;
@@ -40,21 +40,21 @@ public class TwButton : Button, ITwChrome
             true);
     }
 
-    [Category("FormWind"), DefaultValue(0f), Description("Köşe yarıçapı (piksel). Classes tanımlıysa onun değeri kullanılır.")]
+    [Category("FormWind"), DefaultValue(0f), Description("Corner radius (pixels). The value from Classes wins when set.")]
     public float CornerRadius
     {
         get => _chrome.Radius;
         set => SetUniform(Math.Max(0f, value), _chrome.BorderTop, _chrome.BorderColor);
     }
 
-    [Category("FormWind"), DefaultValue(0f), Description("Kenarlık kalınlığı (piksel, tüm kenarlar).")]
+    [Category("FormWind"), DefaultValue(0f), Description("Border width (pixels, all sides).")]
     public float BorderWidth
     {
         get => _chrome.BorderTop;
         set => SetUniform(_chrome.Radius, Math.Max(0f, value), _chrome.BorderColor);
     }
 
-    [Category("FormWind"), Description("Kenarlık rengi.")]
+    [Category("FormWind"), Description("Border color.")]
     public Color BorderColor
     {
         get => _chrome.BorderColor;
@@ -68,7 +68,7 @@ public class TwButton : Button, ITwChrome
     }
 
     [Category("FormWind"), DefaultValue(""), TypeConverter(typeof(TwIconNameConverter))]
-    [Description("Metnin yanında çizilen ikon (örn. plus, save) ya da kod noktası (#E710).")]
+    [Description("Icon drawn next to the text (e.g. plus, save) or a code point (#E710).")]
     public string IconName
     {
         get => _iconName;
@@ -82,7 +82,7 @@ public class TwButton : Button, ITwChrome
         set { _iconPosition = value; Invalidate(); }
     }
 
-    [Category("FormWind"), DefaultValue(8), Description("İkon ile metin arası (96 DPI piksel).")]
+    [Category("FormWind"), DefaultValue(8), Description("Space between the icon and the text (96 DPI pixels).")]
     public int IconSpacing
     {
         get => _iconSpacing;

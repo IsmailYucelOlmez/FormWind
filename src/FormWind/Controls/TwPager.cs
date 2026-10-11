@@ -14,7 +14,7 @@ namespace FormWind;
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(PageChanged))]
-[Description("Stillenebilir sayfalama kontrolü.")]
+[Description("Stylable pager.")]
 public class TwPager : Control
 {
     private int _totalItems;
@@ -290,7 +290,7 @@ public class TwPager : Control
 
         public override string? Value
         {
-            get => $"Sayfa {_pager.Page} / {_pager.PageCount}";
+            get => string.Format(System.Globalization.CultureInfo.CurrentCulture, TwTexts.Current.Page, _pager.Page, _pager.PageCount);
             set { }
         }
     }

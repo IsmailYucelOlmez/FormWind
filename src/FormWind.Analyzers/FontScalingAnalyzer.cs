@@ -20,12 +20,12 @@ public sealed class FontScalingAnalyzer : DiagnosticAnalyzer
 
     private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
         DiagnosticId,
-        "AutoScaleMode.Font formunda font AutoScaleDimensions'tan sonra atanıyor",
-        "'{0}' AutoScaleMode.Font kullanıyor ve Font, AutoScaleDimensions'tan sonra atanıyor; .NET Framework'te PerMonitorV2 açıkken form ölçeklenmez. AutoScaleMode.Dpi kullanın (AutoScaleDimensions = 96, 96).",
+        "Font assigned after AutoScaleDimensions on an AutoScaleMode.Font form",
+        "'{0}' uses AutoScaleMode.Font and assigns Font after AutoScaleDimensions; on .NET Framework with PerMonitorV2 the form is not scaled. Use AutoScaleMode.Dpi (AutoScaleDimensions = 96, 96).",
         "FormWind",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "PerMonitorV2'de .NET Framework WinForms, AutoScaleDimensions'tan sonra değişen font için yerleşimi ölçeklemez; FormWind fontları ve boşlukları DPI'a göre büyüttüğünden yazılar kırpılır.");
+        description: "With PerMonitorV2, .NET Framework WinForms does not scale the layout for a font changed after AutoScaleDimensions; since FormWind scales fonts and spacing with DPI, text gets clipped.");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 

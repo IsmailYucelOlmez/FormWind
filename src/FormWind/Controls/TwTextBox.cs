@@ -13,7 +13,7 @@ namespace FormWind;
 [ToolboxItem(true)]
 [DefaultEvent(nameof(TextChanged))]
 [DefaultProperty(nameof(Text))]
-[Description("Yuvarlak köşeli, stillenebilir metin kutusu.")]
+[Description("Stylable text box with rounded corners.")]
 public class TwTextBox : TwPanel
 {
     private readonly PlaceholderTextBox _inner;

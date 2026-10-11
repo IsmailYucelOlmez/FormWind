@@ -462,8 +462,23 @@ if (TwDialog.Show(this, "Delete this order?", "Confirm delete", TwDialogKind.War
 TwToast.Show(this, "Order saved", TwDialogKind.Success);
 ```
 
-- **`TwDialog`** (instead of MessageBox): icon, title, message and right-aligned buttons; Enter is the default, Esc cancels/answers no. Follows the owner form's dark mode. Button texts are changed through `TwDialog.Texts`; `TwDialog.Create(...)` allows customization before showing.
+- **`TwDialog`** (instead of MessageBox): icon, title, message and right-aligned buttons; Enter is the default, Esc cancels/answers no. Follows the owner form's dark mode. Button texts come from [`TwTexts`](#localization) and can be overridden one by one with `TwDialog.Texts[DialogResult.Yes] = "Delete"`; `TwDialog.Create(...)` allows customization before showing.
 - **`TwToast`**: a notification that stacks in the bottom-right corner of the owner form, does not steal focus, pauses while hovered and closes by itself (`DefaultDuration` 4 s). Announced to screen readers as an Alert.
+
+## Localization
+
+User-facing texts (dialog buttons, validation messages, the grid filter menu and loading text, the search box hint, screen reader names) live in `TwTexts`. The default language is English; Turkish texts are selected when the application's UI language (`CultureInfo.CurrentUICulture`) is Turkish.
+
+```csharp
+TwTexts.Current = TwTexts.Turkish;                                   // force a language
+TwTexts.Current = new TwTexts { Ok = "OK", Cancel = "Abbrechen", Required = "Pflichtfeld." };   // another language
+TwTexts.Current.Loading = "Fetching data…";                          // a single text
+```
+
+- A control's own text properties (`TwField.RequiredMessage`, `PatternMessage`, `IncompleteMessage`, `TwSelect.SearchPlaceholder`) take precedence over `TwTexts` when set; when not set, they are not written to Designer.cs.
+- Formatted texts use `{0}` placeholders (`MinLength`: number of characters, `Page`: page and page count).
+- In grid filtering, the key for blank values is language-independent (`TwSortableBindingList<T>.EmptyValue`); the menu shows `TwTexts.Blank`.
+- Developer-facing texts (exceptions, Designer commands, analyzer warnings, Debug output) are in English.
 
 ## Accessibility
 
@@ -609,7 +624,7 @@ The Roslyn analyzer shipped with the package warns when code assigns a property 
 
 ```csharp
 tw.SetClasses(btnSave, "btn-primary");
-btnSave.BackColor = Color.Red;   // FW001: control 'btnSave' has classes; assigning 'BackColor' conflicts with them.
+btnSave.BackColor = Color.Red;   // FW001: 'btnSave' has classes; assigning 'BackColor' conflicts with them. …
 ```
 
 At run time a color assignment wins: FormWind leaves that color channel to the application (see [Colors assigned by application code](#colors-assigned-by-application-code)); the warning can be suppressed for deliberate assignments such as status colors. Padding and margin assignments, on the other hand, are undone and the class wins (see [DPI](#dpi)); here the warning points to a real conflict.

@@ -226,12 +226,12 @@ public class TailwindProviderDesigner : ComponentDesigner
             var items = new DesignerActionItemCollection
             {
                 new DesignerActionHeaderItem("FormWind"),
-                new DesignerActionPropertyItem(nameof(Classes), "Classes", "FormWind", "Tailwind class'ları (örn. bg-blue-600 text-white px-4 py-2)."),
+                new DesignerActionPropertyItem(nameof(Classes), "Classes", "FormWind", "Tailwind-style classes (e.g. bg-blue-600 text-white px-4 py-2)."),
             };
             foreach (var component in SuggestedComponents())
                 items.Add(new ComponentItem(this, component));
             if (Classes.Length > 0)
-                items.Add(new DesignerActionMethodItem(this, nameof(Clear), "Class'ları temizle", "FormWind", true));
+                items.Add(new DesignerActionMethodItem(this, nameof(Clear), "Clear classes", "FormWind", true));
             return items;
         }
 
@@ -242,7 +242,7 @@ public class TailwindProviderDesigner : ComponentDesigner
             private readonly string _component;
 
             public ComponentItem(ClassesActionList owner, string component)
-                : base(owner, nameof(Clear), component, "FormWind", $"Class'ları '{component}' yapar.", true)
+                : base(owner, nameof(Clear), component, "FormWind", $"Sets the classes to '{component}'.", true)
             {
                 _owner = owner;
                 _component = component;

@@ -205,9 +205,9 @@ public static class TwContrast
             case DataGridView grid:
                 var reasons = new List<string>();
                 foreach (var name in new[] { "CellPainting", "RowPrePaint", "RowPostPaint" })
-                    if (HasHandlers(grid, name)) reasons.Add(name + " olayı");
+                    if (HasHandlers(grid, name)) reasons.Add(name + " event");
                 foreach (var name in new[] { "OnPaint", "OnCellPainting", "OnRowPrePaint", "OnRowPostPaint" })
-                    if (Overrides(grid, name)) reasons.Add(name + " ezilmiş");
+                    if (Overrides(grid, name)) reasons.Add(name + " override");
                 return reasons.Count > 0 ? string.Join(", ", reasons) : null;
             case ListView { OwnerDraw: true }:
             case TabControl { DrawMode: TabDrawMode.OwnerDrawFixed }:

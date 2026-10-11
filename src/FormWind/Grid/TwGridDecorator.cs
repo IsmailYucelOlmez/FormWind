@@ -178,18 +178,20 @@ internal sealed class TwGridDecorator
         var allowed = source.GetColumnFilter(property);
 
         var menu = NewMenu();
-        var all = new ToolStripMenuItem("(Tümünü seç)") { Checked = allowed is null };
+        var all = new ToolStripMenuItem(TwTexts.Current.SelectAll) { Checked = allowed is null };
         menu.Items.Add(all);
         menu.Items.Add(new ToolStripSeparator());
         var items = new List<ToolStripMenuItem>();
         foreach (var value in values)
         {
-            var item = new ToolStripMenuItem(value) { CheckOnClick = true, Checked = allowed is null || allowed.Contains(value), Tag = value };
+            // Boş değerlerin anahtarı sabittir (TwSortableBindingList.EmptyValue); yalnızca görünen adı yerelleştirilir.
+            var text = value == TwSortableBindingList<object>.EmptyValue ? TwTexts.Current.Blank : value;
+            var item = new ToolStripMenuItem(text) { CheckOnClick = true, Checked = allowed is null || allowed.Contains(value), Tag = value };
             items.Add(item);
             menu.Items.Add(item);
         }
         menu.Items.Add(new ToolStripSeparator());
-        var clear = new ToolStripMenuItem("Süzmeyi kaldır") { Enabled = allowed != null };
+        var clear = new ToolStripMenuItem(TwTexts.Current.ClearFilter) { Enabled = allowed != null };
         menu.Items.Add(clear);
 
         void Apply()
@@ -259,7 +261,14 @@ internal sealed class TwGridDecorator
 
     public bool Loading { get; set; }
 
-    public string LoadingText { get; set; } = "Yükleniyor…";
+    private string? _loadingText;
+
+    /// <summary>Atanmamışsa <see cref="TwTexts.Loading"/>.</summary>
+    public string LoadingText
+    {
+        get => _loadingText ?? TwTexts.Current.Loading;
+        set => _loadingText = value;
+    }
 
     /// <summary>Sıralama okunun ve düzenleme kontrollerinin rengi; FormWind class'ları verildiğinde açılır.</summary>
     public Color Accent { get; set; } = ColorTranslator.FromHtml("#2563eb");

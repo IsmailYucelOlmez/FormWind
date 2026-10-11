@@ -12,7 +12,7 @@ namespace FormWind;
 /// </summary>
 [ToolboxItem(true)]
 [DefaultProperty(nameof(Value))]
-[Description("Stillenebilir ilerleme çubuğu.")]
+[Description("Stylable progress bar.")]
 public class TwProgress : Control, ITwChrome
 {
     private int _maximum = 100;

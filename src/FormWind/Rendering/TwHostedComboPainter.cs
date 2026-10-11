@@ -58,7 +58,7 @@ internal sealed class TwHostedComboPainter : NativeWindow
         }
         catch (Exception ex) when (!TwErrors.IsCritical(ex))
         {
-            TwErrors.Trace("şerit açılır kutusu", ex);
+            TwErrors.Trace("strip combo box", ex);
         }
     }
 

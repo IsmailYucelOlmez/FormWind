@@ -13,7 +13,7 @@ namespace FormWind;
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ValueChanged))]
 [DefaultProperty(nameof(Value))]
-[Description("Stillenebilir kaydırıcı.")]
+[Description("Stylable slider.")]
 public class TwSlider : Control
 {
     private int _minimum;

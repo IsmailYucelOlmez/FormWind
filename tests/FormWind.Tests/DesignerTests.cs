@@ -20,13 +20,13 @@ public class DesignerTests
         form.Controls.Add(tabs);
 
         var designer = Assert.IsType<TwTabControlDesigner>(host.GetDesigner(tabs));
-        Assert.Equal(new[] { "Sayfa ekle", "Seçili sayfayı kaldır" }, designer.Verbs.Cast<DesignerVerb>().Select(v => v.Text));
+        Assert.Equal(new[] { "Add page", "Remove selected page" }, designer.Verbs.Cast<DesignerVerb>().Select(v => v.Text));
 
         designer.Verbs[0]!.Invoke();
         designer.Verbs[0]!.Invoke();
         Assert.Equal(2, tabs.TabPages.Count);
         Assert.All(tabs.TabPages, p => Assert.NotNull(p.Site));            // Designer.cs'e yazılacak bileşenler
-        Assert.Equal(new[] { "Sayfa 1", "Sayfa 2" }, tabs.Strip.Tabs);
+        Assert.Equal(new[] { "Page 1", "Page 2" }, tabs.Strip.Tabs);
         Assert.Same(tabs.TabPages[1], tabs.SelectedTab);
 
         Assert.True(designer.CanParent(new TwTabPage()));
@@ -39,7 +39,7 @@ public class DesignerTests
 
         designer.Verbs[1]!.Invoke();
         Assert.Single(tabs.TabPages);
-        Assert.Equal("Sayfa 2", tabs.TabPages[0].Text);
+        Assert.Equal("Page 2", tabs.TabPages[0].Text);
         Assert.Single(designer.ActionLists);
     });
 
@@ -93,7 +93,7 @@ public class DesignerTests
         Assert.Equal("btn-ghost", provider.GetClasses(button));
         Assert.True(changes > 0);                                                 // Designer.cs'e yazılır, geri alınabilir
 
-        var clear = Items(button).OfType<DesignerActionMethodItem>().Single(i => i.DisplayName == "Class'ları temizle");
+        var clear = Items(button).OfType<DesignerActionMethodItem>().Single(i => i.DisplayName == "Clear classes");
         clear.Invoke();
         Assert.Equal("", provider.GetClasses(button));
 

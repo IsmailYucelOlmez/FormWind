@@ -71,7 +71,7 @@ internal sealed class TwDisabledText
         }
         catch (System.Exception ex) when (!TwErrors.IsCritical(ex))
         {
-            TwErrors.Trace("devre dışı buton yazısı", ex);
+            TwErrors.Trace("disabled button text", ex);
         }
     }
 

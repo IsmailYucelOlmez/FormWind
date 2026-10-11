@@ -31,8 +31,11 @@ public interface ITwFilterableList
 /// </summary>
 public class TwSortableBindingList<T> : BindingList<T>, ITwFilterableList
 {
-    /// <summary>Boş değerin süzme menüsündeki adı.</summary>
-    public const string EmptyValue = "(Boş)";
+    /// <summary>
+    /// Boş (<c>null</c> ya da boş metin) değerlerin süzme anahtarı (<see cref="SetColumnFilter"/>). Dilden bağımsızdır;
+    /// süzme menüsünde <see cref="TwTexts.Blank"/> olarak görünür.
+    /// </summary>
+    public const string EmptyValue = "(blank)";
 
     private readonly List<T> _all;       // geçerli sırada tüm satırlar (sıralamalar üst üste uygulanır)
     private readonly List<T> _original;  // eklenme sırası (sıralama kaldırılınca)
@@ -163,7 +166,7 @@ public class TwSortableBindingList<T> : BindingList<T>, ITwFilterableList
     }
 
     private PropertyDescriptor Property(string name) =>
-        _properties.Find(name, false) ?? throw new ArgumentException($"{typeof(T).Name} türünde '{name}' özelliği yok.", nameof(name));
+        _properties.Find(name, false) ?? throw new ArgumentException($"Type {typeof(T).Name} has no property '{name}'.", nameof(name));
 
     internal static string Display(object? value) => value switch
     {

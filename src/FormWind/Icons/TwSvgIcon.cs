@@ -30,7 +30,7 @@ internal sealed class TwSvgIcon
 
     public static TwSvgIcon Parse(string svg)
     {
-        if (string.IsNullOrWhiteSpace(svg)) throw new FormatException("SVG boş.");
+        if (string.IsNullOrWhiteSpace(svg)) throw new FormatException("The SVG is empty.");
         XElement root;
         try
         {
@@ -38,9 +38,9 @@ internal sealed class TwSvgIcon
         }
         catch (System.Xml.XmlException ex)
         {
-            throw new FormatException("SVG okunamadı: " + ex.Message, ex);
+            throw new FormatException("Could not read the SVG: " + ex.Message, ex);
         }
-        if (root.Name.LocalName != "svg") throw new FormatException("Kök öğe <svg> değil.");
+        if (root.Name.LocalName != "svg") throw new FormatException("The root element is not <svg>.");
 
         var viewBox = ParseViewBox(root);
         var icon = new TwSvgIcon(viewBox);

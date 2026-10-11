@@ -92,7 +92,7 @@ internal sealed class TwComboPainter : NativeWindow
         }
         catch (Exception ex) when (!TwErrors.IsCritical(ex))
         {
-            TwErrors.Trace("ComboBox çizimi", ex);
+            TwErrors.Trace("ComboBox painting", ex);
         }
     }
 

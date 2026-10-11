@@ -46,7 +46,7 @@ public class TwTabPage : TwPanel
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
-[Description("Stillenebilir sayfalı sekme kontrolü.")]
+[Description("Stylable tab control with pages.")]
 [Designer("FormWind.Design.TwTabControlDesigner, FormWind")]
 public class TwTabControl : Control
 {

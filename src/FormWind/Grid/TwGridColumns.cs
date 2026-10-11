@@ -79,7 +79,7 @@ public class TwBadgeColumn : DataGridViewColumn
     }
 
     [Category("FormWind"), DefaultValue("*: bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100")]
-    [Description("değer: class'lar; ... (* = diğerleri)")]
+    [Description("value: classes; ... (* = everything else)")]
     public string Variants
     {
         get => _variants;
@@ -157,10 +157,10 @@ public class TwAvatarColumn : DataGridViewImageColumn
         DefaultCellStyle.NullValue = null;
     }
 
-    [Category("FormWind"), DefaultValue(32), Description("Avatar kenarı (96 DPI piksel).")]
+    [Category("FormWind"), DefaultValue(32), Description("Avatar size (96 DPI pixels).")]
     public int AvatarSize { get; set; } = 32;
 
-    [Category("FormWind"), DefaultValue(9999f), Description("Köşe yarıçapı; 9999 = daire.")]
+    [Category("FormWind"), DefaultValue(9999f), Description("Corner radius; 9999 = circle.")]
     public float Radius { get; set; } = 9999f;
 
     [Category("FormWind")]
@@ -266,7 +266,7 @@ public class TwProgressColumn : DataGridViewColumn
     [Category("FormWind"), DefaultValue(100.0)]
     public double Maximum { get; set; } = 100;
 
-    [Category("FormWind"), DefaultValue(true), Description("Çubuğun sağında yüzde metni.")]
+    [Category("FormWind"), DefaultValue(true), Description("Percentage text to the right of the bar.")]
     public bool ShowText { get; set; } = true;
 
     [Category("FormWind")]
@@ -349,7 +349,7 @@ public class TwCheckColumn : DataGridViewCheckBoxColumn
 
     private bool ShouldSerializeAccentColor() => AccentColor.ToArgb() != ColorTranslator.FromHtml("#2563eb").ToArgb();
 
-    [Category("FormWind"), DefaultValue(16), Description("Kutu kenarı (96 DPI piksel).")]
+    [Category("FormWind"), DefaultValue(16), Description("Box size (96 DPI pixels).")]
     public int BoxSize { get; set; } = 16;
 
     public override object Clone()

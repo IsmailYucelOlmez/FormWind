@@ -16,7 +16,7 @@ internal static class TwErrors
 
     /// <summary>Sağlayıcısı bilinmeyen yerlerde (çizim) hatayı Debug çıktısına yazar.</summary>
     public static void Trace(string where, Exception exception) =>
-        Debug.WriteLine($"FormWind: {where} sırasında hata: {exception}");
+        Debug.WriteLine($"FormWind: error during {where}: {exception}");
 }
 
 /// <summary><see cref="TailwindProvider.StyleError"/> olayının verisi.</summary>

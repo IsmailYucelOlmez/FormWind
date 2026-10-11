@@ -52,7 +52,7 @@ public static class TwFonts
     {
         if (path is null) throw new ArgumentNullException(nameof(path));
         var fullPath = Path.GetFullPath(path);
-        if (!File.Exists(fullPath)) throw new FileNotFoundException("Font dosyası bulunamadı.", fullPath);
+        if (!File.Exists(fullPath)) throw new FileNotFoundException("Font file not found.", fullPath);
 
         string[] names;
         using (var probe = new PrivateFontCollection())
@@ -108,7 +108,7 @@ public static class TwFonts
         return Cache.GetOrAdd(key, k =>
         {
             if (Cache.Count >= CacheWarningThreshold && System.Threading.Interlocked.Exchange(ref _warned, 1) == 0)
-                Debug.WriteLine($"FormWind: font önbelleği {CacheWarningThreshold} örneği aştı; class'larda çok sayıda farklı yazı boyutu kullanılıyor olabilir.");
+                Debug.WriteLine($"FormWind: the font cache exceeded {CacheWarningThreshold} instances; the classes may use many different font sizes.");
             FontFamily? privateFamily;
             lock (Gate) PrivateFamilies.TryGetValue(k.Item1, out privateFamily);
             return privateFamily != null && privateFamily.IsStyleAvailable(k.Item3)
@@ -156,7 +156,7 @@ public static class TwFonts
         catch (Exception ex) when (ex is FileNotFoundException || ex is ArgumentException || ex is ExternalException)
         {
             // Font isteğe bağlıdır; yığındaki bir sonraki aile kullanılır.
-            Debug.WriteLine($"FormWind: font yüklenemedi ({path}): {ex.Message}");
+            Debug.WriteLine($"FormWind: could not load font ({path}): {ex.Message}");
         }
     }
 

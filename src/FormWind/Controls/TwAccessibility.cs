@@ -138,7 +138,7 @@ internal sealed class TwDataListAccessibleObject : TwListAccessibleObject
             }
         }
 
-        public override string DefaultAction => "Aç";
+        public override string DefaultAction => TwTexts.Current.Open;
 
         public override void DoDefaultAction()
         {
@@ -206,7 +206,7 @@ internal sealed class TwTabStripAccessibleObject : TwListAccessibleObject
             }
         }
 
-        public override string DefaultAction => "Seç";
+        public override string DefaultAction => TwTexts.Current.Select;
 
         public override void DoDefaultAction() => Select(AccessibleSelection.TakeSelection);
 
@@ -265,7 +265,7 @@ internal sealed class TwCalendarAccessibleObject : TwListAccessibleObject
 
         public override string? Name
         {
-            get => Index == 0 ? "Önceki ay" : "Sonraki ay";
+            get => Index == 0 ? TwTexts.Current.PreviousMonth : TwTexts.Current.NextMonth;
             set { }
         }
 
@@ -312,7 +312,7 @@ internal sealed class TwCalendarAccessibleObject : TwListAccessibleObject
             }
         }
 
-        public override string DefaultAction => "Seç";
+        public override string DefaultAction => TwTexts.Current.Select;
 
         public override void DoDefaultAction() => Select(AccessibleSelection.TakeSelection);
 
@@ -355,7 +355,7 @@ internal sealed class TwSelectAccessibleObject : Control.ControlAccessibleObject
         }
     }
 
-    public override string DefaultAction => "Aç";
+    public override string DefaultAction => TwTexts.Current.Open;
 
     public override void DoDefaultAction() => _select.ShowDropDown();
 }
@@ -431,7 +431,8 @@ internal sealed class TwTreeAccessibleObject : TwListAccessibleObject
             }
         }
 
-        public override string DefaultAction => Item.HasChildren ? (Item.IsExpanded ? "Daralt" : "Genişlet") : "Seç";
+        public override string DefaultAction =>
+            Item.HasChildren ? (Item.IsExpanded ? TwTexts.Current.Collapse : TwTexts.Current.Expand) : TwTexts.Current.Select;
 
         public override void DoDefaultAction()
         {

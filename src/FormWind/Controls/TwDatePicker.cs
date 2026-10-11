@@ -15,7 +15,7 @@ namespace FormWind;
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ValueChanged))]
 [DefaultProperty(nameof(Value))]
-[Description("Stillenebilir tarih seçici.")]
+[Description("Stylable date picker.")]
 public class TwDatePicker : TwTextBox
 {
     private DateTime? _value;

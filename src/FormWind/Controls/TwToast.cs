@@ -124,7 +124,7 @@ public sealed class TwToastForm : Form
         MessageLabel = new Label { AutoSize = true, Text = message, MaximumSize = new Size(280, 0) };
         texts.Controls.Add(TitleLabel);
         texts.Controls.Add(MessageLabel);
-        var close = new TwIcon { IconName = "x", Cursor = Cursors.Hand, AccessibleName = "Kapat", AccessibleRole = AccessibleRole.PushButton };
+        var close = new TwIcon { IconName = "x", Cursor = Cursors.Hand, AccessibleName = TwTexts.Current.Close, AccessibleRole = AccessibleRole.PushButton };
         close.Click += (_, _) => Dismiss();
         root.Controls.Add(close);
 

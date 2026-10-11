@@ -14,7 +14,7 @@ namespace FormWind;
 /// Stiller: <c>label:text-* label:font-*</c>, <c>hint:text-*</c>, <c>error:text-*</c>.
 /// </summary>
 [ToolboxItem(true)]
-[Description("Etiketli, doğrulamalı form alanı.")]
+[Description("Labeled form field with validation.")]
 public class TwField : TwPanel
 {
     private readonly Label _caption;
@@ -90,18 +90,47 @@ public class TwField : TwPanel
         }
     }
 
-    [Category("Validation"), DefaultValue("Bu alan zorunludur."), Localizable(true)]
-    public string RequiredMessage { get; set; } = "Bu alan zorunludur.";
+    private string? _requiredMessage, _patternMessage, _incompleteMessage;
+
+    /// <summary>Zorunlu alan boşken gösterilir; atanmamışsa <see cref="TwTexts.Required"/>.</summary>
+    [Category("Validation"), Localizable(true)]
+    public string RequiredMessage
+    {
+        get => _requiredMessage ?? TwTexts.Current.Required;
+        set => _requiredMessage = value;
+    }
+
+    private bool ShouldSerializeRequiredMessage() => _requiredMessage != null;
+
+    private void ResetRequiredMessage() => _requiredMessage = null;
 
     /// <summary>Değerin uyması gereken düzenli ifade (boş değer <see cref="Required"/>'a bırakılır).</summary>
     [Category("Validation"), DefaultValue("")]
     public string Pattern { get; set; } = "";
 
-    [Category("Validation"), DefaultValue("Geçersiz biçim."), Localizable(true)]
-    public string PatternMessage { get; set; } = "Geçersiz biçim.";
+    /// <summary><see cref="Pattern"/>'e uymayan değerde gösterilir; atanmamışsa <see cref="TwTexts.InvalidFormat"/>.</summary>
+    [Category("Validation"), Localizable(true)]
+    public string PatternMessage
+    {
+        get => _patternMessage ?? TwTexts.Current.InvalidFormat;
+        set => _patternMessage = value;
+    }
 
-    [Category("Validation"), DefaultValue("Eksik giriş."), Localizable(true)]
-    public string IncompleteMessage { get; set; } = "Eksik giriş.";
+    private bool ShouldSerializePatternMessage() => _patternMessage != null;
+
+    private void ResetPatternMessage() => _patternMessage = null;
+
+    /// <summary>Maskesi tamamlanmamış alanda gösterilir; atanmamışsa <see cref="TwTexts.Incomplete"/>.</summary>
+    [Category("Validation"), Localizable(true)]
+    public string IncompleteMessage
+    {
+        get => _incompleteMessage ?? TwTexts.Current.Incomplete;
+        set => _incompleteMessage = value;
+    }
+
+    private bool ShouldSerializeIncompleteMessage() => _incompleteMessage != null;
+
+    private void ResetIncompleteMessage() => _incompleteMessage = null;
 
     /// <summary>Özel kural: değeri alır, hata metni ya da <c>null</c> döner (örn. <see cref="TwValidators.TcKimlikNo"/>).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

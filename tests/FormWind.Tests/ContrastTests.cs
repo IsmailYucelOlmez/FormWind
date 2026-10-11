@@ -235,8 +235,8 @@ public class ContrastTests
         var found = TwContrast.FindOwnerDrawn(panel).ToDictionary(f => f.Control.Name, f => f.Reason);
 
         Assert.Equal(new[] { "box", "handled", "list", "subclassed" }, found.Keys.OrderBy(k => k, StringComparer.Ordinal));
-        Assert.Equal("CellPainting olayı", found["handled"]);
-        Assert.Equal("OnCellPainting ezilmiş", found["subclassed"]);
+        Assert.Equal("CellPainting event", found["handled"]);
+        Assert.Equal("OnCellPainting override", found["subclassed"]);
         Assert.Equal("DrawMode.OwnerDrawFixed", found["box"]);
     }
 }

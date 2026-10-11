@@ -61,7 +61,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     /// </summary>
     public event EventHandler<TwStyleErrorEventArgs>? StyleError;
 
-    [Category("FormWind"), DefaultValue(false), Description("dark: varyantlarını etkinleştirir.")]
+    [Category("FormWind"), DefaultValue(false), Description("Enables the dark: variants.")]
     public bool DarkMode
     {
         get => _darkMode;
@@ -91,7 +91,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     /// Form yerleşimi DPI ile ölçeklenmeyen (AutoScale çalışmayan) uygulamalarda kapatılmalıdır;
     /// aksi halde class değerleri büyürken kontrol boyutları sabit kalır.
     /// </summary>
-    [Category("FormWind"), DefaultValue(true), Description("Class piksel değerlerini kontrolün DPI'ına göre ölçekler.")]
+    [Category("FormWind"), DefaultValue(true), Description("Scales class pixel values with the control's DPI.")]
     public bool ScaleWithDpi
     {
         get => _scaleWithDpi;
@@ -112,7 +112,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     /// döner, seçili ve hover parçaları vurgu rengini alır, gölge ve gradient çizilmez); <c>forced-colors:</c> varyantları
     /// yine uygulanır. Boşluk, yazı boyutu, köşe ve yerleşim değişmez. Mod çalışırken değişirse stiller yeniden uygulanır.
     /// </summary>
-    [Category("FormWind"), DefaultValue(true), Description("Yüksek Karşıtlık modunda sistem renklerini kullanır.")]
+    [Category("FormWind"), DefaultValue(true), Description("Uses system colors in High Contrast mode.")]
     public bool RespectHighContrast
     {
         get => _respectHighContrast;
@@ -137,7 +137,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
         if (_respectHighContrast) RefreshAll();
     }
 
-    [Category("FormWind"), DefaultValue(true), Description("Koyu temada native kaydırma çubuklarını da koyulaştırır.")]
+    [Category("FormWind"), DefaultValue(true), Description("Also darkens native scrollbars in dark mode.")]
     public bool DarkScrollbars
     {
         get => _darkScrollbars;
@@ -154,7 +154,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
     /// uygulamanın bileşenlerine ait olduğundan etki iş parçacığı genelindedir. Windows 10 1809+ gerekir ve belgelenmemiş
     /// bir tema adı kullanır; sorun olursa kapatılabilir.
     /// </summary>
-    [Category("FormWind"), DefaultValue(true), Description("Koyu temada native ipuçlarını da koyulaştırır.")]
+    [Category("FormWind"), DefaultValue(true), Description("Also darkens native tooltips in dark mode.")]
     public bool DarkToolTips
     {
         get => _darkToolTips;
@@ -189,7 +189,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
 
     [Category("FormWind")]
     [DefaultValue("")]
-    [Description("Kolon class'ları: hücreler (text-right font-semibold px-3), başlık (header:…), w-32, min-w-20, flex-1, hidden.")]
+    [Description("Column classes: cells (text-right font-semibold px-3), header (header:…), w-32, min-w-20, flex-1, hidden.")]
     [Editor(typeof(ClassesEditor), typeof(UITypeEditor))]
     [TypeConverter(typeof(ClassesConverter))]
     public string GetColumnClasses(DataGridViewColumn column) =>
@@ -228,7 +228,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
 
     [Category("FormWind")]
     [DefaultValue("")]
-    [Description("Tailwind benzeri utility class'lar. Örn: bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700")]
+    [Description("Tailwind-style utility classes, e.g. bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700")]
     [Editor(typeof(ClassesEditor), typeof(UITypeEditor))]
     [TypeConverter(typeof(ClassesConverter))]
     public string GetClasses(Control control) =>
@@ -468,7 +468,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
             return;
         }
         var name = (target as Control)?.Name ?? (target as DataGridViewColumn)?.Name ?? target.GetType().Name;
-        Debug.WriteLine($"FormWind: '{name}' stillenirken hata ({classes}): {exception}");
+        Debug.WriteLine($"FormWind: error while styling '{name}' ({classes}): {exception}");
     }
 
     internal void ReportUnknown(Control control, TwParsed parsed)
@@ -479,7 +479,7 @@ public class TailwindProvider : Component, IExtenderProvider, ISupportInitialize
             handler(this, new TwUnknownClassesEventArgs(control, parsed.Unknown));
             return;
         }
-        Debug.WriteLine($"FormWind: '{control.Name}' için bilinmeyen class: {string.Join(", ", parsed.Unknown)}");
+        Debug.WriteLine($"FormWind: unknown classes on '{control.Name}': {string.Join(", ", parsed.Unknown)}");
     }
 
     protected override void Dispose(bool disposing)

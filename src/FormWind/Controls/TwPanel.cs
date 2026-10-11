@@ -11,7 +11,7 @@ namespace FormWind;
 /// çocuklarını FormWind yerleşim motoruyla yerleştirir (Dock ve Anchor yok sayılır).
 /// </summary>
 [ToolboxItem(true)]
-[Description("Yuvarlak köşeli, flex/grid yerleşimli panel.")]
+[Description("Panel with rounded corners and flex/grid layout.")]
 public class TwPanel : Panel, ITwChrome, ITwLayoutHost
 {
     private TwChrome _chrome = TwChrome.None;
@@ -27,21 +27,21 @@ public class TwPanel : Panel, ITwChrome, ITwLayoutHost
             true);
     }
 
-    [Category("FormWind"), DefaultValue(0f), Description("Köşe yarıçapı (piksel). Classes tanımlıysa onun değeri kullanılır.")]
+    [Category("FormWind"), DefaultValue(0f), Description("Corner radius (pixels). The value from Classes wins when set.")]
     public float CornerRadius
     {
         get => _chrome.Radius;
         set => SetUniform(Math.Max(0f, value), _chrome.BorderTop, _chrome.BorderColor);
     }
 
-    [Category("FormWind"), DefaultValue(0f), Description("Kenarlık kalınlığı (piksel, tüm kenarlar).")]
+    [Category("FormWind"), DefaultValue(0f), Description("Border width (pixels, all sides).")]
     public float BorderWidth
     {
         get => _chrome.BorderTop;
         set => SetUniform(_chrome.Radius, Math.Max(0f, value), _chrome.BorderColor);
     }
 
-    [Category("FormWind"), Description("Kenarlık rengi.")]
+    [Category("FormWind"), Description("Border color.")]
     public Color BorderColor
     {
         get => _chrome.BorderColor;

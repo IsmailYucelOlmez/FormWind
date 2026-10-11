@@ -10,7 +10,7 @@ const FormWind.TwMasks.TcKimlikNo = "00000000000" -> string!
 const FormWind.TwPager.Gap = 0 -> int
 const FormWind.TwPager.Next = -2 -> int
 const FormWind.TwPager.Previous = -1 -> int
-const FormWind.TwSortableBindingList<T>.EmptyValue = "(Boş)" -> string!
+const FormWind.TwSortableBindingList<T>.EmptyValue = "(blank)" -> string!
 const FormWind.TwToolTip.DefaultClasses = "bg-gray-900 text-white text-xs px-2 py-1 border-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-300" -> string!
 FormWind.Design.ClassesConverter
 FormWind.Design.ClassesConverter.ClassesConverter() -> void
@@ -1215,3 +1215,66 @@ FormWind.TwVirtualRows<T>.PagesLoaded.get -> int
 FormWind.TwVirtualRows<T>.Reset(int rowCount) -> void
 FormWind.TwVirtualRows<T>.RowCount.get -> int
 FormWind.TwVirtualRows<T>.TwVirtualRows(System.Windows.Forms.DataGridView! grid, System.Func<int, int, System.Collections.Generic.IReadOnlyList<T>!>! loadPage, int pageSize = 100, int cachedPages = 8) -> void
+FormWind.TwTexts
+FormWind.TwTexts.TwTexts() -> void
+FormWind.TwTexts.Ok.get -> string!
+FormWind.TwTexts.Ok.set -> void
+FormWind.TwTexts.Cancel.get -> string!
+FormWind.TwTexts.Cancel.set -> void
+FormWind.TwTexts.Yes.get -> string!
+FormWind.TwTexts.Yes.set -> void
+FormWind.TwTexts.No.get -> string!
+FormWind.TwTexts.No.set -> void
+FormWind.TwTexts.Close.get -> string!
+FormWind.TwTexts.Close.set -> void
+FormWind.TwTexts.Required.get -> string!
+FormWind.TwTexts.Required.set -> void
+FormWind.TwTexts.InvalidFormat.get -> string!
+FormWind.TwTexts.InvalidFormat.set -> void
+FormWind.TwTexts.Incomplete.get -> string!
+FormWind.TwTexts.Incomplete.set -> void
+FormWind.TwTexts.MinLength.get -> string!
+FormWind.TwTexts.MinLength.set -> void
+FormWind.TwTexts.InvalidEmail.get -> string!
+FormWind.TwTexts.InvalidEmail.set -> void
+FormWind.TwTexts.TcKimlikLength.get -> string!
+FormWind.TwTexts.TcKimlikLength.set -> void
+FormWind.TwTexts.InvalidTcKimlik.get -> string!
+FormWind.TwTexts.InvalidTcKimlik.set -> void
+FormWind.TwTexts.InvalidIban.get -> string!
+FormWind.TwTexts.InvalidIban.set -> void
+FormWind.TwTexts.TurkishIbanLength.get -> string!
+FormWind.TwTexts.TurkishIbanLength.set -> void
+FormWind.TwTexts.InvalidMobile.get -> string!
+FormWind.TwTexts.InvalidMobile.set -> void
+FormWind.TwTexts.Search.get -> string!
+FormWind.TwTexts.Search.set -> void
+FormWind.TwTexts.Loading.get -> string!
+FormWind.TwTexts.Loading.set -> void
+FormWind.TwTexts.SelectAll.get -> string!
+FormWind.TwTexts.SelectAll.set -> void
+FormWind.TwTexts.ClearFilter.get -> string!
+FormWind.TwTexts.ClearFilter.set -> void
+FormWind.TwTexts.Blank.get -> string!
+FormWind.TwTexts.Blank.set -> void
+FormWind.TwTexts.Open.get -> string!
+FormWind.TwTexts.Open.set -> void
+FormWind.TwTexts.Select.get -> string!
+FormWind.TwTexts.Select.set -> void
+FormWind.TwTexts.Expand.get -> string!
+FormWind.TwTexts.Expand.set -> void
+FormWind.TwTexts.Collapse.get -> string!
+FormWind.TwTexts.Collapse.set -> void
+FormWind.TwTexts.PreviousMonth.get -> string!
+FormWind.TwTexts.PreviousMonth.set -> void
+FormWind.TwTexts.NextMonth.get -> string!
+FormWind.TwTexts.NextMonth.set -> void
+FormWind.TwTexts.Item.get -> string!
+FormWind.TwTexts.Item.set -> void
+FormWind.TwTexts.Page.get -> string!
+FormWind.TwTexts.Page.set -> void
+static FormWind.TwTexts.Current.get -> FormWind.TwTexts!
+static FormWind.TwTexts.Current.set -> void
+static FormWind.TwTexts.English.get -> FormWind.TwTexts!
+static FormWind.TwTexts.Turkish.get -> FormWind.TwTexts!
+static FormWind.TwTexts.ForCulture(System.Globalization.CultureInfo! culture) -> FormWind.TwTexts!

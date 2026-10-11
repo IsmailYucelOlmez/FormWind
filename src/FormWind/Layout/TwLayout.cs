@@ -48,7 +48,7 @@ public static class TwLayout
             data.Container = container;
             if (control is ITwLayoutHost) control.PerformLayout();
             else if (container != null)
-                Debug.WriteLine($"FormWind: '{control.Name}' flex/grid için bir TwPanel olmalı; yerleşim class'ları yok sayıldı.");
+                Debug.WriteLine($"FormWind: '{control.Name}' must be a TwPanel for flex/grid; the layout classes were ignored.");
         }
 
         if (!Equals(data.Item, item))

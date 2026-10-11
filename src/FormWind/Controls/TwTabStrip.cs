@@ -41,7 +41,7 @@ internal sealed class TwTabColors
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
 [DefaultProperty(nameof(Tabs))]
-[Description("Sekme şeridi: alt çizgili, hap ya da segment görünüm.")]
+[Description("Tab strip: underline, pills or segmented.")]
 public class TwTabStrip : Control, ITwChrome
 {
     private readonly List<string> _tabs = new List<string>();

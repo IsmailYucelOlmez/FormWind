@@ -67,7 +67,7 @@ internal sealed class TwDecorator
         }
         catch (System.Exception ex) when (!TwErrors.IsCritical(ex))
         {
-            TwErrors.Trace("kenarlık çizimi", ex);
+            TwErrors.Trace("border painting", ex);
         }
     }
 }

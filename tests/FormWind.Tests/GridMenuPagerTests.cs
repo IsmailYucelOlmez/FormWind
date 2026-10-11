@@ -31,14 +31,14 @@ public class GridMenuPagerTests
     public void List_filters_by_column_values_and_keeps_sorting()
     {
         var list = Orders();
-        Assert.Equal(new[] { "(Boş)", "Ankara", "Bursa", "İzmir" }, ((ITwFilterableList)list).DistinctValues("City"));
+        Assert.Equal(new[] { TwSortableBindingList<Order>.EmptyValue, "Ankara", "Bursa", "İzmir" }, ((ITwFilterableList)list).DistinctValues("City"));
 
         list.SetColumnFilter("Status", new[] { "Kargoda" });
         Assert.Equal(3, list.Count);
         ((IBindingList)list).ApplySort(TypeDescriptor.GetProperties(typeof(Order))["Amount"]!, ListSortDirection.Descending);
         Assert.Equal(new[] { 50, 40, 30 }, list.Select(o => o.Amount));
 
-        list.SetColumnFilter("City", new[] { "İzmir", "(Boş)" });
+        list.SetColumnFilter("City", new[] { "İzmir", TwSortableBindingList<Order>.EmptyValue });
         Assert.Equal(new[] { 40, 30 }, list.Select(o => o.Amount));
         Assert.True(list.HasFilters);
 
@@ -71,13 +71,13 @@ public class GridMenuPagerTests
             TwGrid.ShowFilterMenu(grid, grid.Columns["City"]!);
             var menu = TwGrid.OpenMenu(grid)!;
             var values = menu.Items.OfType<ToolStripMenuItem>().Where(i => i.Tag is string).ToList();
-            Assert.Equal(new[] { "(Boş)", "Ankara", "Bursa", "İzmir" }, values.Select(i => i.Text));
+            Assert.Equal(new[] { "(Boş)", "Ankara", "Bursa", "İzmir" }, values.Select(i => i.Text));   // görünen ad: TwTexts.Blank
             Assert.All(values, i => Assert.True(i.Checked));
 
             values.First(i => i.Text == "Ankara").Checked = false;
             values.First(i => i.Text == "Bursa").Checked = false;
             Assert.Equal(3, grid.Rows.Count);
-            Assert.Equal(new[] { "(Boş)", "İzmir" }, list.GetColumnFilter("City")!.OrderBy(v => v));
+            Assert.Equal(new[] { TwSortableBindingList<Order>.EmptyValue, "İzmir" }, list.GetColumnFilter("City")!.OrderBy(v => v, System.StringComparer.Ordinal));
             menu.Close();
 
             TwGrid.ShowColumnChooser(grid);

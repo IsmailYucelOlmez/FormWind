@@ -156,7 +156,7 @@ public class TwCheckBox : CheckBox, ITwChrome, ITwToggle
 
 /// <summary>Owner-draw seçenek düğmesi. Renkler <see cref="TwCheckBox"/> ile aynı class'larla verilir.</summary>
 [ToolboxItem(true)]
-[Description("Stillenebilir seçenek düğmesi.")]
+[Description("Stylable radio button.")]
 public class TwRadioButton : RadioButton, ITwChrome, ITwToggle
 {
     private TwChrome _chrome = TwChrome.None;
@@ -213,7 +213,7 @@ public class TwRadioButton : RadioButton, ITwChrome, ITwToggle
 /// kapalıyken <c>fill-*</c> rengindedir. Düğme konumu 150 ms içinde kayarak değişir.
 /// </summary>
 [ToolboxItem(true)]
-[Description("Stillenebilir açma/kapama anahtarı.")]
+[Description("Stylable on/off switch.")]
 public class TwSwitch : CheckBox, ITwChrome, ITwToggle
 {
     private readonly Timer _timer = new Timer { Interval = 15 };

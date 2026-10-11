@@ -24,7 +24,7 @@ public enum TwImageFit
 /// </summary>
 [ToolboxItem(true)]
 [DefaultProperty(nameof(Image))]
-[Description("Yuvarlak köşeli resim kutusu.")]
+[Description("Picture box with rounded corners.")]
 public class TwPictureBox : Control, ITwChrome
 {
     private TwChrome _chrome = TwChrome.None;

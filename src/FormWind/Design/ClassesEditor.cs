@@ -63,8 +63,8 @@ internal sealed class ClassesEditorForm : Form
 
         _status = new Label { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(6), AutoEllipsis = true };
 
-        var ok = new Button { Text = "Tamam", DialogResult = DialogResult.OK, Width = 90 };
-        var cancel = new Button { Text = "İptal", DialogResult = DialogResult.Cancel, Width = 90 };
+        var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
+        var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
         var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = 40, Padding = new Padding(4) };
         buttons.Controls.Add(cancel);
         buttons.Controls.Add(ok);
@@ -102,12 +102,12 @@ internal sealed class ClassesEditorForm : Form
         var parsed = _theme.Parse(_input.Text);
         if (parsed.Unknown.Count == 0)
         {
-            _status.Text = "Tüm class'lar tanındı. Bileşen eklemek için listeye çift tıklayın.";
+            _status.Text = "All classes recognized. Double-click the list to add a component.";
             _status.ForeColor = SystemColors.GrayText;
         }
         else
         {
-            _status.Text = "Bilinmeyen: " + string.Join(", ", parsed.Unknown);
+            _status.Text = "Unknown: " + string.Join(", ", parsed.Unknown);
             _status.ForeColor = Color.Firebrick;
         }
     }

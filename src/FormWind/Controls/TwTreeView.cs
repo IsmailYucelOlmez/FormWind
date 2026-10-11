@@ -176,7 +176,7 @@ public sealed class TwTreeViewCancelEventArgs : CancelEventArgs
 /// </summary>
 [ToolboxItem(true)]
 [DefaultEvent(nameof(AfterSelect))]
-[Description("Stillenebilir sanal ağaç.")]
+[Description("Stylable virtual tree.")]
 public class TwTreeView : TwDataList
 {
     private readonly List<TwTreeNode> _visible = new List<TwTreeNode>();

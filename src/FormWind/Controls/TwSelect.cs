@@ -17,7 +17,7 @@ namespace FormWind;
 [ToolboxItem(true)]
 [DefaultEvent(nameof(SelectedIndexChanged))]
 [DefaultProperty(nameof(Items))]
-[Description("Stillenebilir açılır liste.")]
+[Description("Stylable drop-down list.")]
 public class TwSelect : Control, ITwChrome
 {
     private readonly List<string> _items = new List<string>();
@@ -66,8 +66,19 @@ public class TwSelect : Control, ITwChrome
     [Category("Behavior"), DefaultValue(false)]
     public bool Searchable { get; set; }
 
-    [Category("Appearance"), DefaultValue("Ara…"), Localizable(true)]
-    public string SearchPlaceholder { get; set; } = "Ara…";
+    private string? _searchPlaceholder;
+
+    /// <summary>Arama kutusunun ipucu; atanmamışsa <see cref="TwTexts.Search"/>.</summary>
+    [Category("Appearance"), Localizable(true)]
+    public string SearchPlaceholder
+    {
+        get => _searchPlaceholder ?? TwTexts.Current.Search;
+        set => _searchPlaceholder = value;
+    }
+
+    private bool ShouldSerializeSearchPlaceholder() => _searchPlaceholder != null;
+
+    private void ResetSearchPlaceholder() => _searchPlaceholder = null;
 
     /// <summary>Açık menüdeki arama kutusu (kapalıyken ya da <see cref="Searchable"/> kapalıyken <c>null</c>).</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

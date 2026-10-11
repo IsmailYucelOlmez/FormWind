@@ -462,8 +462,23 @@ if (TwDialog.Show(this, "Sipariş silinsin mi?", "Silme onayı", TwDialogKind.Wa
 TwToast.Show(this, "Sipariş kaydedildi", TwDialogKind.Success);
 ```
 
-- **`TwDialog`** (MessageBox yerine): ikon, başlık, mesaj, sağa dayalı düğmeler; Enter varsayılan, Esc iptal/hayır. Sahip formun koyu temasını izler. Düğme metinleri `TwDialog.Texts` ile değiştirilir; `TwDialog.Create(...)` göstermeden özelleştirmeye izin verir.
+- **`TwDialog`** (MessageBox yerine): ikon, başlık, mesaj, sağa dayalı düğmeler; Enter varsayılan, Esc iptal/hayır. Sahip formun koyu temasını izler. Düğme metinleri [`TwTexts`](#yerelleştirme)'ten gelir, tek tek `TwDialog.Texts[DialogResult.Yes] = "Sil"` ile ezilebilir; `TwDialog.Create(...)` göstermeden özelleştirmeye izin verir.
 - **`TwToast`**: sahip formun sağ alt köşesinde üst üste dizilen, odak çalmayan, fare üzerindeyken bekleyen ve kendiliğinden kapanan bildirim (`DefaultDuration` 4 sn). Ekran okuyucuya Alert olarak bildirilir.
+
+## Yerelleştirme
+
+Kullanıcıya görünen metinler (diyalog düğmeleri, doğrulama mesajları, grid süzme menüsü ve "yükleniyor" metni, arama kutusu ipucu, ekran okuyucu adları) `TwTexts` içindedir. Varsayılan dil İngilizcedir; uygulamanın kullanıcı arayüzü dili (`CultureInfo.CurrentUICulture`) Türkçeyse Türkçe metinler seçilir.
+
+```csharp
+TwTexts.Current = TwTexts.Turkish;                                   // dili zorla
+TwTexts.Current = new TwTexts { Ok = "OK", Cancel = "Abbrechen", Required = "Pflichtfeld." };   // başka bir dil
+TwTexts.Current.Loading = "Veriler alınıyor…";                       // tek bir metin
+```
+
+- Kontrollerin kendi metin özellikleri (`TwField.RequiredMessage`, `PatternMessage`, `IncompleteMessage`, `TwSelect.SearchPlaceholder`) atanmışsa `TwTexts`'in önüne geçer; atanmamışsa Designer.cs'e yazılmaz.
+- Biçimli metinlerde `{0}` yer tutucuları kullanılır (`MinLength`: karakter sayısı, `Page`: sayfa ve sayfa sayısı).
+- Grid süzmesinde boş değerlerin anahtarı dilden bağımsızdır (`TwSortableBindingList<T>.EmptyValue`); menüde `TwTexts.Blank` görünür.
+- Geliştiriciye görünen metinler (istisnalar, Designer komutları, çözümleyici uyarıları, Debug çıktısı) İngilizcedir.
 
 ## Erişilebilirlik
 
@@ -609,7 +624,7 @@ Paketle gelen Roslyn çözümleyicisi, class'ların yönettiği bir özelliğe k
 
 ```csharp
 tw.SetClasses(btnSave, "btn-primary");
-btnSave.BackColor = Color.Red;   // FW001: 'btnSave' kontrolünün class'ları var; 'BackColor' ataması class'larla çakışır.
+btnSave.BackColor = Color.Red;   // FW001: 'btnSave' has classes; assigning 'BackColor' conflicts with them. …
 ```
 
 Çalışma zamanında renk ataması kazanır: FormWind o renk kanalını uygulamaya bırakır (bkz. [Uygulama kodunun atadığı renkler](#uygulama-kodunun-atadığı-renkler)); durum rengi gibi bilinçli atamalarda uyarı bastırılabilir. Padding ve margin atamaları ise geri alınır, class kazanır (bkz. [DPI](#dpi)); bu durumda uyarı gerçek bir çakışmayı gösterir.

@@ -11,7 +11,7 @@ namespace FormWind;
 /// </summary>
 [ToolboxItem(true)]
 [DefaultProperty(nameof(IconName))]
-[Description("Windows ikon fontundan bir ikon çizer.")]
+[Description("Draws an icon from the Windows icon font or a theme SVG.")]
 public class TwIcon : Control
 {
     private string _iconName = "";
@@ -31,7 +31,7 @@ public class TwIcon : Control
     }
 
     [Category("FormWind"), DefaultValue(""), TypeConverter(typeof(TwIconNameConverter))]
-    [Description("İkon adı (örn. plus, search, user) ya da kod noktası (#E710).")]
+    [Description("Icon name (e.g. plus, search, user) or a code point (#E710).")]
     public string IconName
     {
         get => _iconName;

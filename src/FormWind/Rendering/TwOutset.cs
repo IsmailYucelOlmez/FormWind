@@ -323,7 +323,7 @@ internal sealed class TwOutset
                 }
                 catch (Exception ex) when (!TwErrors.IsCritical(ex))
                 {
-                    TwErrors.Trace("gölge/halka çizimi", ex);
+                    TwErrors.Trace("shadow/ring painting", ex);
                 }
             }
         }

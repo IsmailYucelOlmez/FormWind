@@ -880,7 +880,7 @@ public class TwDataList : Control
     protected override AccessibleObject CreateAccessibilityInstance() => new TwDataListAccessibleObject(this);
 
     internal string GetAccessibleItemName(int index) =>
-        AccessibleItemText?.Invoke(index) ?? ItemText?.Invoke(index) ?? $"Öğe {index + 1}";
+        AccessibleItemText?.Invoke(index) ?? ItemText?.Invoke(index) ?? string.Format(System.Globalization.CultureInfo.CurrentCulture, TwTexts.Current.Item, index + 1);
 
     internal void Activate() => ItemActivate?.Invoke(this, EventArgs.Empty);
 

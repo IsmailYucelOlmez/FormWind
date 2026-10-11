@@ -14,7 +14,7 @@ namespace FormWind;
 [ToolboxItem(true)]
 [DefaultEvent(nameof(ValueChanged))]
 [DefaultProperty(nameof(Value))]
-[Description("Yukarı/aşağı butonlu sayı kutusu.")]
+[Description("Number box with up/down buttons.")]
 public class TwNumberBox : TwTextBox
 {
     private readonly Timer _repeat = new Timer();

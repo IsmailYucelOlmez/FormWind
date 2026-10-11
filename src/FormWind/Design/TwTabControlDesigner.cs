@@ -23,8 +23,8 @@ public class TwTabControlDesigner : ParentControlDesigner
 
     public override DesignerVerbCollection Verbs => _verbs ??= new DesignerVerbCollection
     {
-        new DesignerVerb("Sayfa ekle", (_, _) => AddPage()),
-        new DesignerVerb("Seçili sayfayı kaldır", (_, _) => RemovePage()),
+        new DesignerVerb("Add page", (_, _) => AddPage()),
+        new DesignerVerb("Remove selected page", (_, _) => RemovePage()),
     };
 
     public override DesignerActionListCollection ActionLists => _actionLists ??= new DesignerActionListCollection { new ActionList(this) };
@@ -82,11 +82,11 @@ public class TwTabControlDesigner : ParentControlDesigner
     internal void AddPage()
     {
         if (GetService(typeof(IDesignerHost)) is not IDesignerHost host) return;
-        using var transaction = host.CreateTransaction("Sayfa ekle");
+        using var transaction = host.CreateTransaction("Add page");
         var controls = TypeDescriptor.GetProperties(Tabs)["Controls"];
         RaiseComponentChanging(controls);
         var page = (TwTabPage)host.CreateComponent(typeof(TwTabPage));
-        page.Text = "Sayfa " + (Tabs.TabPages.Count + 1);
+        page.Text = "Page " + (Tabs.TabPages.Count + 1);
         Tabs.Controls.Add(page);
         RaiseComponentChanged(controls, null, null);
         Tabs.SelectedTab = page;
@@ -96,7 +96,7 @@ public class TwTabControlDesigner : ParentControlDesigner
     internal void RemovePage()
     {
         if (Tabs.SelectedTab is not TwTabPage page || GetService(typeof(IDesignerHost)) is not IDesignerHost host) return;
-        using var transaction = host.CreateTransaction("Sayfayı kaldır");
+        using var transaction = host.CreateTransaction("Remove page");
         var controls = TypeDescriptor.GetProperties(Tabs)["Controls"];
         RaiseComponentChanging(controls);
         host.DestroyComponent(page);
@@ -123,9 +123,9 @@ public class TwTabControlDesigner : ParentControlDesigner
 
         public override DesignerActionItemCollection GetSortedActionItems() => new DesignerActionItemCollection
         {
-            new DesignerActionPropertyItem(nameof(Variant), "Görünüm"),
-            new DesignerActionMethodItem(this, nameof(AddPage), "Sayfa ekle", true),
-            new DesignerActionMethodItem(this, nameof(RemovePage), "Seçili sayfayı kaldır", true),
+            new DesignerActionPropertyItem(nameof(Variant), "Style"),
+            new DesignerActionMethodItem(this, nameof(AddPage), "Add page", true),
+            new DesignerActionMethodItem(this, nameof(RemovePage), "Remove selected page", true),
         };
     }
 }

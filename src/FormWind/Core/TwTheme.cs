@@ -69,7 +69,7 @@ public sealed class TwTheme
     /// <summary>Bir font ailesinin belirli bir kalınlığı için kurulu ayrı aileyi tanımlar (örn. 600 → "Inter SemiBold").</summary>
     public void SetFontWeight(string family, int weight, string face)
     {
-        if (string.IsNullOrWhiteSpace(family)) throw new ArgumentException("Aile adı boş olamaz.", nameof(family));
+        if (string.IsNullOrWhiteSpace(family)) throw new ArgumentException("The family name cannot be empty.", nameof(family));
         if (weight < 1 || weight > 1000) throw new ArgumentOutOfRangeException(nameof(weight));
         if (!_fontWeights.TryGetValue(family, out var weights))
         {
@@ -127,7 +127,7 @@ public sealed class TwTheme
     /// <summary>Tema düzeyinde ikon ekler ya da yerleşik bir ikonu ezer (örn. özel ikon fontu için).</summary>
     public void SetIcon(string name, char glyph)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("İkon adı boş olamaz.", nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("The icon name cannot be empty.", nameof(name));
         _icons[name] = glyph;
     }
 
@@ -137,7 +137,7 @@ public sealed class TwTheme
     /// </summary>
     public void SetSvgIcon(string name, string svg)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("İkon adı boş olamaz.", nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("The icon name cannot be empty.", nameof(name));
         _svgIcons[name] = TwSvgIcon.Parse(svg);
     }
 
@@ -215,7 +215,7 @@ public sealed class TwTheme
         get => _spacingUnit;
         set
         {
-            if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value), "SpacingUnit pozitif olmalı.");
+            if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value), "SpacingUnit must be positive.");
             _spacingUnit = value;
             _cache.Clear();
         }
@@ -269,7 +269,7 @@ public sealed class TwTheme
     public void SetColor(string name, string shade, Color color)
     {
         if (name is null || !ColorNameRx.IsMatch(name))
-            throw new ArgumentException("Renk adı küçük harfle başlamalı ve yalnızca a-z, 0-9 içermeli.", nameof(name));
+            throw new ArgumentException("A color name must start with a lowercase letter and contain only a-z and 0-9.", nameof(name));
         SetColorCore(name, shade ?? "", color);
         _cache.Clear();
     }
@@ -282,7 +282,7 @@ public sealed class TwTheme
 
     public void SetComponent(string name, string classes)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Bileşen adı boş olamaz.", nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("The component name cannot be empty.", nameof(name));
         _components[name] = classes ?? "";
         _cache.Clear();
     }
@@ -347,7 +347,7 @@ public sealed class TwTheme
             var version = palette.GetString();
             UsePalette(string.Equals(version, "v4", StringComparison.OrdinalIgnoreCase) ? TwPaletteVersion.V4
                 : string.Equals(version, "v3", StringComparison.OrdinalIgnoreCase) ? TwPaletteVersion.V3
-                : throw new FormatException($"tw.config.json: 'palette' için geçersiz değer: {version} (v3 ya da v4)."));
+                : throw new FormatException($"tw.config.json: invalid 'palette' value: {version} (v3 or v4)."));
         }
 
         if (root.TryGetProperty("fontFamily", out var sans))
@@ -374,7 +374,7 @@ public sealed class TwTheme
                 }
                 else
                 {
-                    throw new FormatException($"tw.config.json: 'colors.{color.Name}' bir renk ya da ton nesnesi olmalı.");
+                    throw new FormatException($"tw.config.json: 'colors.{color.Name}' must be a color or an object of shades.");
                 }
             }
         }
@@ -393,7 +393,7 @@ public sealed class TwTheme
                 foreach (var weight in family.Value.EnumerateObject())
                 {
                     if (!int.TryParse(weight.Name, NumberStyles.None, CultureInfo.InvariantCulture, out var value))
-                        throw new FormatException($"tw.config.json: 'fontWeights.{family.Name}.{weight.Name}' geçerli bir kalınlık değil.");
+                        throw new FormatException($"tw.config.json: 'fontWeights.{family.Name}.{weight.Name}' is not a valid weight.");
                     SetFontWeight(family.Name, value, weight.Value.GetString() ?? "");
                 }
             }
@@ -415,7 +415,7 @@ public sealed class TwTheme
                 else if (value.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
                 {
                     var path = Path.Combine(baseDirectory ?? AppDomain.CurrentDomain.BaseDirectory, value);
-                    if (!File.Exists(path)) throw new FormatException($"tw.config.json: 'icons.{icon.Name}' dosyası bulunamadı: {path}");
+                    if (!File.Exists(path)) throw new FormatException($"tw.config.json: file for 'icons.{icon.Name}' not found: {path}");
                     SetSvgIcon(icon.Name, File.ReadAllText(path));
                 }
                 else if (TwIcons.TryParseCodePoint(value, out var glyph))
@@ -424,7 +424,7 @@ public sealed class TwTheme
                 }
                 else
                 {
-                    throw new FormatException($"tw.config.json: 'icons.{icon.Name}' için geçersiz değer (kod noktası, .svg yolu ya da <svg>): {value}");
+                    throw new FormatException($"tw.config.json: invalid value for 'icons.{icon.Name}' (code point, .svg path or <svg>): {value}");
                 }
             }
         }
@@ -443,12 +443,12 @@ public sealed class TwTheme
     private static Color ParseColor(string? value, string key)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new FormatException($"tw.config.json: '{key}' için renk değeri boş.");
+            throw new FormatException($"tw.config.json: empty color value for '{key}'.");
         // Tailwind v4 biçimi: oklch(62.3% 0.214 259.8)
         if (value!.TrimStart().StartsWith("oklch", StringComparison.OrdinalIgnoreCase))
         {
             if (TwOklch.TryParse(value, out var oklch)) return oklch;
-            throw new FormatException($"tw.config.json: '{key}' için geçersiz renk: {value}");
+            throw new FormatException($"tw.config.json: invalid color for '{key}': {value}");
         }
         try
         {
@@ -456,7 +456,7 @@ public sealed class TwTheme
         }
         catch (Exception ex)
         {
-            throw new FormatException($"tw.config.json: '{key}' için geçersiz renk: {value}", ex);
+            throw new FormatException($"tw.config.json: invalid color for '{key}': {value}", ex);
         }
     }
 }

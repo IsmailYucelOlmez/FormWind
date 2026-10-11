@@ -49,14 +49,25 @@ public sealed class TwDialogOptions
 /// </summary>
 public static class TwDialog
 {
-    /// <summary>Düğme metinleri (yerelleştirme için).</summary>
-    public static Dictionary<DialogResult, string> Texts { get; } = new Dictionary<DialogResult, string>
+    /// <summary>
+    /// Düğme metinlerini ezmek için (örn. <c>Texts[DialogResult.Yes] = "Sil"</c>). Burada olmayan düğmeler
+    /// <see cref="TwTexts.Current"/>'tan alınır.
+    /// </summary>
+    public static Dictionary<DialogResult, string> Texts { get; } = new Dictionary<DialogResult, string>();
+
+    internal static string TextFor(DialogResult result)
     {
-        [DialogResult.OK] = "Tamam",
-        [DialogResult.Cancel] = "İptal",
-        [DialogResult.Yes] = "Evet",
-        [DialogResult.No] = "Hayır",
-    };
+        if (Texts.TryGetValue(result, out var text)) return text;
+        var texts = TwTexts.Current;
+        return result switch
+        {
+            DialogResult.OK => texts.Ok,
+            DialogResult.Cancel => texts.Cancel,
+            DialogResult.Yes => texts.Yes,
+            DialogResult.No => texts.No,
+            _ => result.ToString(),
+        };
+    }
 
     public static DialogResult Show(IWin32Window? owner, string message, string? title = null,
         TwDialogKind kind = TwDialogKind.Info, TwDialogButtons buttons = TwDialogButtons.Ok, bool danger = false) =>
@@ -138,7 +149,7 @@ public sealed class TwDialogForm : Form
         var primary = results[results.Length - 1];
         foreach (var result in results)
         {
-            var button = new TwButton { Text = TwDialog.Texts[result], DialogResult = result, AutoSize = true, MinimumSize = new Size(88, 0) };
+            var button = new TwButton { Text = TwDialog.TextFor(result), DialogResult = result, AutoSize = true, MinimumSize = new Size(88, 0) };
             row.Controls.Add(button);
             _buttons.Add(button);
             _tw.SetClasses(button, result == primary ? (options.Danger ? "btn-danger" : "btn-primary") : "btn-ghost");

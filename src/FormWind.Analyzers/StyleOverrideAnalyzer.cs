@@ -23,12 +23,12 @@ public sealed class StyleOverrideAnalyzer : DiagnosticAnalyzer
 
     private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
         DiagnosticId,
-        "Class'ı olan kontrole stil özelliği atanıyor",
-        "'{0}' kontrolünün class'ları var; '{1}' ataması class'larla çakışır. Değeri class olarak verin (örn. {2}) ya da atamayı kaldırın.",
+        "Style property assigned on a control with classes",
+        "'{0}' has classes; assigning '{1}' conflicts with them. Express the value as a class (e.g. {2}) or remove the assignment.",
         "FormWind",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "TailwindProvider class'ları durum değiştikçe yeniden uygular; aynı özelliğe kodda atanan değer kalıcı olmaz.");
+        description: "TailwindProvider reapplies classes as the state changes; a value assigned to the same property in code does not persist.");
 
     // Class'larla yönetilen özellikler ve karşılık gelen class örneği.
     internal static readonly IReadOnlyDictionary<string, string> StyleProperties = new Dictionary<string, string>
