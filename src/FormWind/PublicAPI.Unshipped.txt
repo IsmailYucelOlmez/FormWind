@@ -182,6 +182,9 @@ FormWind.TwChrome.TwChrome() -> void
 FormWind.TwChrome.TwChrome(float radius, float left, float top, float right, float bottom, System.Drawing.Color borderColor, FormWind.TwGradient? gradient = null) -> void
 FormWind.TwContrast
 FormWind.TwContrastIssue
+FormWind.TwOwnerDrawn
+FormWind.TwOwnerDrawn.Control.get -> System.Windows.Forms.Control!
+FormWind.TwOwnerDrawn.Reason.get -> string!
 FormWind.TwContrastIssue.Background.get -> System.Drawing.Color
 FormWind.TwContrastIssue.Control.get -> System.Windows.Forms.Control!
 FormWind.TwContrastIssue.Foreground.get -> System.Drawing.Color
@@ -938,6 +941,7 @@ override FormWind.TwCheckedListBox.OnMouseDown(System.Windows.Forms.MouseEventAr
 override FormWind.TwChrome.Equals(object? obj) -> bool
 override FormWind.TwChrome.GetHashCode() -> int
 override FormWind.TwContrastIssue.ToString() -> string!
+override FormWind.TwOwnerDrawn.ToString() -> string!
 override FormWind.TwDataList.CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject!
 override FormWind.TwDataList.Dispose(bool disposing) -> void
 override FormWind.TwDataList.IsInputKey(System.Windows.Forms.Keys keyData) -> bool
@@ -1115,6 +1119,7 @@ static FormWind.TwBreakpoints.Xxl.set -> void
 static FormWind.TwChrome.FromStyle(FormWind.TwStyle! style, float scale, System.Drawing.Color defaultBorderColor) -> FormWind.TwChrome
 static FormWind.TwChrome.None.get -> FormWind.TwChrome
 static FormWind.TwContrast.Audit(System.Windows.Forms.Control! root, FormWind.TailwindProvider? provider = null, double minimum = 4.5, bool includeDisabled = false) -> System.Collections.Generic.IReadOnlyList<FormWind.TwContrastIssue!>!
+static FormWind.TwContrast.FindOwnerDrawn(System.Windows.Forms.Control! root) -> System.Collections.Generic.IReadOnlyList<FormWind.TwOwnerDrawn!>!
 static FormWind.TwContrast.Ratio(System.Drawing.Color foreground, System.Drawing.Color background) -> double
 static FormWind.TwOklch.ToColor(double lightness, double chroma, double hue, double alpha = 1) -> System.Drawing.Color
 static FormWind.TwOklch.TryParse(string? text, out System.Drawing.Color color) -> bool

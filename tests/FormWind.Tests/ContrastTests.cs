@@ -212,4 +212,31 @@ public class ContrastTests
         provider.SetClasses(button, "bg-gray-800 text-gray-100 disabled:text-gray-400");
         Assert.Equal(ColorTranslator.FromHtml("#9ca3af").ToArgb(), TwDisabledText.TextColor(button).ToArgb());
     });
+
+    private sealed class PaintedGrid : DataGridView
+    {
+        protected override void OnCellPainting(DataGridViewCellPaintingEventArgs e) => base.OnCellPainting(e);
+    }
+
+    [Fact]
+    public void Finds_controls_that_paint_their_own_colors()
+    {
+        using var panel = new Panel();
+        var handled = new DataGridView { Name = "handled" };
+        handled.CellPainting += (_, _) => { };
+        var subclassed = new PaintedGrid { Name = "subclassed" };
+        var plain = new DataGridView { Name = "plain" };
+        var list = new ListView { Name = "list", OwnerDraw = true };
+        var box = new ListBox { Name = "box", DrawMode = DrawMode.OwnerDrawFixed };
+        var tree = new TreeView { Name = "tree" };
+        var own = new TwDataList { Name = "own" };
+        panel.Controls.AddRange(new Control[] { handled, subclassed, plain, list, box, tree, own });
+
+        var found = TwContrast.FindOwnerDrawn(panel).ToDictionary(f => f.Control.Name, f => f.Reason);
+
+        Assert.Equal(new[] { "box", "handled", "list", "subclassed" }, found.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal("CellPainting olayı", found["handled"]);
+        Assert.Equal("OnCellPainting ezilmiş", found["subclassed"]);
+        Assert.Equal("DrawMode.OwnerDrawFixed", found["box"]);
+    }
 }

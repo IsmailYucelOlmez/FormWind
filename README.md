@@ -508,6 +508,7 @@ foreach (var issue in TwContrast.Audit(this, tw))
 - Devre dışı kontroller WCAG'ın kapsamı dışında olduğundan varsayılan olarak atlanır. `includeDisabled: true` onları da denetler (bölüm adı `disabled text`); bu, devre dışı bir kontrolün içerik göstermek için kullanıldığı durumları yakalar (örn. imleç görünmesin diye devre dışı bırakılmış bir açıklama kutusu). Devre dışı native metin kutularında zemin Windows'un çizdiği sistem zemini sayılır. Harness denetimi bu seçenekle çalıştırır. Devre dışı butonlarda ekrana çizilen yazı rengi 3:1 eşiğiyle denetlenir: amaç kontrast değil, görünmez yazıyı yakalamak.
 - `transition` geçişi süren renklerde varılacak renk denetlenir; denetim tema değişiminin hemen ardından çağrılabilir.
 - `TwContrast.Ratio(ön, zemin)` iki renk arasındaki oranı verir.
+- `TwContrast.FindOwnerDrawn(root)` renklerini uygulamanın kendisi çizen kontrolleri listeler (`CellPainting` aboneli ya da `OnPaint`'i ezen grid'ler, `OwnerDraw`/`DrawMode` açık liste, ağaç, sekme ve açılır kutular). Denetim bunların ekrandaki renklerini bilemez; koyu temada elle bakılmalıdır.
 - Varsayılan bileşenler (`btn-primary`, `btn-ghost`, `card`, `input`, `table`) açık ve koyu temada bu denetimden geçer (`ContrastTests`). `btn-primary` koyu temada da `blue-600`/`blue-700` kullanır; beyaz yazı `blue-500` üzerinde 3,7:1, `blue-400` üzerinde 2,5:1 ile eşiğin altında kalır.
 
 ## Hata yönetimi
@@ -714,6 +715,7 @@ Log ve görüntüler `%TEMP%\FormWind-Harness\<süreç>-<zaman>\` altına yazıl
 | `FORM` | Form, stillenen kontrol sayısı ve süre; `unstyled` tanınmayan kontrol tipleri |
 | `ADDED` | Sonradan eklenen ve stillenen kontroller |
 | `CONTRAST` | Kontrast denetiminin bulduğu çiftler (açık ve koyu tema) |
+| `OWNERDRAW` | Renklerini uygulamanın kendisi çizen kontroller (`TwContrast.FindOwnerDrawn`): kontrast denetimi bunları ölçemez, class'ların hücre/öğe renkleri yok sayılabilir; koyu temada elle bakılmalı |
 | `UI STALL` | UI iş parçacığının 250 ms'den uzun donması |
 | `PAINT STORM` | 3 saniye üst üste saniyede 100'den fazla çizim: çizim sırasında yeniden geçersiz kılma döngüsü |
 | `EXCEPTION`, `UNKNOWN` | Stil uygulanırken çıkan hata; tanınmayan class |

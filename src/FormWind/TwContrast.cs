@@ -174,6 +174,77 @@ public static class TwContrast
     }
 
     private static bool IsLarge(Font font) => font.SizeInPoints >= 18f || (font.Bold && font.SizeInPoints >= 14f);
+
+    /// <summary>
+    /// Renklerini uygulamanın kendisinin çizdiği kontroller: <see cref="Audit"/> bunların ekrandaki renklerini bilemez ve
+    /// class'ların hücre/öğe renkleri onlarda yok sayılabilir (örn. koyu temada açık kalan bir grid). Bulunanlar:
+    /// <c>CellPainting</c>/<c>RowPrePaint</c>/<c>RowPostPaint</c> aboneleri ya da <c>OnPaint</c>/<c>OnCellPainting</c>'i
+    /// ezen DataGridView'lar; <c>OwnerDraw</c> açık ListView ve TabControl; <c>DrawMode</c>'u <c>Normal</c> olmayan
+    /// ListBox, ComboBox ve TreeView. FormWind'in kendi kontrolleri sayılmaz.
+    /// </summary>
+    public static IReadOnlyList<TwOwnerDrawn> FindOwnerDrawn(Control root)
+    {
+        if (root is null) throw new ArgumentNullException(nameof(root));
+        var found = new List<TwOwnerDrawn>();
+        CollectOwnerDrawn(root, found);
+        return found;
+    }
+
+    private static void CollectOwnerDrawn(Control control, List<TwOwnerDrawn> found)
+    {
+        if (!IsHidden(control) && OwnerDrawReason(control) is string reason) found.Add(new TwOwnerDrawn(control, reason));
+        foreach (Control child in control.Controls)
+            CollectOwnerDrawn(child, found);
+    }
+
+    private static string? OwnerDrawReason(Control control)
+    {
+        if (control.GetType().Namespace == typeof(TwContrast).Namespace) return null;
+        switch (control)
+        {
+            case DataGridView grid:
+                var reasons = new List<string>();
+                foreach (var name in new[] { "CellPainting", "RowPrePaint", "RowPostPaint" })
+                    if (HasHandlers(grid, name)) reasons.Add(name + " olayı");
+                foreach (var name in new[] { "OnPaint", "OnCellPainting", "OnRowPrePaint", "OnRowPostPaint" })
+                    if (Overrides(grid, name)) reasons.Add(name + " ezilmiş");
+                return reasons.Count > 0 ? string.Join(", ", reasons) : null;
+            case ListView { OwnerDraw: true }:
+            case TabControl { DrawMode: TabDrawMode.OwnerDrawFixed }:
+                return "OwnerDraw";
+            case ListBox { DrawMode: not DrawMode.Normal } list:
+                return "DrawMode." + list.DrawMode;
+            case ComboBox { DrawMode: not DrawMode.Normal } combo:
+                return "DrawMode." + combo.DrawMode;
+            case TreeView { DrawMode: not TreeViewDrawMode.Normal } tree:
+                return "DrawMode." + tree.DrawMode;
+            default:
+                return null;
+        }
+    }
+
+    private static bool Overrides(Control control, string method)
+    {
+        for (var type = control.GetType(); type != null && type != typeof(DataGridView); type = type.BaseType)
+        {
+            var declared = type.GetMethod(method, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.DeclaredOnly);
+            if (declared != null) return true;
+        }
+        return false;
+    }
+
+    // Olay anahtarı: .NET Framework'te EVENT_DATAGRIDVIEWCELLPAINTING, .NET'te s_cellPaintingEvent.
+    private static bool HasHandlers(DataGridView grid, string eventName)
+    {
+        const System.Reflection.BindingFlags Static = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+        var key = (typeof(DataGridView).GetField("EVENT_DATAGRIDVIEW" + eventName.ToUpperInvariant(), Static)
+                   ?? typeof(DataGridView).GetField("s_" + char.ToLowerInvariant(eventName[0]) + eventName.Substring(1) + "Event", Static))?.GetValue(null);
+        if (key is null) return false;
+        var events = typeof(System.ComponentModel.Component).GetProperty("Events", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            ?.GetValue(grid) as System.ComponentModel.EventHandlerList;
+        return events?[key] != null;
+    }
 }
 
 /// <summary>Eşiğin altında kalan bir ön plan/zemin çifti.</summary>
@@ -205,4 +276,21 @@ public sealed class TwContrastIssue
     public override string ToString() =>
         $"{Control.GetType().Name} '{Control.Name}' {Part}: {Ratio:0.00}:1 < {Required:0.0}:1 " +
         $"(#{Foreground.R:X2}{Foreground.G:X2}{Foreground.B:X2} on #{Background.R:X2}{Background.G:X2}{Background.B:X2})";
+}
+
+/// <summary>Renklerini uygulamanın kendisinin çizdiği bir kontrol (bkz. <see cref="TwContrast.FindOwnerDrawn"/>).</summary>
+public sealed class TwOwnerDrawn
+{
+    internal TwOwnerDrawn(Control control, string reason)
+    {
+        Control = control;
+        Reason = reason;
+    }
+
+    public Control Control { get; }
+
+    /// <summary>Neden: <c>CellPainting olayı</c>, <c>OnPaint ezilmiş</c>, <c>OwnerDraw</c>, <c>DrawMode.OwnerDrawFixed</c>…</summary>
+    public string Reason { get; }
+
+    public override string ToString() => $"{Control.GetType().Name} '{Control.Name}': {Reason}";
 }

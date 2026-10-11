@@ -228,6 +228,9 @@ public static class FormWindHarness
             Log($"  unstyled: {string.Join(", ", unstyled.GroupBy(t => t).OrderByDescending(g => g.Count()).Select(g => $"{g.Key}={g.Count()}"))}");
 
         AuditContrast(form, provider, _dark ? "dark" : "light");
+        // Renklerini uygulamanın çizdiği kontroller: kontrast denetimi bunları ölçemez, koyu temada açık kalabilirler.
+        foreach (var drawn in TwContrast.FindOwnerDrawn(form))
+            if (Reported.Add($"ownerdraw {Describe(drawn.Control)}")) Log($"OWNERDRAW {Describe(drawn.Control)}: {drawn.Reason}");
         if (form is ThreadExceptionDialog) Log($"APP EXCEPTION dialog opened: {form.Text}");
         if (_walkText != null)
         {

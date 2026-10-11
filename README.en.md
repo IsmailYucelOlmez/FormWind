@@ -508,6 +508,7 @@ foreach (var issue in TwContrast.Audit(this, tw))
 - Disabled controls are outside WCAG's scope and are skipped by default. `includeDisabled: true` checks them too (part name `disabled text`); this catches disabled controls used to display content (e.g. a description box disabled so that no caret shows). For disabled native text boxes the background is the system background Windows paints. The harness runs the audit with this option. For disabled buttons the text color actually drawn is checked against 3:1: the aim is to catch invisible text, not to enforce contrast.
 - For colors in the middle of a `transition`, the target color is checked; the audit can be called right after a theme change.
 - `TwContrast.Ratio(foreground, background)` returns the ratio between two colors.
+- `TwContrast.FindOwnerDrawn(root)` lists controls that paint their own colors (grids with `CellPainting` handlers or an overridden `OnPaint`, lists, trees, tabs and combo boxes with `OwnerDraw`/`DrawMode` on). The audit cannot know their colors on screen; check them by eye in dark mode.
 - The default components (`btn-primary`, `btn-ghost`, `card`, `input`, `table`) pass this audit in light and dark mode (`ContrastTests`). `btn-primary` uses `blue-600`/`blue-700` in dark mode too; white text stays below the threshold on `blue-500` (3.7:1) and `blue-400` (2.5:1).
 
 ## Error handling
@@ -714,6 +715,7 @@ Logs and images are written to `%TEMP%\FormWind-Harness\<process>-<time>\`:
 | `FORM` | Form, number of styled controls and duration; `unstyled` lists unrecognized control types |
 | `ADDED` | Controls added and styled later |
 | `CONTRAST` | Pairs found by the contrast audit (light and dark mode) |
+| `OWNERDRAW` | Controls that paint their own colors (`TwContrast.FindOwnerDrawn`): the contrast audit cannot measure them and the classes' cell/item colors may be ignored; check them by eye in dark mode |
 | `UI STALL` | The UI thread froze for more than 250 ms |
 | `PAINT STORM` | More than 100 paints per second for 3 seconds in a row: an invalidate-while-painting loop |
 | `EXCEPTION`, `UNKNOWN` | An error while applying styles; an unknown class |
