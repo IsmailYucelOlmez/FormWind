@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FormWind\FormWind.csproj" />
+    <ProjectReference Include="..\..\src\FormWind.Krypton\FormWind.Krypton.csproj" />
   </ItemGroup>
 
   <!-- Görsel regresyon testleri vitrin formlarını çizer (vitrin yalnızca net472). -->

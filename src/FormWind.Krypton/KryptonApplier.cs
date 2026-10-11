@@ -8,6 +8,13 @@ namespace FormWind.Krypton;
 /// Varyantları Krypton'un durum paletlerine eşler: temel → StateCommon, hover → StateTracking,
 /// active → StatePressed, focus → OverrideFocus, disabled → StateDisabled. Hover ve basılı durumların
 /// çizimini Krypton kendisi yönetir; köşeler antialias çizilir.
+/// <para>
+/// <see cref="KryptonDataGridView"/> yapısal olarak (satır yüksekliği, ızgara çizgileri, satır başlıkları, sıralama oku)
+/// FormWind'in DataGridView uygulayıcısıyla stillenir; Krypton hücreleri ve başlıkları kendi paletiyle çizdiğinden renkler
+/// ayrıca paletin <c>StateCommon</c> ve <c>StateSelected</c> durumlarına yazılır: temel class'lar ve <c>cell:</c> → veri
+/// hücreleri, <c>header:</c> → kolon başlıkları, <c>row-header:</c> → satır başlıkları, <c>selected:</c> → seçili hücreler,
+/// <c>bg-*</c> → boş alan, <c>divide-*</c> → hücre kenarlıkları.
+/// </para>
 /// </summary>
 public sealed class KryptonApplier : IStyleApplier
 {
@@ -15,10 +22,18 @@ public sealed class KryptonApplier : IStyleApplier
     public static void Register() => TwAppliers.Register(new KryptonApplier());
 
     public bool CanApply(Control control) =>
-        control is KryptonButton || control is KryptonPanel || control is KryptonTextBox || control is KryptonLabel;
+        control is KryptonButton || control is KryptonPanel || control is KryptonTextBox || control is KryptonLabel
+        || control is KryptonDataGridView;
 
     public void Apply(Control control, TwStyle style, TwApplyContext context)
     {
+        if (control is KryptonDataGridView grid)
+        {
+            TwAppliers.FindBuiltIn(grid).Apply(grid, style, context);
+            ApplyGrid(grid, style, context);
+            return;
+        }
+
         var parsed = context.Parsed;
         var dark = (context.State & TwState.Dark) != 0 ? TwState.Dark : TwState.None;
 
@@ -61,6 +76,42 @@ public sealed class KryptonApplier : IStyleApplier
 
         // Krypton kontrolleri de flex/grid konteynerlerinin öğesi olabilir.
         TwLayout.Apply(control, style, scale);
+    }
+
+    private static void ApplyGrid(KryptonDataGridView grid, TwStyle style, TwApplyContext context)
+    {
+        var parsed = context.Parsed;
+        var state = context.State & ~(TwState.Hover | TwState.Active);
+        var cells = new TwStyle { BackColor = style.BackColor, ForeColor = style.ForeColor };
+        cells.MergeFrom(parsed.ResolvePart("cell", state));
+        var header = parsed.ResolvePart("header", state);
+        var rowHeader = parsed.ResolvePart("row-header", state);
+        var selected = parsed.ResolvePart("selected", state);
+        var divide = style.DivideColor;
+
+        var common = grid.StateCommon;
+        SetColor(common.Background, style.BackColor);
+        SetTriple(common.DataCell.Back, common.DataCell.Border, common.DataCell.Content, cells.BackColor, cells.ForeColor, divide);
+        SetTriple(common.HeaderColumn.Back, common.HeaderColumn.Border, common.HeaderColumn.Content, header.BackColor, header.ForeColor, divide);
+        SetTriple(common.HeaderRow.Back, common.HeaderRow.Border, common.HeaderRow.Content, rowHeader.BackColor ?? header.BackColor, rowHeader.ForeColor ?? header.ForeColor, divide);
+        var picked = grid.StateSelected;
+        SetTriple(picked.DataCell.Back, picked.DataCell.Border, picked.DataCell.Content, selected.BackColor, selected.ForeColor, null);
+        // Seçim başlıkları vurgulamasın (FormWind'in DataGridView davranışıyla aynı).
+        SetTriple(picked.HeaderColumn.Back, picked.HeaderColumn.Border, picked.HeaderColumn.Content, header.BackColor, header.ForeColor, divide);
+        SetTriple(picked.HeaderRow.Back, picked.HeaderRow.Border, picked.HeaderRow.Content, rowHeader.BackColor ?? header.BackColor, rowHeader.ForeColor ?? header.ForeColor, divide);
+    }
+
+    private static void SetTriple(PaletteBack back, PaletteBorder border, PaletteDataGridViewContentStates content, Color? backColor, Color? foreColor, Color? borderColor)
+    {
+        SetColor(back, backColor);
+        content.Color1 = foreColor ?? Color.Empty;
+        border.Color1 = borderColor ?? Color.Empty;
+    }
+
+    private static void SetColor(PaletteBack back, Color? color)
+    {
+        back.Color1 = color ?? Color.Empty;
+        back.ColorStyle = color.HasValue ? PaletteColorStyle.Solid : PaletteColorStyle.Inherit;
     }
 
     private static TwStyle Merge(TwStyle first, TwStyle second)

@@ -54,6 +54,7 @@ public static class TwAppliers
         new FormApplier(),
     };
     private static readonly IStyleApplier Fallback = new WinFormsApplier();
+    private static readonly IStyleApplier[] BuiltIn = Registered.ToArray();
 
     public static void Register(IStyleApplier applier)
     {
@@ -69,6 +70,20 @@ public static class TwAppliers
             {
                 if (applier.CanApply(control)) return applier;
             }
+        }
+        return Fallback;
+    }
+
+    /// <summary>
+    /// FormWind'in kendi uygulayıcısı; kayıtlı uygulayıcılar atlanır. Bir kontrol kütüphanesinin uygulayıcısı yapısal
+    /// stillemeyi (örn. DataGridView satır yüksekliği, ızgara çizgileri) buna bırakıp yalnızca kendi paletini doldurabilir.
+    /// </summary>
+    public static IStyleApplier FindBuiltIn(Control control)
+    {
+        if (control is null) throw new ArgumentNullException(nameof(control));
+        foreach (var applier in BuiltIn)
+        {
+            if (applier.CanApply(control)) return applier;
         }
         return Fallback;
     }

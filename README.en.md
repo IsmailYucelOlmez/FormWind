@@ -552,6 +552,8 @@ FormWind.Krypton.KryptonApplier.Register();   // in Program.Main
 
 For `KryptonButton`, `KryptonPanel`, `KryptonTextBox` and `KryptonLabel`, variants map to Krypton's state palettes: base → `StateCommon`, `hover:` → `StateTracking`, `active:` → `StatePressed`, `focus:` → `OverrideFocus`, `disabled:` → `StateDisabled`.
 
+`KryptonDataGridView` is styled structurally (row height, grid lines, `row-header:hidden`, sort arrow) by FormWind's DataGridView applier. Because Krypton paints cells and headers with its own palette, the colors are also written to the palette: base classes and `cell:` → data cells, `header:` → column headers, `row-header:` → row headers (falling back to `header:`), `selected:` → selected cells, `bg-*` → empty area, `divide-*` → cell borders. To follow the same approach in your own applier, `TwAppliers.FindBuiltIn(control)` returns FormWind's built-in applier.
+
 ## DPI
 
 Recommended setup: `AutoScaleMode = AutoScaleMode.Dpi` and `AutoScaleDimensions = new SizeF(96F, 96F)` on forms (for forms built in code, wrap the constructor in `SuspendLayout`/`ResumeLayout`), and run the application as `PerMonitorV2`. `samples/FormWind.Showcase/ControlsForm.cs` is set up this way; at 125% (120 DPI) the content scales and fits. Measurements:
@@ -795,7 +797,6 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 - [ ] Quick component selection via smart tag (for standard controls; `TwTabControl` has a smart tag)
 - [ ] `AutoScaleMode.Font` forms when moving between screens
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
-- [ ] `KryptonDataGridView` draws headers with the Krypton palette: FormWind's header text color is used but the background color is ignored, so headers become unreadable in dark mode. `FormWind.Krypton` does not cover this control yet, and the contrast audit cannot catch it because it does not know the background painted on screen
 - [ ] `row-span`, `grid-rows` for grid; list rows with varying heights; a DataGridView VirtualMode helper
 - [ ] Shadow animations
 - [ ] Porting `ClassesEditor` to the .NET 8+ out-of-process Designer with the Designer SDK

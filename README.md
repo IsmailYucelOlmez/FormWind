@@ -552,6 +552,8 @@ FormWind.Krypton.KryptonApplier.Register();   // Program.Main içinde
 
 `KryptonButton`, `KryptonPanel`, `KryptonTextBox` ve `KryptonLabel` için varyantlar Krypton'un durum paletlerine eşlenir: temel → `StateCommon`, `hover:` → `StateTracking`, `active:` → `StatePressed`, `focus:` → `OverrideFocus`, `disabled:` → `StateDisabled`.
 
+`KryptonDataGridView` yapısal olarak (satır yüksekliği, ızgara çizgileri, `row-header:hidden`, sıralama oku) FormWind'in DataGridView uygulayıcısıyla stillenir. Krypton hücreleri ve başlıkları kendi paletiyle çizdiği için renkler ayrıca palete yazılır: temel class'lar ve `cell:` → veri hücreleri, `header:` → kolon başlıkları, `row-header:` → satır başlıkları (yoksa `header:`), `selected:` → seçili hücreler, `bg-*` → boş alan, `divide-*` → hücre kenarlıkları. Kendi uygulayıcınızda aynı yolu izlemek için `TwAppliers.FindBuiltIn(control)` FormWind'in yerleşik uygulayıcısını verir.
+
 ## DPI
 
 Önerilen kurulum: formlarda `AutoScaleMode = AutoScaleMode.Dpi` ve `AutoScaleDimensions = new SizeF(96F, 96F)` (kodla kurulan formlarda yapıcıyı `SuspendLayout`/`ResumeLayout` arasına alın) ve uygulamayı `PerMonitorV2` çalıştırın. `samples/FormWind.Showcase/ControlsForm.cs` bu şekilde kuruludur; %125'te (120 DPI) içerik ölçeklenip sığar. Ölçümler:
@@ -820,7 +822,6 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 - [x] WCAG kontrast denetimi (`TwContrast`), koyu native ipuçları (`DarkToolTips`)
 - [x] Değişmez testleri; gerçek uygulamalarda deneme aracı (`tools/run-harness.ps1`)
 - [ ] Kendi çizen kontroller (örn. owner-draw grid'ler) hücre stillerini yok sayar; koyu temada açık kalabilirler
-- [ ] `KryptonDataGridView` başlıkları Krypton paletiyle çizer: FormWind'in başlık yazı rengi kullanılır ama zemin rengi yok sayılır, koyu temada başlıklar okunmaz olur. `FormWind.Krypton` bu kontrolü henüz kapsamıyor; kontrast denetimi de ekrana çizilen zemini bilemediği için bunu yakalamaz
 - [ ] Grid için `row-span`, `grid-rows`; farklı yükseklikte liste satırları; DataGridView VirtualMode yardımcısı
 - [ ] Gölge animasyonları
 - [ ] .NET 8+ out-of-process Designer için `ClassesEditor`'ün Designer SDK ile taşınması

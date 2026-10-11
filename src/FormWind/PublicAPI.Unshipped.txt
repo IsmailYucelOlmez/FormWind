@@ -1098,6 +1098,7 @@ override FormWind.TwTreeView.OnKeyDown(System.Windows.Forms.KeyEventArgs! e) -> 
 override FormWind.TwTreeView.OnMouseDoubleClick(System.Windows.Forms.MouseEventArgs! e) -> void
 override FormWind.TwTreeView.OnMouseDown(System.Windows.Forms.MouseEventArgs! e) -> void
 static FormWind.TwAppliers.Find(System.Windows.Forms.Control! control) -> FormWind.IStyleApplier!
+static FormWind.TwAppliers.FindBuiltIn(System.Windows.Forms.Control! control) -> FormWind.IStyleApplier!
 static FormWind.TwAppliers.Register(FormWind.IStyleApplier! applier) -> void
 static FormWind.TwBreakpoints.For(System.Windows.Forms.Control! control) -> FormWind.TwState
 static FormWind.TwBreakpoints.ForWidth(int width) -> FormWind.TwState
