@@ -429,6 +429,7 @@ tw.SetClasses(list, "p-1 bg-white text-gray-900 item:hover:bg-gray-100 selected:
 - `item:rounded-*` row corners, `item:text-*` secondary text, `row:border-*` row separator, `ItemPadding` inner padding (`e.ContentBounds`).
 - **Multi-selection:** `SelectionMode = MultiExtended`; Ctrl+click adds/removes, Shift+click and Shift+arrow select a range, Ctrl+A selects all (without storing indices, even with a million rows). `SelectedIndices`, `IsSelected`, `SetSelected`, `SelectionChanged`.
 - **Groups:** `SetGroups(new[] { (0, "Today"), (12, "Yesterday") })`; the header of the group at the top sticks while scrolling. Headers are drawn with `header:bg-* header:text-*` or the `DrawGroupHeader` event.
+- **Rows of different heights:** `ItemHeights = i => orders[i].HasNote ? 72 : 52` (96 DPI pixels); row offsets are computed once, call `InvalidateItemHeights()` when the heights change. Without it every row is `ItemHeight` tall and a million rows cost nothing extra; with it each row's height is asked for once.
 - **Incremental loading:** `IsItemLoaded` draws unloaded rows as skeletons (with a gentle pulse) and `ItemsNeeded(first, last)` is raised with the visible range; call `Invalidate()` when the data arrives.
 
 ## Forms: validation, masks and dialogs

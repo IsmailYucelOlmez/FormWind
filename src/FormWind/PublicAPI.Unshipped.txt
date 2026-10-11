@@ -213,6 +213,9 @@ FormWind.TwDataList.IsSelected(int index) -> bool
 FormWind.TwDataList.ItemActivate -> System.EventHandler?
 FormWind.TwDataList.ItemCount.get -> int
 FormWind.TwDataList.ItemCount.set -> void
+FormWind.TwDataList.InvalidateItemHeights() -> void
+FormWind.TwDataList.ItemHeights.get -> System.Func<int, int>?
+FormWind.TwDataList.ItemHeights.set -> void
 FormWind.TwDataList.ItemHeight.get -> int
 FormWind.TwDataList.ItemHeight.set -> void
 FormWind.TwDataList.ItemPadding.get -> System.Windows.Forms.Padding

@@ -429,6 +429,7 @@ tw.SetClasses(list, "p-1 bg-white text-gray-900 item:hover:bg-gray-100 selected:
 - `item:rounded-*` satır köşesi, `item:text-*` ikincil metin, `row:border-*` satır ayırıcısı, `ItemPadding` satır içi boşluk (`e.ContentBounds`).
 - **Çoklu seçim:** `SelectionMode = MultiExtended`; Ctrl+tık ekler/çıkarır, Shift+tık ve Shift+ok aralık seçer, Ctrl+A tümünü seçer (milyon satırda da dizin tutmadan). `SelectedIndices`, `IsSelected`, `SetSelected`, `SelectionChanged`.
 - **Gruplar:** `SetGroups(new[] { (0, "Bugün"), (12, "Dün") })`; kaydırırken üstteki grubun başlığı yapışık kalır. Başlık `header:bg-* header:text-*` ile ya da `DrawGroupHeader` olayıyla çizilir.
+- **Farklı yükseklikte satırlar:** `ItemHeights = i => orders[i].HasNote ? 72 : 52` (96 DPI pikseli); satır başlangıçları bir kez hesaplanır, yükseklikler değişince `InvalidateItemHeights()`. Verilmezse bütün satırlar `ItemHeight` boyundadır ve milyon satırda ek maliyet yoktur; verildiğinde her satırın yüksekliği bir kez sorulur.
 - **Parça parça yükleme:** `IsItemLoaded` yüklenmemiş satırları iskelet olarak çizer (hafifçe nabız atar) ve `ItemsNeeded(first, last)` görünür aralıkla tetiklenir; veri gelince `Invalidate()`.
 
 ## Formlar: doğrulama, maske ve diyaloglar

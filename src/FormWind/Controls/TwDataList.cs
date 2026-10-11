@@ -192,6 +192,10 @@ public class TwDataList : Control
 {
     private int _itemCount;
     private int _itemHeight = 40;
+    private Func<int, int>? _itemHeights;
+    // ItemHeights verildiğinde satırların içerikteki başlangıçları (ölçeklenmiş, grup başlıkları hariç); uzunluk ItemCount + 1.
+    private int[]? _offsets;
+    private int _offsetsDpi;
     private int _selectedIndex = -1;
     private int _hoverIndex = -1;
     private float _offset;
@@ -253,6 +257,7 @@ public class TwDataList : Control
         set
         {
             _itemCount = Math.Max(0, value);
+            _offsets = null;
             if (_selectedIndex >= _itemCount) SelectedIndex = _itemCount - 1;
             _requestedFirst = _requestedLast = -1;
             _hoverIndex = -1;
@@ -268,8 +273,73 @@ public class TwDataList : Control
         set
         {
             _itemHeight = Math.Max(8, value);
+            _offsets = null;
             ScrollTo(_target, animate: false);
         }
+    }
+
+    /// <summary>
+    /// Satır başına yükseklik (96 DPI pikseli); verilmezse bütün satırlar <see cref="ItemHeight"/> yüksekliğindedir. Satır
+    /// başlangıçları bir kez hesaplanıp saklanır; veriler değişip yükseklikler farklılaşınca <see cref="InvalidateItemHeights"/>
+    /// çağrılmalı. Yükseklikler her satır için hesaplandığından çok büyük sanal listelerde (<see cref="ItemsNeeded"/>) ucuz
+    /// tutulmalı.
+    /// </summary>
+    [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<int, int>? ItemHeights
+    {
+        get => _itemHeights;
+        set
+        {
+            _itemHeights = value;
+            InvalidateItemHeights();
+        }
+    }
+
+    /// <summary><see cref="ItemHeights"/>'in döndürdüğü yükseklikler değişti; satırlar yeniden yerleştirilir.</summary>
+    public void InvalidateItemHeights()
+    {
+        _offsets = null;
+        _hoverIndex = -1;
+        ScrollTo(_target, animate: false);
+        Invalidate();
+    }
+
+    // İçerik koordinatında satırın başlangıcı (grup başlıkları hariç).
+    private int Offset(int index)
+    {
+        index = Math.Max(0, Math.Min(index, _itemCount));
+        if (_itemHeights is null) return index * ScaledItemHeight;
+        int dpi = TwDpi.DeviceDpi(this);
+        if (_offsets is null || _offsets.Length != _itemCount + 1 || _offsetsDpi != dpi)
+        {
+            var offsets = new int[_itemCount + 1];
+            for (int i = 0; i < _itemCount; i++)
+                offsets[i + 1] = offsets[i] + Math.Max(1, ScalePixels(Math.Max(1, _itemHeights(i))));
+            _offsets = offsets;
+            _offsetsDpi = dpi;
+        }
+        return _offsets[index];
+    }
+
+    private int HeightOf(int index) => _itemHeights is null ? ScaledItemHeight : Offset(index + 1) - Offset(index);
+
+    // from'dan başlayarak y piksel aşağıdaki satır (limit'e kadar; aşılırsa limit).
+    private int IndexAtOffset(int y, int from, int limit)
+    {
+        if (y < 0) return from;
+        if (_itemHeights is null) return Math.Min(limit, from + y / ScaledItemHeight);
+        int target = Offset(from) + y, lo = from, hi = limit - 1, found = limit;
+        while (lo <= hi)
+        {
+            int mid = (lo + hi) / 2;
+            if (Offset(mid + 1) > target)
+            {
+                found = mid;
+                hi = mid - 1;
+            }
+            else lo = mid + 1;
+        }
+        return found;
     }
 
     /// <summary>Satır köşe yarıçapı (96 DPI); <c>item:rounded-*</c> ile de ayarlanır.</summary>
@@ -489,7 +559,7 @@ public class TwDataList : Control
     public int ScrollOffset => (int)Math.Round(_offset);
 
     [Browsable(false)]
-    public int MaxScrollOffset => Math.Max(0, _itemCount * ScaledItemHeight + VisibleGroupCount * ScaledGroupHeaderHeight + Padding.Vertical - ClientSize.Height);
+    public int MaxScrollOffset => Math.Max(0, Offset(_itemCount) + VisibleGroupCount * ScaledGroupHeaderHeight + Padding.Vertical - ClientSize.Height);
 
     /// <summary>En üstte (kısmen de olsa) görünen satır.</summary>
     [Browsable(false)]
@@ -504,7 +574,7 @@ public class TwDataList : Control
                 int index = RowAt(y);
                 if (index >= 0) return index;
             }
-            return Math.Min(_itemCount - 1, Math.Max(0, (ScrollOffset - Padding.Top) / ScaledItemHeight));
+            return Math.Min(_itemCount - 1, IndexAtOffset(ScrollOffset - Padding.Top, 0, _itemCount));
         }
     }
 
@@ -524,10 +594,10 @@ public class TwDataList : Control
     private int RowWidth => Math.Max(0, ClientSize.Width - Padding.Horizontal - (MaxScrollOffset > 0 ? ScalePixels(10) : 0));
 
     // İçerik koordinatı (kaydırmasız): grup başlığı g'nin üstü.
-    private int HeaderTop(int group) => Padding.Top + _groupStarts[group] * ScaledItemHeight + group * ScaledGroupHeaderHeight;
+    private int HeaderTop(int group) => Padding.Top + Offset(_groupStarts[group]) + group * ScaledGroupHeaderHeight;
 
     // İçerik koordinatı: satırın üstü.
-    private int RowTop(int index) => Padding.Top + index * ScaledItemHeight + (GroupOf(index) + 1) * ScaledGroupHeaderHeight;
+    private int RowTop(int index) => Padding.Top + Offset(index) + (GroupOf(index) + 1) * ScaledGroupHeaderHeight;
 
     // İçerik koordinatındaki satır; grup başlığının üzerindeyse -2 - grup, boşsa -1.
     private int RowAt(int contentY)
@@ -559,7 +629,7 @@ public class TwDataList : Control
             limit = group + 1 < _groupStarts.Length ? Math.Min(_itemCount, _groupStarts[group + 1]) : _itemCount;
         }
         if (contentY < baseY) return -1;
-        int index = baseIndex + (contentY - baseY) / ScaledItemHeight;
+        int index = IndexAtOffset(contentY - baseY, baseIndex, limit);
         return index < limit ? index : -1;
     }
 
@@ -574,7 +644,7 @@ public class TwDataList : Control
     /// <summary>Satırın istemci koordinatlarındaki yeri (görünmüyorsa da hesaplanır).</summary>
     public Rectangle GetItemBounds(int index)
     {
-        return new Rectangle(Padding.Left, RowTop(index) - ScrollOffset, RowWidth, ScaledItemHeight);
+        return new Rectangle(Padding.Left, RowTop(index) - ScrollOffset, RowWidth, HeightOf(index));
     }
 
     /// <summary>Noktadaki satır; yoksa -1.</summary>
@@ -590,7 +660,7 @@ public class TwDataList : Control
     public void EnsureVisible(int index, bool animate = true)
     {
         if (index < 0 || index >= _itemCount) return;
-        int top = RowTop(index), bottom = top + ScaledItemHeight;
+        int top = RowTop(index), bottom = top + HeightOf(index);
         // Yapışık başlık satırın üstünü örtmesin.
         int stickyHeight = GroupOf(index) >= 0 ? ScaledGroupHeaderHeight : 0;
         float target = _target;
@@ -838,7 +908,7 @@ public class TwDataList : Control
             int top = clip.Top + ScrollOffset;
             int first = RowAt(top);
             if (first <= -2) first = _groupStarts[-2 - first];
-            else if (first < 0) first = Math.Max(0, Math.Min(_itemCount - 1, (top - Padding.Top) / ScaledItemHeight));
+            else if (first < 0) first = Math.Max(0, Math.Min(_itemCount - 1, IndexAtOffset(top - Padding.Top, 0, _itemCount)));
             first = Math.Max(0, first);
 
             for (int i = first; i < _itemCount; i++)
@@ -1006,7 +1076,7 @@ public class TwDataList : Control
     private Rectangle ThumbBounds()
     {
         var track = TrackBounds();
-        float content = _itemCount * ScaledItemHeight + VisibleGroupCount * ScaledGroupHeaderHeight + Padding.Vertical;
+        float content = Offset(_itemCount) + VisibleGroupCount * ScaledGroupHeaderHeight + Padding.Vertical;
         int height = Math.Max(ScalePixels(24), (int)(track.Height * ClientSize.Height / Math.Max(1f, content)));
         height = Math.Min(height, track.Height);
         int y = track.Y + (int)((track.Height - height) * (MaxScrollOffset == 0 ? 0 : _offset / MaxScrollOffset));

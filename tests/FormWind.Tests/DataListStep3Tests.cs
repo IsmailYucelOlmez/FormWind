@@ -113,4 +113,30 @@ public class DataListStep3Tests
         Assert.Null(request);
         form.Close();
     });
+
+    // Farklı yükseklikte satırlar: çift satırlar 40, tek satırlar 80 px; gruplar ve kaydırma hesapları bunlara göre.
+    [Fact]
+    public void Item_heights_can_vary_per_row() => Sta.Run(() =>
+    {
+        using var list = NewList(10);
+        list.ItemHeights = i => i % 2 == 0 ? 40 : 80;
+        list.SetGroups(new[] { (0, "A"), (4, "B") });
+
+        Assert.Equal(40, list.GetItemBounds(0).Height);
+        Assert.Equal(4 + 28, list.GetItemBounds(0).Top);
+        Assert.Equal(80, list.GetItemBounds(1).Height);
+        Assert.Equal(4 + 28 + 40 + 80 + 40, list.GetItemBounds(3).Top);
+        Assert.Equal(4 + 28 + 2 * 120 + 28, list.GetItemBounds(4).Top);           // ikinci grubun başlığından sonra
+        Assert.Equal(1, list.IndexFromPoint(new Point(50, list.GetItemBounds(1).Top + 70)));
+        Assert.Equal(2, list.IndexFromPoint(new Point(50, list.GetItemBounds(1).Bottom + 1)));
+        Assert.Equal(5 * 120 + 2 * 28 + 8 - 208, list.MaxScrollOffset);
+
+        list.EnsureVisible(9, animate: false);
+        Assert.Equal(list.MaxScrollOffset, list.ScrollOffset);
+        Assert.Equal(list.ClientSize.Height - 4, list.GetItemBounds(9).Bottom);
+
+        list.ItemHeights = null;                                                       // sabit yüksekliğe dönüş
+        Assert.Equal(40, list.GetItemBounds(1).Height);
+        Assert.Equal(10 * 40 + 2 * 28 + 8 - 208, list.MaxScrollOffset);
+    });
 }
