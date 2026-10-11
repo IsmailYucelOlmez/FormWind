@@ -13,10 +13,16 @@ namespace FormWind.Design;
 /// bir FormWind bölümü ekler. Bölümde class'lar düzenlenir ve kontrol tipine uygun bileşenler (buton → <c>btn-primary</c>,
 /// metin kutusu → <c>input</c>, panel → <c>card</c>, grid → <c>table</c>) tek tıkla verilir. Değişiklikler extender
 /// özelliği üzerinden yapıldığından Designer.cs'e yazılır ve geri alınabilir.
+/// <para>
+/// Önizleme (<see cref="TailwindProvider.DesignTimePreview"/>) class'ların rengini, fontunu ve boşluklarını kontrole
+/// uygular; bu değerler Designer.cs'e yazılmasın diye her kontrole örnek başına bir tür tanımlayıcısı eklenir: class'ların
+/// yönettiği özellikler (BackColor, ForeColor, Font, Padding, Margin, Cursor) serileştirilmez.
+/// </para>
 /// </summary>
 public class TailwindProviderDesigner : ComponentDesigner
 {
     private readonly Dictionary<IComponent, DesignerActionListCollection> _lists = new Dictionary<IComponent, DesignerActionListCollection>();
+    private readonly Dictionary<Control, PreviewTypeProvider> _previews = new Dictionary<Control, PreviewTypeProvider>();
     private DesignerActionService? _actions;
     private IComponentChangeService? _changes;
 
@@ -27,7 +33,6 @@ public class TailwindProviderDesigner : ComponentDesigner
         base.Initialize(component);
         _actions = GetService(typeof(DesignerActionService)) as DesignerActionService;
         _changes = GetService(typeof(IComponentChangeService)) as IComponentChangeService;
-        if (_actions is null) return;
         if (GetService(typeof(IDesignerHost)) is IDesignerHost host)
             foreach (IComponent existing in host.Container.Components) Attach(existing);
         if (_changes != null)
@@ -44,6 +49,11 @@ public class TailwindProviderDesigner : ComponentDesigner
 
     private void OnComponentRemoved(object? sender, ComponentEventArgs e)
     {
+        if (e.Component is Control control && _previews.TryGetValue(control, out var preview))
+        {
+            TypeDescriptor.RemoveProvider(preview, control);
+            _previews.Remove(control);
+        }
         if (e.Component is null || !_lists.TryGetValue(e.Component, out var lists)) return;
         foreach (DesignerActionList list in lists) _actions?.Remove(e.Component, list);
         _lists.Remove(e.Component);
@@ -51,7 +61,14 @@ public class TailwindProviderDesigner : ComponentDesigner
 
     private void Attach(IComponent component)
     {
-        if (_actions is null || component is not Control control || _lists.ContainsKey(component) || !Provider.CanExtend(control)) return;
+        if (component is not Control control || !Provider.CanExtend(control)) return;
+        if (!_previews.ContainsKey(control))
+        {
+            var preview = new PreviewTypeProvider(TypeDescriptor.GetProvider(control), Provider);
+            TypeDescriptor.AddProvider(preview, control);
+            _previews[control] = preview;
+        }
+        if (_actions is null || _lists.ContainsKey(component)) return;
         var lists = new DesignerActionListCollection { new ClassesActionList(Provider, control) };
         _lists[component] = lists;
         _actions.Add(component, lists);
@@ -69,8 +86,95 @@ public class TailwindProviderDesigner : ComponentDesigner
             foreach (var pair in _lists)
                 foreach (DesignerActionList list in pair.Value) _actions?.Remove(pair.Key, list);
             _lists.Clear();
+            foreach (var pair in _previews) TypeDescriptor.RemoveProvider(pair.Value, pair.Key);
+            _previews.Clear();
         }
         base.Dispose(disposing);
+    }
+
+    /// <summary>Önizlemenin uyguladığı, class'ların yönettiği özellikleri serileştirmeyen tür tanımlayıcısı.</summary>
+    private sealed class PreviewTypeProvider : TypeDescriptionProvider
+    {
+        private readonly TailwindProvider _provider;
+
+        public PreviewTypeProvider(TypeDescriptionProvider parent, TailwindProvider provider) : base(parent) => _provider = provider;
+
+        public override ICustomTypeDescriptor? GetTypeDescriptor(Type objectType, object? instance)
+        {
+            var descriptor = base.GetTypeDescriptor(objectType, instance);
+            return instance is Control control && descriptor != null ? new Descriptor(descriptor, _provider, control) : descriptor;
+        }
+
+        private sealed class Descriptor : CustomTypeDescriptor
+        {
+            private readonly TailwindProvider _provider;
+            private readonly Control _control;
+
+            public Descriptor(ICustomTypeDescriptor parent, TailwindProvider provider, Control control) : base(parent)
+            {
+                _provider = provider;
+                _control = control;
+            }
+
+            public override PropertyDescriptorCollection GetProperties() => Wrap(base.GetProperties());
+
+            public override PropertyDescriptorCollection GetProperties(Attribute[]? attributes) => Wrap(base.GetProperties(attributes));
+
+            private PropertyDescriptorCollection Wrap(PropertyDescriptorCollection properties)
+            {
+                var wrapped = new PropertyDescriptor[properties.Count];
+                for (int i = 0; i < properties.Count; i++)
+                    wrapped[i] = IsStyleProperty(properties[i].Name) ? new ManagedProperty(properties[i], _provider, _control) : properties[i];
+                return new PropertyDescriptorCollection(wrapped, true);
+            }
+        }
+
+        private static bool IsStyleProperty(string name) =>
+            name is nameof(Control.BackColor) or nameof(Control.ForeColor) or nameof(Control.Font)
+                or nameof(Control.Padding) or nameof(Control.Margin) or nameof(Control.Cursor);
+    }
+
+    /// <summary>Class'lar bu özelliği yönetiyorsa (ve önizleme açıksa) değeri Designer.cs'e yazılmaz.</summary>
+    private sealed class ManagedProperty : PropertyDescriptor
+    {
+        private readonly PropertyDescriptor _inner;
+        private readonly TailwindProvider _provider;
+        private readonly Control _control;
+
+        public ManagedProperty(PropertyDescriptor inner, TailwindProvider provider, Control control) : base(inner)
+        {
+            _inner = inner;
+            _provider = provider;
+            _control = control;
+        }
+
+        internal static bool IsManaged(TailwindProvider provider, Control control, string property)
+        {
+            if (!provider.DesignTimePreview || provider.GetParsed(control) is not TwParsed parsed) return false;
+            var style = parsed.Resolve(provider.BaseState);
+            return property switch
+            {
+                nameof(Control.BackColor) => style.BackColor.HasValue,
+                nameof(Control.ForeColor) => style.ForeColor.HasValue,
+                nameof(Control.Font) => style.HasFont,
+                nameof(Control.Padding) => !style.Padding.IsEmpty,
+                nameof(Control.Margin) => !style.Margin.IsEmpty,
+                nameof(Control.Cursor) => style.Cursor != null,
+                _ => false,
+            };
+        }
+
+        public override bool ShouldSerializeValue(object component) =>
+            !IsManaged(_provider, _control, Name) && _inner.ShouldSerializeValue(component);
+
+        public override Type ComponentType => _inner.ComponentType;
+        public override bool IsReadOnly => _inner.IsReadOnly;
+        public override Type PropertyType => _inner.PropertyType;
+        public override bool CanResetValue(object component) => _inner.CanResetValue(component);
+        public override object? GetValue(object? component) => _inner.GetValue(component);
+        public override void ResetValue(object component) => _inner.ResetValue(component);
+        public override void SetValue(object? component, object? value) => _inner.SetValue(component, value);
+        public override TypeConverter Converter => _inner.Converter;
     }
 
     /// <summary>Bir kontrolün akıllı etiketindeki FormWind bölümü.</summary>

@@ -100,4 +100,29 @@ public class DesignerTests
         host.DestroyComponent(textBox);
         Assert.Empty(actions.GetComponentActions(textBox).Cast<DesignerActionList>().OfType<TailwindProviderDesigner.ClassesActionList>());
     });
+
+    // Önizleme class renklerini kontrole uygular; bu değerler Designer.cs'e yazılmamalı (çalışma anında class'lar zaten verir).
+    [Fact]
+    public void Preview_values_managed_by_classes_are_not_serialized() => Sta.Run(() =>
+    {
+        using var surface = new DesignSurface(typeof(Form));
+        var host = (IDesignerHost)surface.GetService(typeof(IDesignerHost))!;
+        var form = (Form)host.RootComponent;
+        var provider = (TailwindProvider)host.CreateComponent(typeof(TailwindProvider), "tw");
+        var button = (Button)host.CreateComponent(typeof(Button), "btn");
+        form.Controls.Add(button);
+        button.Font = new System.Drawing.Font("Segoe UI", 12f);                    // class'ların yönetmediği, elle atanmış
+
+        var properties = System.ComponentModel.TypeDescriptor.GetProperties(button);
+        properties["Classes"]!.SetValue(button, "bg-blue-600 text-white p-2");
+        Assert.Equal(System.Drawing.ColorTranslator.FromHtml("#2563eb").ToArgb(), button.BackColor.ToArgb());   // önizleme
+        Assert.False(properties["BackColor"]!.ShouldSerializeValue(button));
+        Assert.False(properties["ForeColor"]!.ShouldSerializeValue(button));
+        Assert.False(properties["Padding"]!.ShouldSerializeValue(button));
+        Assert.True(properties["Font"]!.ShouldSerializeValue(button));
+
+        provider.DesignTimePreview = false;                                         // önizleme kapalıyken dokunulmaz
+        button.BackColor = System.Drawing.Color.Red;
+        Assert.True(System.ComponentModel.TypeDescriptor.GetProperties(button)["BackColor"]!.ShouldSerializeValue(button));
+    });
 }
