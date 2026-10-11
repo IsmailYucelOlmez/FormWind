@@ -569,6 +569,16 @@ FormWind.Krypton.KryptonApplier.Register();   // Program.Main içinde
 
 `KryptonDataGridView` yapısal olarak (satır yüksekliği, ızgara çizgileri, `row-header:hidden`, sıralama oku) FormWind'in DataGridView uygulayıcısıyla stillenir. Krypton hücreleri ve başlıkları kendi paletiyle çizdiği için renkler ayrıca palete yazılır: temel class'lar ve `cell:` → veri hücreleri, `header:` → kolon başlıkları, `row-header:` → satır başlıkları (yoksa `header:`), `selected:` → seçili hücreler, `bg-*` → boş alan, `divide-*` → hücre kenarlıkları. Kendi uygulayıcınızda aynı yolu izlemek için `TwAppliers.FindBuiltIn(control)` FormWind'in yerleşik uygulayıcısını verir.
 
+## Diğer kontrol kütüphaneleriyle kullanım
+
+Kendi skin ya da tema motoru olan kontrol kütüphaneleri (ticari kontrol süitleri dahil) kontrollerini kendileri çizer. FormWind tanımadığı kontrollere standart WinForms uygulayıcısını uygular: boyut, boşluk ve yerleşim genellikle çalışır; renkler, durum varyantları (`hover:`, `focus:` …) ve köşeler ise kütüphanenin çizimiyle çakışabilir ya da yok sayılabilir. Bu kütüphanelerle FormWind üç şekilde kullanılabilir:
+
+- **Karma kullanım:** Kütüphanenin güçlü olduğu bileşenler (gelişmiş grid'ler, ribbon, zamanlayıcı …) kendi motorunda kalır; FormWind standart kontrollerde, yeni ekranlarda ve form iskeletinde kullanılır. Kütüphanenin kontrolleri de bir `TwPanel` flex/grid yerleşiminin öğesi olabilir.
+- **Uygulayıcı yazmak:** `IStyleApplier` uygulayan ve `TwAppliers.Register` ile kaydedilen bir sınıf, class'ları kütüphanenin kendi görünüm nesnelerine aktarır; temel stil ve her varyant kütüphanedeki karşılığına (normal, üzerinde, basılı, odaklı, devre dışı) eşlenir. [Krypton Toolkit](#krypton-toolkit) entegrasyonu bu yolun örneğidir. Çoğu skin motorunda renklerin birebir uygulanması için ilgili kontrolde skin'in kapatılması (düz stile geçilmesi) gerekir; yoksa renkler skin tarafından ezilir ya da yalnızca ton olarak kullanılır. `DataGridView`'den türeyen grid'lerde yapısal stil `TwAppliers.FindBuiltIn` ile FormWind'e bırakılabilir; kendi grid'i olan kütüphanelerde eşlemenin tümü uygulayıcıda yapılır.
+- **Yalnızca tema senkronu:** Kütüphanenin kontrollerine class verilmez; `DarkMode` değişince kütüphanenin açık/koyu skin'ine de geçilir ve istenirse `tw.config.json` renkleri kütüphanenin paletine aktarılır. Her kontrol kendi motoruyla çizilir, iki taraf aynı renkleri kullanır.
+
+Lisanslı kütüphanelere yönelik uygulayıcılar bu repoda yer almaz; uygulamanın kendi projesinde tutulmaları önerilir. FormWind'in mevcut bir uygulamadaki standart kontrollere etkisi kaynak koduna dokunmadan [harness](#gerçek-uygulamalarla-deneme-harness) ile görülebilir.
+
 ## DPI
 
 Önerilen kurulum: formlarda `AutoScaleMode = AutoScaleMode.Dpi` ve `AutoScaleDimensions = new SizeF(96F, 96F)` (kodla kurulan formlarda yapıcıyı `SuspendLayout`/`ResumeLayout` arasına alın) ve uygulamayı `PerMonitorV2` çalıştırın. `samples/FormWind.Showcase/ControlsForm.cs` bu şekilde kuruludur; %125'te (120 DPI) içerik ölçeklenip sığar. Ölçümler:

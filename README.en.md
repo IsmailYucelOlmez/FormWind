@@ -569,6 +569,16 @@ For `KryptonButton`, `KryptonPanel`, `KryptonTextBox` and `KryptonLabel`, varian
 
 `KryptonDataGridView` is styled structurally (row height, grid lines, `row-header:hidden`, sort arrow) by FormWind's DataGridView applier. Because Krypton paints cells and headers with its own palette, the colors are also written to the palette: base classes and `cell:` → data cells, `header:` → column headers, `row-header:` → row headers (falling back to `header:`), `selected:` → selected cells, `bg-*` → empty area, `divide-*` → cell borders. To follow the same approach in your own applier, `TwAppliers.FindBuiltIn(control)` returns FormWind's built-in applier.
 
+## Using other control libraries
+
+Control libraries with their own skin or theme engine (including commercial control suites) paint their controls themselves. FormWind applies its standard WinForms applier to controls it does not recognize: size, spacing and layout usually work, while colors, state variants (`hover:`, `focus:` …) and corners may conflict with the library's painting or be ignored. FormWind can be used alongside such libraries in three ways:
+
+- **Mixed use:** The components the library is strong at (advanced grids, ribbons, schedulers …) stay on its engine; FormWind is used for standard controls, new screens and the form skeleton. The library's controls can also be items of a `TwPanel` flex/grid layout.
+- **Writing an applier:** A class that implements `IStyleApplier` and is registered with `TwAppliers.Register` passes the classes to the library's own appearance objects; the base style and each variant map to the library's counterpart (normal, hovered, pressed, focused, disabled). The [Krypton Toolkit](#krypton-toolkit) integration is an example of this approach. In most skin engines, colors are applied exactly only when the skin is turned off for that control (a flat style); otherwise the skin overrides them or uses them only as a tint. For grids derived from `DataGridView`, structural styling can be left to FormWind through `TwAppliers.FindBuiltIn`; for libraries with their own grid, the applier does all of the mapping.
+- **Theme sync only:** No classes are given to the library's controls; when `DarkMode` changes, the library's light/dark skin is switched too, and the `tw.config.json` colors can optionally be carried into the library's palette. Each control is painted by its own engine, and both sides use the same colors.
+
+Appliers for licensed libraries are not part of this repository; keeping them in the application's own project is recommended. The effect of FormWind on the standard controls of an existing application can be seen without touching its source code with the [harness](#trying-real-applications-harness).
+
 ## DPI
 
 Recommended setup: `AutoScaleMode = AutoScaleMode.Dpi` and `AutoScaleDimensions = new SizeF(96F, 96F)` on forms (for forms built in code, wrap the constructor in `SuspendLayout`/`ResumeLayout`), and run the application as `PerMonitorV2`. `samples/FormWind.Showcase/ControlsForm.cs` is set up this way; at 125% (120 DPI) the content scales and fits. Measurements:
