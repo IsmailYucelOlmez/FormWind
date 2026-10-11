@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace FormWind;
@@ -75,6 +76,28 @@ internal class TwToolStripRenderer : ToolStripRenderer
     {
         e.ArrowColor = e.Item is { Enabled: false } ? Color.FromArgb(128, Colors.Fore) : Colors.Fore;
         base.OnRenderArrow(e);
+    }
+
+    // Büyütülmüş MDI çocuğunun menüye eklenen küçült/geri yükle/kapat düğmeleri siyah sistem glifleridir; koyu şeritte
+    // görünmezdi. Glifler şeridin yazı rengine boyanır (saydamlık korunur).
+    protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
+    {
+        if (e.Image is null || e.Item?.GetType().Name != "ControlBoxMenuItem")
+        {
+            base.OnRenderItemImage(e);
+            return;
+        }
+        var color = !e.Item.Enabled ? Color.FromArgb(128, Colors.Fore) : IsHighlighted(e.Item) ? Colors.ItemHoverFore : Colors.Fore;
+        using var attributes = new ImageAttributes();
+        attributes.SetColorMatrix(new ColorMatrix(new[]
+        {
+            new float[] { 0, 0, 0, 0, 0 },
+            new float[] { 0, 0, 0, 0, 0 },
+            new float[] { 0, 0, 0, 0, 0 },
+            new float[] { 0, 0, 0, color.A / 255f, 0 },
+            new float[] { color.R / 255f, color.G / 255f, color.B / 255f, 0, 1 },
+        }));
+        e.Graphics.DrawImage(e.Image, e.ImageRectangle, 0, 0, e.Image.Width, e.Image.Height, GraphicsUnit.Pixel, attributes);
     }
 
     protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
@@ -272,6 +295,7 @@ internal class FormApplier : WinFormsApplier
         if (context.DesignMode) return;
 
         var form = (Form)control;
+        TwMdiBackground.Update(form, style.BackColor.HasValue);
         var caption = context.Parsed.ResolvePart("caption", context.State & ~(TwState.Hover | TwState.Active));
         TwTitleBar.For(form).Update(
             (context.State & TwState.Dark) != 0,
@@ -279,5 +303,77 @@ internal class FormApplier : WinFormsApplier
             caption.ForeColor,
             caption.BorderColor,
             style.Backdrop);
+    }
+}
+
+/// <summary>
+/// MDI kabuğunun çocuk pencerelerin arkasındaki alanı (<see cref="MdiClient"/>) formun zeminini almaz, sistemin
+/// <see cref="SystemColors.AppWorkspace"/> rengiyle kalır; koyu temada açık gri bir alan çıkardı. Form'un <c>bg-*</c>
+/// rengi bu alana da verilir ve form zemini değiştikçe (geçişler dahil) izlenir. Uygulamanın MdiClient'a atadığı renge
+/// dokunulmaz; class'lar zemini bırakınca özgün renk geri yüklenir.
+/// </summary>
+internal sealed class TwMdiBackground
+{
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Form, TwMdiBackground> States =
+        new System.Runtime.CompilerServices.ConditionalWeakTable<Form, TwMdiBackground>();
+
+    private readonly Form _form;
+    private MdiClient? _client;
+    private Color _original;
+    private Color? _set;
+    private bool _active;
+    private bool _appOwned;
+
+    private TwMdiBackground(Form form)
+    {
+        _form = form;
+        form.BackColorChanged += (_, _) => Sync();
+        // IsMdiContainer class'lardan sonra da açılabilir; MdiClient o zaman eklenir.
+        form.ControlAdded += (_, e) => { if (e.Control is MdiClient) Sync(); };
+    }
+
+    public static void Update(Form form, bool hasBackground)
+    {
+        if (!hasBackground && !States.TryGetValue(form, out _)) return;
+        var state = States.GetValue(form, f => new TwMdiBackground(f));
+        state._active = hasBackground;
+        state.Sync();
+    }
+
+    private void Sync()
+    {
+        var client = _form.IsMdiContainer ? FindClient(_form) : null;
+        if (client != _client)
+        {
+            _client = client;
+            _set = null;
+            _appOwned = false;
+            if (client != null) _original = client.BackColor;
+        }
+        if (client is null || _appOwned) return;
+
+        // Uygulamanın atadığı renk (ilk görüldüğünde sistem renginden farklı ya da bizden sonra değiştirilmiş) korunur.
+        _appOwned = _set is Color set ? client.BackColor.ToArgb() != set.ToArgb()
+            : _original.ToArgb() != SystemColors.AppWorkspace.ToArgb();
+        if (_appOwned) return;
+        if (_active)
+        {
+            var back = _form.BackColor;
+            if (back.A < 255) back = Color.FromArgb(255, back); // MdiClient saydam zemini desteklemez
+            client.BackColor = back;
+            _set = back;
+        }
+        else if (_set != null)
+        {
+            client.BackColor = _original;
+            _set = null;
+        }
+    }
+
+    private static MdiClient? FindClient(Form form)
+    {
+        foreach (Control child in form.Controls)
+            if (child is MdiClient client) return client;
+        return null;
     }
 }

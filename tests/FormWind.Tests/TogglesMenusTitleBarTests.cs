@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using FormWind.Tests.Performance;
@@ -136,6 +137,85 @@ public class TogglesMenusTitleBarTests
         Assert.Equal(Argb("#111827"), bar.Caption!.Value.ToArgb());
         Assert.Equal(Color.White.ToArgb(), bar.Text!.Value.ToArgb());
         if (System.Environment.OSVersion.Version.Build >= 22000) Assert.True(bar.Applied); // Windows 11
+        form.Close();
+    });
+
+    private static MdiClient Client(Form form) => form.Controls.OfType<MdiClient>().Single();
+
+    [Fact]
+    public void Mdi_workspace_follows_form_background_and_is_restored() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form { IsMdiContainer = true };
+        provider.SetClasses(form, "bg-gray-50 dark:bg-gray-900");
+        Assert.Equal(Argb("#f9fafb"), Client(form).BackColor.ToArgb());
+
+        provider.DarkMode = true;
+        Assert.Equal(Argb("#111827"), Client(form).BackColor.ToArgb());
+
+        provider.SetClasses(form, "");
+        Assert.Equal(SystemColors.AppWorkspace.ToArgb(), Client(form).BackColor.ToArgb());
+    });
+
+    [Fact]
+    public void Mdi_workspace_is_styled_when_container_is_enabled_later() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form();
+        provider.SetClasses(form, "bg-gray-900");
+        form.IsMdiContainer = true;
+        Assert.Equal(Argb("#111827"), Client(form).BackColor.ToArgb());
+    });
+
+    [Fact]
+    public void Mdi_workspace_color_assigned_by_app_is_kept() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var before = new Form { IsMdiContainer = true };
+        Client(before).BackColor = Color.Teal;
+        provider.SetClasses(before, "bg-gray-900");
+        Assert.Equal(Color.Teal.ToArgb(), Client(before).BackColor.ToArgb());
+
+        using var after = new Form { IsMdiContainer = true };
+        provider.SetClasses(after, "bg-white dark:bg-gray-900");
+        Client(after).BackColor = Color.Teal;
+        provider.DarkMode = true;
+        Assert.Equal(Color.Teal.ToArgb(), Client(after).BackColor.ToArgb());
+    });
+
+    [Fact]
+    public void Maximized_mdi_child_control_box_glyphs_use_strip_text_color() => Sta.Run(() =>
+    {
+        using var provider = new TailwindProvider();
+        using var form = new Form { IsMdiContainer = true, StartPosition = FormStartPosition.Manual, Location = new Point(-10000, -10000), Size = new Size(600, 400), ShowInTaskbar = false };
+        var menu = new MenuStrip();
+        menu.Items.Add("File");
+        form.Controls.Add(menu);
+        form.MainMenuStrip = menu;
+        provider.SetClasses(menu, "bg-gray-900 text-white");
+        form.Show();
+        var child = new Form { MdiParent = form, WindowState = FormWindowState.Maximized };
+        child.Show();
+        Application.DoEvents();
+
+        // Küçült, geri yükle ve kapat düğmeleri.
+        var boxes = menu.Items.Cast<ToolStripItem>().Where(i => i.GetType().Name == "ControlBoxMenuItem" && i.Alignment == ToolStripItemAlignment.Right).ToList();
+        Assert.Equal(3, boxes.Count);
+        using var bitmap = Render(menu);
+        foreach (var box in boxes)
+        {
+            var r = box.Bounds;
+            int bright = 0, dark = 0;
+            for (int x = r.Left; x < r.Right; x++)
+                for (int y = r.Top; y < r.Bottom; y++)
+                {
+                    float b = bitmap.GetPixel(x, y).GetBrightness();
+                    if (b > 0.8f) bright++;
+                    else if (b < 0.05f) dark++;
+                }
+            Assert.True(bright > 0, "glif şeridin yazı rengiyle çizilmeli");
+            Assert.Equal(0, dark); // siyah sistem glifi kalmamalı (zemin gray-900, parlaklığı ~0.12)
+        }
         form.Close();
     });
 }
