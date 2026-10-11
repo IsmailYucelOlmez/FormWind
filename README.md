@@ -119,13 +119,13 @@ this.tailwindProvider1.SetClasses(this.pnlSpacer, "flex-1");
 | `gap-{n}`, `gap-x-{n}`, `gap-y-{n}` | `basis-{n}`, `basis-1/2`, `basis-full`, `basis-auto` |
 | `justify-start/end/center/between/around/evenly` | `w-1/2`, `w-full`, `h-full` (oranlar konteynere göre) |
 | `items-start/end/center/stretch` | `min-w-{n}`, `max-w-{n}`, `max-w-md` …, `min-h-{n}`, `max-h-{n}` |
-| `grid-cols-{1–12}` | `self-start/end/center/stretch`, `col-span-{1–12}`, `col-span-full`, `m-*` |
+| `grid-cols-{1–12}`, `grid-rows-{1–12}` | `self-start/end/center/stretch`, `col-span-{1–12}`, `col-span-full`, `row-span-{1–12}`, `row-span-full`, `m-*` |
 
 CSS'ten farklar:
 - Öğelerin "doğal" boyutu Designer'daki `Size`'dır (AutoSize kontrollerde tercih edilen boyut). Boyutu belirtilmemiş öğeler doğal boyutlarının altına küçülmez.
 - Öğe aralığı yalnızca `m-*` class'larından gelir; WinForms'un varsayılan 3 px `Margin`'i kullanılmaz.
 - Varsayılan `items-stretch`: satırdaki öğeler konteyner yüksekliğine, sütundaki öğeler genişliğine uzar.
-- Grid satır yükseklikleri içerikten belirlenir; `grid-rows-*`, `row-span-*`, `margin: auto` ve `order-*` yok.
+- Grid öğeleri CSS'in otomatik yerleştirmesiyle (seyrek) sırayla konur; `row-span-*`'ın kapladığı hücreler atlanır. `grid-rows-N` kabın yüksekliğini N eşit satıra böler (`repeat(N, minmax(0, 1fr))`); `row-span-full` bu açık satırların tümünü kaplar (`grid-rows` yoksa tek satırdır). Diğer satırların yüksekliği içerikten gelir; birden çok satır kaplayan bir öğe sığmazsa eksik yükseklik kapladığı satırlara eşit dağıtılır. `col-start-*`, `row-start-*`, `grid-flow-*`, `margin: auto` ve `order-*` yok.
 - Öğeler satırın çapraz boyutunu aşmaz (CSS'te taşabilir; WinForms'ta taşan kısım kesilip kaybolurdu). Daralan Label'larda `truncate` "…" gösterir.
 - `TwPanel`'in içeriği kenarlığın içinde başlar (CSS kutu modeli); `AutoScroll` panelde genişlik görünen alandan alınır ve dikey kaydırma çubuğunun yeri önceden ayrılır.
 - `AutoSize = true` olan flex `TwPanel` içeriğine göre boyutlanır (grid için henüz yok).

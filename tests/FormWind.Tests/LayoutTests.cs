@@ -162,6 +162,41 @@ public sealed class LayoutTests : IDisposable
         Assert.Equal(new Rectangle(0, 56, 89, 30), bounds[2]);
     }
 
+    // CSS auto-placement: row-span'li öğenin kapladığı hücreler atlanır; eksik yükseklik kapladığı satırlara eşit dağıtılır.
+    [Fact]
+    public void Grid_row_span_reserves_cells_and_grows_the_spanned_rows()
+    {
+        using var host = Host("grid grid-cols-3 gap-4", 300, 200,
+            (10, 60, "row-span-2"), (10, 20, ""), (10, 20, ""), (10, 20, ""), (10, 20, ""));
+        var bounds = Bounds(host);
+
+        Assert.Equal(new Rectangle(0, 0, 89, 60), bounds[0]);        // 22 + 16 + 22
+        Assert.Equal(new Rectangle(105, 0, 90, 22), bounds[1]);
+        Assert.Equal(new Rectangle(105, 38, 90, 22), bounds[3]);     // ikinci satır, ilk kolon dolu
+        Assert.Equal(new Rectangle(211, 38, 89, 22), bounds[4]);
+    }
+
+    [Fact]
+    public void Grid_rows_split_the_container_height_equally()
+    {
+        using var host = Host("grid grid-cols-2 grid-rows-2 gap-4", 200, 100, (10, 10, ""), (10, 10, ""), (10, 10, ""), (10, 10, ""));
+        var bounds = Bounds(host);
+
+        Assert.Equal(new Rectangle(0, 0, 92, 42), bounds[0]);
+        Assert.Equal(new Rectangle(108, 58, 92, 42), bounds[3]);
+    }
+
+    [Fact]
+    public void Row_span_full_covers_the_explicit_rows()
+    {
+        using var host = Host("grid grid-cols-2 grid-rows-3 gap-2", 200, 100, (10, 10, "row-span-full"), (10, 10, ""), (10, 10, ""), (10, 10, ""));
+        var bounds = Bounds(host);
+
+        Assert.Equal(new Rectangle(0, 0, 96, 100), bounds[0]);
+        Assert.Equal(104, bounds[3].X);
+        Assert.Equal(72, bounds[3].Y);  // üçüncü satır: 2 × (28 + 8)
+    }
+
     [Fact]
     public void Dark_variant_can_switch_direction()
     {

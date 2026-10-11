@@ -98,6 +98,13 @@ internal static class Catalog
             new Example("flex justify-between", Boxes(3, 300, 48)),
             new Example("flex justify-center gap-4", Boxes(3, 300, 48)),
             new Example("grid grid-cols-3 gap-2", Boxes(6, 300, 90)),
+            new Example("grid grid-cols-3 grid-rows-2 gap-2", () =>
+            {
+                // İlk kutu row-span-2: iki satırı kaplar, kalan kutular yanındaki hücrelere yerleşir.
+                var panel = (TwPanel)Boxes(5, 300, 90)();
+                panel.Controls[0].Tag = "bg-indigo-700 text-white rounded-md row-span-2";
+                return panel;
+            }),
         }),
         new Section("controls", "Controls", "Owner-drawn replacements for native controls.", new[]
         {

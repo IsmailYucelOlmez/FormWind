@@ -682,6 +682,8 @@ FormWind.TwStyle.GradientVia.get -> System.Drawing.Color?
 FormWind.TwStyle.GradientVia.set -> void
 FormWind.TwStyle.GridColumns.get -> int?
 FormWind.TwStyle.GridColumns.set -> void
+FormWind.TwStyle.GridRows.get -> int?
+FormWind.TwStyle.GridRows.set -> void
 FormWind.TwStyle.HasChrome.get -> bool
 FormWind.TwStyle.HasFont.get -> bool
 FormWind.TwStyle.HasGradient.get -> bool
@@ -712,6 +714,8 @@ FormWind.TwStyle.NoWrap.set -> void
 FormWind.TwStyle.ObjectFit.get -> FormWind.TwImageFit?
 FormWind.TwStyle.ObjectFit.set -> void
 FormWind.TwStyle.Padding.get -> FormWind.TwSides!
+FormWind.TwStyle.RowSpan.get -> int?
+FormWind.TwStyle.RowSpan.set -> void
 FormWind.TwStyle.Radius.get -> int?
 FormWind.TwStyle.Radius.set -> void
 FormWind.TwStyle.RingColor.get -> System.Drawing.Color?

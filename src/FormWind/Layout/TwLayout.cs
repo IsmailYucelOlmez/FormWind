@@ -143,7 +143,8 @@ internal sealed record TwContainerProps(
     int GapY,
     TwJustify Justify,
     TwAlign Items,
-    int Columns)
+    int Columns,
+    int Rows)
 {
     public static TwContainerProps? From(TwStyle style, float scale) =>
         style.Display is TwDisplay.Flex or TwDisplay.Grid
@@ -155,7 +156,8 @@ internal sealed record TwContainerProps(
                 TwSides.Scale(style.GapY ?? 0, scale),
                 style.JustifyContent ?? TwJustify.Start,
                 style.AlignItems ?? TwAlign.Stretch,
-                Math.Max(1, style.GridColumns ?? 1))
+                Math.Max(1, style.GridColumns ?? 1),
+                style.GridRows ?? 0)
             : null;
 }
 
@@ -165,6 +167,7 @@ internal sealed record TwItemProps(
     TwLength Basis,
     TwAlign? Self,
     int ColumnSpan,
+    int RowSpan,
     TwLength Width,
     TwLength Height,
     int? MinWidth,
@@ -175,7 +178,7 @@ internal sealed record TwItemProps(
 {
     // CSS varsayılanları: flex: 0 1 auto, margin 0. WinForms'un varsayılan 3 px Margin'i kullanılmaz.
     public static readonly TwItemProps Default = new TwItemProps(
-        0, 1, TwLength.Auto, null, 1, TwLength.Auto, TwLength.Auto, null, null, null, null, Padding.Empty);
+        0, 1, TwLength.Auto, null, 1, 1, TwLength.Auto, TwLength.Auto, null, null, null, null, Padding.Empty);
 
     public bool IsDefault => Equals(Default);
 
@@ -185,6 +188,7 @@ internal sealed record TwItemProps(
         (style.FlexBasis ?? TwLength.Auto).Scale(scale),
         style.AlignSelf,
         style.ColumnSpan ?? 1,
+        style.RowSpan ?? 1,
         (style.Width ?? TwLength.Auto).Scale(scale),
         (style.Height ?? TwLength.Auto).Scale(scale),
         Scale(style.MinWidth, scale),

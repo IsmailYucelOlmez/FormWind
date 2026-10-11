@@ -92,6 +92,9 @@ public sealed class TwStyle
     public TwAlign? AlignItems { get; set; }
     public int? GridColumns { get; set; }
 
+    /// <summary>Grid'in açık satır sayısı (<c>grid-rows-3</c>): kabın yüksekliği eşit satırlara bölünür.</summary>
+    public int? GridRows { get; set; }
+
     // Yerleşim öğesi: ebeveyn flex / grid konteyneriyse etkilidir.
     public float? FlexGrow { get; set; }
     public float? FlexShrink { get; set; }
@@ -100,6 +103,9 @@ public sealed class TwStyle
 
     /// <summary>Grid'de kaplanan kolon sayısı. <see cref="int.MaxValue"/> = <c>col-span-full</c>.</summary>
     public int? ColumnSpan { get; set; }
+
+    /// <summary>Grid'de kaplanan satır sayısı. <see cref="int.MaxValue"/> = <c>row-span-full</c> (açık satırların tümü).</summary>
+    public int? RowSpan { get; set; }
 
     // Ayraç çizgileri (divide-x, divide-y, divide-{renk}). Şimdilik DataGridView ızgara çizgilerinde kullanılır.
     public bool? DivideX { get; set; }
@@ -219,12 +225,14 @@ public sealed class TwStyle
         JustifyContent = other.JustifyContent ?? JustifyContent;
         AlignItems = other.AlignItems ?? AlignItems;
         GridColumns = other.GridColumns ?? GridColumns;
+        GridRows = other.GridRows ?? GridRows;
 
         FlexGrow = other.FlexGrow ?? FlexGrow;
         FlexShrink = other.FlexShrink ?? FlexShrink;
         FlexBasis = other.FlexBasis ?? FlexBasis;
         AlignSelf = other.AlignSelf ?? AlignSelf;
         ColumnSpan = other.ColumnSpan ?? ColumnSpan;
+        RowSpan = other.RowSpan ?? RowSpan;
 
         DivideX = other.DivideX ?? DivideX;
         DivideY = other.DivideY ?? DivideY;

@@ -245,64 +245,121 @@ internal sealed class TwLayoutEngine : LayoutEngine
         }
     }
 
+    // CSS grid'in otomatik yerleştirmesi (seyrek): öğeler sırayla, imleçten sonraki ilk boş alana konur; col-span ve
+    // row-span'in kapladığı hücreler dolu sayılır. grid-rows-N ile açık satırlar kabın yüksekliğini eşit paylaşır
+    // (repeat(N, minmax(0, 1fr))); sonraki (örtük) satırların ve grid-rows'suz satırların yüksekliği içerikten gelir.
     private static void LayoutGrid(Rectangle area, TwContainerProps container, List<Entry> entries)
     {
         int columns = container.Columns;
         float columnWidth = Math.Max(0f, (area.Width - container.GapX * (columns - 1)) / (float)columns);
 
-        var rows = new List<List<Cell>>();
-        var current = new List<Cell>();
-        int column = 0;
+        var cells = new List<Cell>(entries.Count);
+        var occupied = new List<bool[]>();
+        int cursorRow = 0, cursorColumn = 0;
         foreach (var entry in entries)
         {
             int span = Math.Min(columns, Math.Max(1, entry.Props.ColumnSpan));
-            if (column + span > columns)
+            // row-span-full açık satırların tümünü kaplar; açık satır yoksa tek satırdır.
+            int rowSpan = entry.Props.RowSpan == int.MaxValue ? Math.Max(1, container.Rows) : Math.Max(1, entry.Props.RowSpan);
+            int row = cursorRow, column = cursorColumn;
+            while (true)
             {
-                rows.Add(current);
-                current = new List<Cell>();
-                column = 0;
-            }
-            current.Add(new Cell(entry, column, span));
-            column += span;
-        }
-        if (current.Count > 0) rows.Add(current);
-
-        float y = area.Top;
-        foreach (var cells in rows)
-        {
-            float rowHeight = 0;
-            foreach (var cell in cells)
-                rowHeight = Math.Max(rowHeight, GridHeight(cell.Entry) + cell.Entry.Props.Margin.Vertical);
-
-            foreach (var cell in cells)
-            {
-                var entry = cell.Entry;
-                var props = entry.Props;
-                var margin = props.Margin;
-
-                float cellX = area.Left + cell.Column * (columnWidth + container.GapX);
-                float cellWidth = cell.Span * columnWidth + (cell.Span - 1) * container.GapX;
-                float width = props.Width.IsAuto ? cellWidth - margin.Horizontal : props.Width.Resolve(cellWidth);
-                width = Clamp(width, props.MinWidth ?? 0, props.MaxWidth ?? Infinity);
-
-                var align = props.Self ?? container.Items;
-                float innerHeight = rowHeight - margin.Vertical;
-                float height = align == TwAlign.Stretch && props.Height.IsAuto
-                    ? Clamp(innerHeight, props.MinHeight ?? 0, props.MaxHeight ?? Infinity)
-                    : GridHeight(entry);
-                float yOffset = align switch
+                if (column + span > columns)
                 {
-                    TwAlign.Center => (innerHeight - height) / 2,
-                    TwAlign.End => innerHeight - height,
-                    _ => 0,
-                };
-
-                SyncMargin(entry);
-                Place(entry.Control, row: true, cellX + margin.Left, y + margin.Top + yOffset, width, height);
+                    row++;
+                    column = 0;
+                    continue;
+                }
+                if (IsFree(occupied, row, column, span, rowSpan)) break;
+                column++;
             }
-
-            y += rowHeight + container.GapY;
+            for (int r = row; r < row + rowSpan; r++)
+            {
+                while (occupied.Count <= r) occupied.Add(new bool[columns]);
+                for (int c = column; c < column + span; c++) occupied[r][c] = true;
+            }
+            cells.Add(new Cell(entry, row, column, span, rowSpan));
+            cursorRow = row;
+            cursorColumn = column + span;
         }
+
+        int rowCount = Math.Max(container.Rows, occupied.Count);
+        var heights = new float[rowCount];
+        var explicitRow = new bool[rowCount];
+        if (container.Rows > 0)
+        {
+            float share = Math.Max(0f, (area.Height - container.GapY * (container.Rows - 1)) / container.Rows);
+            for (int r = 0; r < container.Rows; r++)
+            {
+                heights[r] = share;
+                explicitRow[r] = true;
+            }
+        }
+        // Önce tek satırlık öğeler, sonra birden çok satır kaplayanların eksiği kapladıkları içerik satırlarına eşit dağıtılır.
+        foreach (var cell in cells)
+            if (cell.RowSpan == 1 && !explicitRow[cell.Row])
+                heights[cell.Row] = Math.Max(heights[cell.Row], GridHeight(cell.Entry) + cell.Entry.Props.Margin.Vertical);
+        foreach (var cell in cells)
+        {
+            if (cell.RowSpan == 1) continue;
+            float need = GridHeight(cell.Entry) + cell.Entry.Props.Margin.Vertical - SpanHeight(heights, container.GapY, cell.Row, cell.RowSpan);
+            int autoRows = 0;
+            for (int r = cell.Row; r < cell.Row + cell.RowSpan; r++)
+                if (!explicitRow[r]) autoRows++;
+            if (need <= 0 || autoRows == 0) continue;
+            for (int r = cell.Row; r < cell.Row + cell.RowSpan; r++)
+                if (!explicitRow[r]) heights[r] += need / autoRows;
+        }
+
+        var tops = new float[rowCount];
+        float y = area.Top;
+        for (int r = 0; r < rowCount; r++)
+        {
+            tops[r] = y;
+            y += heights[r] + container.GapY;
+        }
+
+        foreach (var cell in cells)
+        {
+            var entry = cell.Entry;
+            var props = entry.Props;
+            var margin = props.Margin;
+
+            float cellX = area.Left + cell.Column * (columnWidth + container.GapX);
+            float cellWidth = cell.Span * columnWidth + (cell.Span - 1) * container.GapX;
+            float width = props.Width.IsAuto ? cellWidth - margin.Horizontal : props.Width.Resolve(cellWidth);
+            width = Clamp(width, props.MinWidth ?? 0, props.MaxWidth ?? Infinity);
+
+            var align = props.Self ?? container.Items;
+            float innerHeight = SpanHeight(heights, container.GapY, cell.Row, cell.RowSpan) - margin.Vertical;
+            float height = align == TwAlign.Stretch && props.Height.IsAuto
+                ? Clamp(innerHeight, props.MinHeight ?? 0, props.MaxHeight ?? Infinity)
+                : GridHeight(entry);
+            float yOffset = align switch
+            {
+                TwAlign.Center => (innerHeight - height) / 2,
+                TwAlign.End => innerHeight - height,
+                _ => 0,
+            };
+
+            SyncMargin(entry);
+            Place(entry.Control, row: true, cellX + margin.Left, tops[cell.Row] + margin.Top + yOffset, width, height);
+        }
+    }
+
+    private static bool IsFree(List<bool[]> occupied, int row, int column, int span, int rowSpan)
+    {
+        for (int r = row; r < row + rowSpan && r < occupied.Count; r++)
+            for (int c = column; c < column + span; c++)
+                if (occupied[r][c]) return false;
+        return true;
+    }
+
+    private static float SpanHeight(float[] heights, int gap, int row, int rowSpan)
+    {
+        float total = (rowSpan - 1) * gap;
+        for (int r = row; r < row + rowSpan; r++) total += heights[r];
+        return total;
     }
 
     // Grid satır yüksekliği içerikten belirlenir; oransal yükseklik (h-1/2) burada doğal yüksekliğe düşer.
@@ -339,16 +396,20 @@ internal sealed class TwLayoutEngine : LayoutEngine
 
     private readonly struct Cell
     {
-        public Cell(Entry entry, int column, int span)
+        public Cell(Entry entry, int row, int column, int span, int rowSpan)
         {
             Entry = entry;
+            Row = row;
             Column = column;
             Span = span;
+            RowSpan = rowSpan;
         }
 
         public Entry Entry { get; }
+        public int Row { get; }
         public int Column { get; }
         public int Span { get; }
+        public int RowSpan { get; }
     }
 
     private sealed class Entry

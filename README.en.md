@@ -119,13 +119,13 @@ this.tailwindProvider1.SetClasses(this.pnlSpacer, "flex-1");
 | `gap-{n}`, `gap-x-{n}`, `gap-y-{n}` | `basis-{n}`, `basis-1/2`, `basis-full`, `basis-auto` |
 | `justify-start/end/center/between/around/evenly` | `w-1/2`, `w-full`, `h-full` (fractions of the container) |
 | `items-start/end/center/stretch` | `min-w-{n}`, `max-w-{n}`, `max-w-md` …, `min-h-{n}`, `max-h-{n}` |
-| `grid-cols-{1–12}` | `self-start/end/center/stretch`, `col-span-{1–12}`, `col-span-full`, `m-*` |
+| `grid-cols-{1–12}`, `grid-rows-{1–12}` | `self-start/end/center/stretch`, `col-span-{1–12}`, `col-span-full`, `row-span-{1–12}`, `row-span-full`, `m-*` |
 
 Differences from CSS:
 - An item's "natural" size is its `Size` in the Designer (the preferred size for AutoSize controls). Items without an explicit size do not shrink below their natural size.
 - Item spacing only comes from `m-*` classes; the default 3 px WinForms `Margin` is not used.
 - The default is `items-stretch`: items in a row stretch to the container's height, items in a column to its width.
-- Grid row heights come from the content; there is no `grid-rows-*`, `row-span-*`, `margin: auto` or `order-*`.
+- Grid items are placed in order with CSS auto-placement (sparse); cells covered by `row-span-*` are skipped. `grid-rows-N` splits the container height into N equal rows (`repeat(N, minmax(0, 1fr))`); `row-span-full` covers all of these explicit rows (a single row without `grid-rows`). Other rows take their height from the content; if an item spanning several rows does not fit, the missing height is shared equally by the rows it spans. There is no `col-start-*`, `row-start-*`, `grid-flow-*`, `margin: auto` or `order-*`.
 - Items do not exceed the row's cross size (in CSS they may overflow; in WinForms the overflow would be clipped and lost). Shrunk labels show "…" with `truncate`.
 - A `TwPanel`'s content starts inside its border (CSS box model); in an `AutoScroll` panel the width is taken from the visible area and room for the vertical scrollbar is reserved up front.
 - A flex `TwPanel` with `AutoSize = true` sizes itself to its content (not yet for grid).

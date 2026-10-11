@@ -36,6 +36,8 @@ internal static class TwParser
     private static readonly Regex BasisRx = new Regex(@"^basis-(\d+(?:\.5)?|px|\[\d+px\]|full|auto|\d+/\d+)$", Options);
     private static readonly Regex GridColumnsRx = new Regex(@"^grid-cols-(\d{1,2})$", Options);
     private static readonly Regex ColumnSpanRx = new Regex(@"^col-span-(\d{1,2}|full)$", Options);
+    private static readonly Regex GridRowsRx = new Regex(@"^grid-rows-(\d{1,2})$", Options);
+    private static readonly Regex RowSpanRx = new Regex(@"^row-span-(\d{1,2}|full)$", Options);
     private static readonly Regex RadiusRx = new Regex(@"^rounded(?:-(none|sm|md|lg|xl|2xl|3xl|full|\[\d+px\]))?$", Options);
     private static readonly Regex BorderWidthRx = new Regex(@"^border(?:-(0|2|4|8))?$", Options);
 
@@ -314,6 +316,27 @@ internal static class TwParser
             var columns = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
             if (columns < 1 || columns > 12) return false;
             style.GridColumns = columns;
+            return true;
+        }
+
+        if ((match = GridRowsRx.Match(utility)).Success)
+        {
+            var rows = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+            if (rows < 1 || rows > 12) return false;
+            style.GridRows = rows;
+            return true;
+        }
+
+        if ((match = RowSpanRx.Match(utility)).Success)
+        {
+            if (match.Groups[1].Value == "full")
+            {
+                style.RowSpan = int.MaxValue;
+                return true;
+            }
+            var rowSpan = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+            if (rowSpan < 1 || rowSpan > 12) return false;
+            style.RowSpan = rowSpan;
             return true;
         }
 
