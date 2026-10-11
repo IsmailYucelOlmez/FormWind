@@ -53,7 +53,7 @@ dotnet new install FormWind.Templates
 dotnet new formwind-app -n MyApp --Framework net8.0-windows --Palette v4
 ```
 
-`--Framework`: `net8.0-windows` (default), `net9.0-windows`, `net10.0-windows`, `net472`; `--Palette`: `v3` (default), `v4`; `--FormWindVersion`: package version. Forms are built in code without the Designer and use `AutoScaleMode.Dpi`. Until the package is published, add the `artifacts/packages` folder as a package source; CI generates and builds the template for two targets on every run.
+`--Framework`: `net8.0-windows` (default), `net9.0-windows`, `net10.0-windows`, `net472`; `--Palette`: `v3` (default), `v4`; `--FormWindVersion`: package version (default: the same version as the template package). For a preview, give the version explicitly when installing: `dotnet new install FormWind.Templates::0.1.0-preview.1`. Forms are built in code without the Designer and use `AutoScaleMode.Dpi`. Until the package is published, add the `artifacts/packages` folder as a package source; CI generates and builds the template for two targets on every run.
 
 ## Class reference
 

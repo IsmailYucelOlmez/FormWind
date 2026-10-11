@@ -53,7 +53,7 @@ dotnet new install FormWind.Templates
 dotnet new formwind-app -n MyApp --Framework net8.0-windows --Palette v4
 ```
 
-`--Framework`: `net8.0-windows` (varsayılan), `net9.0-windows`, `net10.0-windows`, `net472`; `--Palette`: `v3` (varsayılan), `v4`; `--FormWindVersion`: paket sürümü. Formlar Designer'sız, kodla kurulur ve `AutoScaleMode.Dpi` kullanır. Paket yayımlanana kadar `artifacts/packages` klasörü paket kaynağı olarak eklenmelidir; CI şablonu her çalışmada iki hedefle üretip derler.
+`--Framework`: `net8.0-windows` (varsayılan), `net9.0-windows`, `net10.0-windows`, `net472`; `--Palette`: `v3` (varsayılan), `v4`; `--FormWindVersion`: paket sürümü (varsayılan: şablon paketiyle aynı sürüm). Önizleme sürümü için kurulumda sürümü açıkça verin: `dotnet new install FormWind.Templates::0.1.0-preview.1`. Formlar Designer'sız, kodla kurulur ve `AutoScaleMode.Dpi` kullanır. Paket yayımlanana kadar `artifacts/packages` klasörü paket kaynağı olarak eklenmelidir; CI şablonu her çalışmada iki hedefle üretip derler.
 
 ## Class sözlüğü
 
