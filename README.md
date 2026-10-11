@@ -329,6 +329,16 @@ TwGrid.EnableColumnChooser(gridOrders);  // başlığa sağ tık: kolonları gö
 - Sıralamalar üst üste uygulanır (önce ada, sonra tarihe göre sıralanan listede aynı tarihliler ada göre kalır); süzme sıralamayı korur, eklenen ve silinen satırlar tüm listeye yansır.
 - Kolon menüsünde son görünen kolon gizlenemez.
 
+**Büyük tablolar (VirtualMode):** `TwVirtualRows<T>` grid'i VirtualMode'a alır ve satırları görüldükçe sayfa sayfa yükler; son kullanılan sayfalar önbellekte tutulur, milyon satırda yalnızca görünen sayfalar bellektedir:
+
+```csharp
+var rows = new TwVirtualRows<Order>(gridOrders, (start, count) => db.Orders.OrderBy(o => o.Id).Skip(start).Take(count).ToList(), pageSize: 100);
+rows.Reset(db.Orders.Count());              // veri ya da sıralama değişince yeniden
+```
+
+- Hücre değeri kolonun `DataPropertyName`'indeki (yoksa adındaki) özellikten okunur; `rows.CellValue = (order, column) => ...` ile değiştirilir. `rows.GetItem(rowIndex)` satırın verisini verir.
+- `loadPage` UI iş parçacığında çağrılır; hızlı olmalı (veritabanında OFFSET/FETCH). VirtualMode'da grid kendisi sıralayamaz: sıralamayı sorguda yapıp `Reset` çağırın. Kullanıcının satır eklemesi kapatılır.
+
 `TwPager` sayfalama düğmeleri çizer (‹ 1 … 9 10 11 … 20 ›); veriyi sayfaya göre siz bağlarsınız:
 
 ```csharp
@@ -830,7 +840,7 @@ Paketler `artifacts/packages` klasörüne yazılır (`FormWind`, `FormWind.Krypt
 - [x] WCAG kontrast denetimi (`TwContrast`), koyu native ipuçları (`DarkToolTips`)
 - [x] Değişmez testleri; gerçek uygulamalarda deneme aracı (`tools/run-harness.ps1`)
 - [ ] Kendi çizen kontroller (örn. owner-draw grid'ler) hücre stillerini yok sayar; koyu temada açık kalabilirler
-- [ ] Grid için `row-span`, `grid-rows`; farklı yükseklikte liste satırları; DataGridView VirtualMode yardımcısı
+- [x] Grid için `row-span`, `grid-rows`; farklı yükseklikte liste satırları (`ItemHeights`); DataGridView VirtualMode yardımcısı (`TwVirtualRows<T>`)
 - [ ] Gölge animasyonları
 - [ ] .NET 8+ out-of-process Designer için `ClassesEditor`'ün Designer SDK ile taşınması
 - [ ] Lisans seçimi (paket yayımlanmadan önce)

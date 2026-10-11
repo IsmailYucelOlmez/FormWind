@@ -1199,3 +1199,14 @@ static readonly FormWind.TwParsed.Empty -> FormWind.TwParsed!
 virtual FormWind.TwDataList.OnDrawItem(FormWind.TwDataListDrawEventArgs! e) -> void
 virtual FormWind.WinFormsApplier.Apply(System.Windows.Forms.Control! control, FormWind.TwStyle! style, FormWind.TwApplyContext! context) -> void
 virtual FormWind.WinFormsApplier.CanApply(System.Windows.Forms.Control! control) -> bool
+FormWind.TwVirtualRows<T>
+FormWind.TwVirtualRows<T>.CachedPages.get -> int
+FormWind.TwVirtualRows<T>.CellValue.get -> System.Func<T, System.Windows.Forms.DataGridViewColumn!, object?>?
+FormWind.TwVirtualRows<T>.CellValue.set -> void
+FormWind.TwVirtualRows<T>.Dispose() -> void
+FormWind.TwVirtualRows<T>.GetItem(int rowIndex) -> T?
+FormWind.TwVirtualRows<T>.PageSize.get -> int
+FormWind.TwVirtualRows<T>.PagesLoaded.get -> int
+FormWind.TwVirtualRows<T>.Reset(int rowCount) -> void
+FormWind.TwVirtualRows<T>.RowCount.get -> int
+FormWind.TwVirtualRows<T>.TwVirtualRows(System.Windows.Forms.DataGridView! grid, System.Func<int, int, System.Collections.Generic.IReadOnlyList<T>!>! loadPage, int pageSize = 100, int cachedPages = 8) -> void

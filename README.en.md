@@ -329,6 +329,16 @@ TwGrid.EnableColumnChooser(gridOrders);  // right-click on the header: show/hide
 - Sorts are stacked (in a list sorted by name and then by date, rows with the same date stay sorted by name); filtering keeps the sort order, and added or removed rows are reflected in the full list.
 - The last visible column cannot be hidden from the column menu.
 
+**Large tables (VirtualMode):** `TwVirtualRows<T>` puts the grid in VirtualMode and loads rows page by page as they come into view; the most recently used pages are cached, so with a million rows only the visible pages are in memory:
+
+```csharp
+var rows = new TwVirtualRows<Order>(gridOrders, (start, count) => db.Orders.OrderBy(o => o.Id).Skip(start).Take(count).ToList(), pageSize: 100);
+rows.Reset(db.Orders.Count());              // again when the data or the sort order changes
+```
+
+- A cell's value is read from the property named by the column's `DataPropertyName` (or its name); change it with `rows.CellValue = (order, column) => ...`. `rows.GetItem(rowIndex)` returns the row's data.
+- `loadPage` runs on the UI thread and should be fast (OFFSET/FETCH in the database). In VirtualMode the grid cannot sort by itself: sort in the query and call `Reset`. Adding rows by the user is turned off.
+
 `TwPager` draws paging buttons (‹ 1 … 9 10 11 … 20 ›); you bind the data for the page:
 
 ```csharp
@@ -805,7 +815,7 @@ Packages are written to `artifacts/packages` (`FormWind`, `FormWind.Krypton` and
 - [ ] The Designer may also write the `BackColor`/`Font` values applied in the preview to `Designer.cs`. `SetClasses` overrides them at run time; use `DesignTimePreview = false` to keep the file clean.
 - [ ] Quick component selection via smart tag (for standard controls; `TwTabControl` has a smart tag)
 - [ ] Self-drawing controls (e.g. owner-drawn grids) ignore cell styles; they may stay light in dark mode
-- [ ] `row-span`, `grid-rows` for grid; list rows with varying heights; a DataGridView VirtualMode helper
+- [x] `row-span`, `grid-rows` for grid; list rows with varying heights (`ItemHeights`); a DataGridView VirtualMode helper (`TwVirtualRows<T>`)
 - [ ] Shadow animations
 - [ ] Porting `ClassesEditor` to the .NET 8+ out-of-process Designer with the Designer SDK
 - [ ] Choosing a license (before publishing the package)
